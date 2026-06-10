@@ -8,48 +8,113 @@ import {
 // ============ BRAND ============
 const BHA = {
   blue: "#0057B8",
-  blueLight: "#4A9EFF",
+  blueLight: "#3DBEFF",       // brighter, more electric cyan-blue (was #4A9EFF)
   blueDark: "#003D7A",
-  blueGlow: "rgba(74, 158, 255, 0.4)",
+  blueGlow: "rgba(61, 190, 255, 0.5)",
   white: "#FFFFFF"
 };
 const SCOUTS = {
   green: "#1FD43E",
   greenDark: "#0C5C24",
-  greenGlow: "rgba(31, 212, 62, 0.4)"
+  greenGlow: "rgba(31, 212, 62, 0.5)"
+};
+// Cyberpunk accent palette — used for glow, highlight, and key UI accents
+const CYBER = {
+  magenta: "#FF2BD6",         // hot magenta — for star players, key highlights
+  cyan: "#00F5FF",            // electric cyan — for active state pulses
+  hotpink: "#FF4DA6",         // hot pink — secondary accent
+  amber: "#FFB800",           // warm amber (replacing yellow for warmer glow)
+  magentaGlow: "rgba(255, 43, 214, 0.5)",
+  cyanGlow: "rgba(0, 245, 255, 0.5)"
 };
 
-// ============ SQUAD DATA (real names, plausible 2025-26 stats) ============
+// ============ SQUAD DATA (real names, plausible 2025-26 stats with position-specific KPIs) ============
+// keyStats contains both the 4 "table" stats and the full extended season set per position.
+// Schema by position:
+//   GK:  cs, savePct, distPct, sweeper, saves, goalsConc, penSaves, highClaims, crossesClaimed, shotsFaced, minPerGoalConc
+//   DEF: tackles, ints, clr, aer, tklWonPct, blocks, fouls, yellows, duelsPct, recoveries, progCarries, passPct
+//   MID: passPct, progPass, recov, distKm, keyPasses, throughBalls, chCreated, tackles, ints, ballCarries, yellows, fouls
+//   FWD: goals, sot, drib, convPct, xG, xA, bigChMissed, shotAcc, assists, minPerGoal, offsides, foulsWon
 const squad = [
   // Goalkeepers
-  { num: 1,  pos: "GK",  name: "B. Verbruggen",     nation: "NED", mr: 7.1, apps: 35, g: 0,  a: 0, cs: 11, starter: true },
-  { num: 23, pos: "GK",  name: "J. Steele",          nation: "ENG", mr: 6.5, apps: 5,  g: 0,  a: 0, cs: 1 },
-  { num: 38, pos: "GK",  name: "T. McGill",          nation: "CAN", mr: 6.4, apps: 1,  g: 0,  a: 0, cs: 0 },
+  { num: 1,  pos: "GK",  name: "B. Verbruggen",     nation: "NED", apps: 35, g: 0,  a: 0, cs: 11, starter: true,
+    keyStats: { cs: 11, savePct: 71, distPct: 78, sweeper: 1.2,
+                saves: 105, goalsConc: 49, penSaves: 1, highClaims: 1.2, crossesClaimed: 0.8, shotsFaced: 148, minPerGoalConc: 64 } },
+  { num: 23, pos: "GK",  name: "J. Steele",          nation: "ENG", apps: 5,  g: 0,  a: 0, cs: 1,
+    keyStats: { cs: 1,  savePct: 68, distPct: 72, sweeper: 0.8,
+                saves: 14, goalsConc: 7, penSaves: 0, highClaims: 0.9, crossesClaimed: 0.6, shotsFaced: 22, minPerGoalConc: 64 } },
+  { num: 38, pos: "GK",  name: "T. McGill",          nation: "CAN", apps: 1,  g: 0,  a: 0, cs: 0,
+    keyStats: { cs: 0,  savePct: 65, distPct: 70, sweeper: 0.5,
+                saves: 3, goalsConc: 2, penSaves: 0, highClaims: 0.5, crossesClaimed: 0.3, shotsFaced: 6, minPerGoalConc: 45 } },
   // Defenders
-  { num: 5,  pos: "CB",  name: "L. Dunk",            nation: "ENG", mr: 7.2, apps: 32, g: 1,  a: 5, starter: true, captain: true },
-  { num: 6,  pos: "CB",  name: "J. van Hecke",       nation: "NED", mr: 7.1, apps: 30, g: 0,  a: 2, starter: true },
-  { num: 21, pos: "CB",  name: "O. Boscagli",        nation: "FRA", mr: 6.9, apps: 17, g: 1,  a: 1 },
-  { num: 4,  pos: "CB",  name: "A. Webster",         nation: "ENG", mr: 6.7, apps: 12, g: 0,  a: 0 },
-  { num: 34, pos: "RB",  name: "J. Veltman",         nation: "NED", mr: 7.0, apps: 28, g: 0,  a: 2, starter: true },
-  { num: 24, pos: "RB",  name: "F. Kadıoğlu",        nation: "TUR", mr: 6.8, apps: 20, g: 1,  a: 2 },
-  { num: 29, pos: "LB",  name: "M. De Cuyper",       nation: "BEL", mr: 7.0, apps: 31, g: 1,  a: 4, starter: true },
+  { num: 5,  pos: "CB",  name: "L. Dunk",            nation: "ENG", apps: 32, g: 1,  a: 5, starter: true, captain: true,
+    keyStats: { tackles: 2.4, ints: 2.1, clr: 3.8, aer: 72,
+                tklWonPct: 71, blocks: 1.4, fouls: 1.1, yellows: 5, duelsPct: 65, recoveries: 5.8, progCarries: 1.6, passPct: 89 } },
+  { num: 6,  pos: "CB",  name: "J. van Hecke",       nation: "NED", apps: 30, g: 0,  a: 2, starter: true,
+    keyStats: { tackles: 2.6, ints: 1.9, clr: 3.5, aer: 68,
+                tklWonPct: 68, blocks: 1.1, fouls: 0.9, yellows: 4, duelsPct: 62, recoveries: 5.2, progCarries: 2.2, passPct: 87 } },
+  { num: 21, pos: "CB",  name: "O. Boscagli",        nation: "FRA", apps: 17, g: 1,  a: 1,
+    keyStats: { tackles: 2.2, ints: 2.0, clr: 2.8, aer: 65,
+                tklWonPct: 66, blocks: 1.0, fouls: 1.0, yellows: 3, duelsPct: 60, recoveries: 4.8, progCarries: 1.4, passPct: 84 } },
+  { num: 4,  pos: "CB",  name: "A. Webster",         nation: "ENG", apps: 12, g: 0,  a: 0,
+    keyStats: { tackles: 1.8, ints: 1.7, clr: 4.2, aer: 70,
+                tklWonPct: 69, blocks: 1.6, fouls: 1.3, yellows: 4, duelsPct: 64, recoveries: 4.4, progCarries: 0.9, passPct: 85 } },
+  { num: 34, pos: "RB",  name: "J. Veltman",         nation: "NED", apps: 28, g: 0,  a: 2, starter: true,
+    keyStats: { tackles: 3.1, ints: 2.4, clr: 2.6, aer: 64,
+                tklWonPct: 73, blocks: 0.7, fouls: 1.0, yellows: 6, duelsPct: 64, recoveries: 6.1, progCarries: 1.8, passPct: 82 } },
+  { num: 24, pos: "RB",  name: "F. Kadıoğlu",        nation: "TUR", apps: 20, g: 1,  a: 2,
+    keyStats: { tackles: 2.4, ints: 1.6, clr: 2.1, aer: 58,
+                tklWonPct: 68, blocks: 0.6, fouls: 1.1, yellows: 3, duelsPct: 58, recoveries: 5.0, progCarries: 2.4, passPct: 80 } },
+  { num: 29, pos: "LB",  name: "M. De Cuyper",       nation: "BEL", apps: 31, g: 1,  a: 4, starter: true,
+    keyStats: { tackles: 2.9, ints: 1.8, clr: 2.4, aer: 60,
+                tklWonPct: 70, blocks: 0.8, fouls: 1.2, yellows: 4, duelsPct: 60, recoveries: 5.6, progCarries: 2.6, passPct: 83 } },
   // Midfielders
-  { num: 17, pos: "DM",  name: "C. Baleba",          nation: "CMR", mr: 7.3, apps: 33, g: 1,  a: 3, starter: true, star: true },
-  { num: 27, pos: "DM",  name: "M. Wieffer",         nation: "NED", mr: 6.9, apps: 28, g: 2,  a: 4, starter: true },
-  { num: 13, pos: "CAM", name: "J. Hinshelwood",     nation: "ENG", mr: 7.0, apps: 28, g: 3,  a: 4, starter: true },
-  { num: 30, pos: "CM",  name: "P. Groß",            nation: "GER", mr: 7.1, apps: 24, g: 2,  a: 6 },
-  { num: 26, pos: "CM",  name: "Y. Ayari",           nation: "SWE", mr: 6.9, apps: 26, g: 3,  a: 4 },
-  { num: 33, pos: "CM",  name: "M. O'Riley",         nation: "DEN", mr: 6.9, apps: 22, g: 4,  a: 3 },
-  { num: 20, pos: "CM",  name: "J. Milner",          nation: "ENG", mr: 6.7, apps: 12, g: 0,  a: 1 },
-  { num: 25, pos: "CM",  name: "D. Gómez",           nation: "PAR", mr: 6.7, apps: 10, g: 1,  a: 1 },
+  { num: 17, pos: "DM",  name: "C. Baleba",          nation: "CMR", apps: 33, g: 1,  a: 3, starter: true, star: true,
+    keyStats: { passPct: 88, progPass: 5.3, recov: 8.4, distKm: 10.4,
+                keyPasses: 1.2, throughBalls: 0.4, chCreated: 1.8, tackles: 2.8, ints: 1.6, ballCarries: 31, yellows: 4, fouls: 1.4 } },
+  { num: 27, pos: "DM",  name: "M. Wieffer",         nation: "NED", apps: 28, g: 2,  a: 4, starter: true,
+    keyStats: { passPct: 85, progPass: 3.8, recov: 7.2, distKm: 10.2,
+                keyPasses: 1.0, throughBalls: 0.3, chCreated: 1.5, tackles: 2.4, ints: 1.4, ballCarries: 22, yellows: 5, fouls: 1.6 } },
+  { num: 13, pos: "CAM", name: "J. Hinshelwood",     nation: "ENG", apps: 28, g: 3,  a: 4, starter: true,
+    keyStats: { passPct: 82, progPass: 2.5, recov: 5.8, distKm: 10.1,
+                keyPasses: 1.6, throughBalls: 0.5, chCreated: 2.1, tackles: 1.9, ints: 1.1, ballCarries: 18, yellows: 3, fouls: 1.0 } },
+  { num: 30, pos: "CM",  name: "P. Groß",            nation: "GER", apps: 24, g: 2,  a: 6,
+    keyStats: { passPct: 87, progPass: 4.1, recov: 4.2, distKm: 9.5,
+                keyPasses: 2.4, throughBalls: 0.8, chCreated: 2.6, tackles: 1.4, ints: 0.9, ballCarries: 14, yellows: 4, fouls: 0.9 } },
+  { num: 26, pos: "CM",  name: "Y. Ayari",           nation: "SWE", apps: 26, g: 3,  a: 4,
+    keyStats: { passPct: 80, progPass: 2.8, recov: 6.1, distKm: 9.7,
+                keyPasses: 1.5, throughBalls: 0.4, chCreated: 1.8, tackles: 1.8, ints: 1.3, ballCarries: 16, yellows: 5, fouls: 1.2 } },
+  { num: 33, pos: "CM",  name: "M. O'Riley",         nation: "DEN", apps: 22, g: 4,  a: 3,
+    keyStats: { passPct: 84, progPass: 3.5, recov: 5.0, distKm: 10.0,
+                keyPasses: 1.8, throughBalls: 0.6, chCreated: 2.0, tackles: 1.6, ints: 1.0, ballCarries: 19, yellows: 3, fouls: 1.0 } },
+  { num: 20, pos: "CM",  name: "J. Milner",          nation: "ENG", apps: 12, g: 0,  a: 1,
+    keyStats: { passPct: 85, progPass: 2.2, recov: 4.8, distKm: 9.8,
+                keyPasses: 1.0, throughBalls: 0.3, chCreated: 1.2, tackles: 1.4, ints: 0.9, ballCarries: 9, yellows: 6, fouls: 1.5 } },
+  { num: 25, pos: "CM",  name: "D. Gómez",           nation: "PAR", apps: 10, g: 1,  a: 1,
+    keyStats: { passPct: 78, progPass: 2.0, recov: 5.5, distKm: 9.6,
+                keyPasses: 0.8, throughBalls: 0.2, chCreated: 1.0, tackles: 1.7, ints: 1.2, ballCarries: 12, yellows: 4, fouls: 1.3 } },
   // Forwards / Wingers
-  { num: 22, pos: "LW",  name: "K. Mitoma",          nation: "JPN", mr: 7.6, apps: 28, g: 8,  a: 7, starter: true, star: true },
-  { num: 11, pos: "RW",  name: "Y. Minteh",          nation: "GAM", mr: 7.2, apps: 30, g: 7,  a: 5, starter: true },
-  { num: 10, pos: "CAM", name: "G. Rutter",          nation: "FRA", mr: 7.1, apps: 25, g: 6,  a: 5 },
-  { num: 7,  pos: "WG",  name: "S. March",           nation: "ENG", mr: 6.6, apps: 4,  g: 0,  a: 0 },
-  { num: 18, pos: "ST",  name: "D. Welbeck",         nation: "ENG", mr: 7.4, apps: 32, g: 13, a: 4, starter: true, topScorer: true },
-  { num: 9,  pos: "ST",  name: "S. Tzimas",          nation: "GRE", mr: 6.6, apps: 15, g: 4,  a: 1 },
-  { num: 19, pos: "ST",  name: "C. Kostoulas",       nation: "GRE", mr: 6.7, apps: 18, g: 2,  a: 1 }
+  { num: 22, pos: "LW",  name: "K. Mitoma",          nation: "JPN", apps: 28, g: 8,  a: 7, starter: true, star: true,
+    keyStats: { goals: 8,  sot: 42, drib: 2.8, convPct: 14,
+                xG: 7.2, xA: 5.1, bigChMissed: 8, shotAcc: 49, assists: 7, minPerGoal: 312, offsides: 0.4, foulsWon: 1.8 } },
+  { num: 11, pos: "RW",  name: "Y. Minteh",          nation: "GAM", apps: 30, g: 7,  a: 5, starter: true,
+    keyStats: { goals: 7,  sot: 38, drib: 2.4, convPct: 12,
+                xG: 6.8, xA: 4.2, bigChMissed: 9, shotAcc: 46, assists: 5, minPerGoal: 358, offsides: 0.6, foulsWon: 1.5 } },
+  { num: 10, pos: "CAM", name: "G. Rutter",          nation: "FRA", apps: 25, g: 6,  a: 5,
+    keyStats: { passPct: 81, progPass: 3.2, recov: 4.8, distKm: 10.3,
+                keyPasses: 2.3, throughBalls: 0.7, chCreated: 2.6, tackles: 1.5, ints: 0.9, ballCarries: 22, yellows: 3, fouls: 0.9 } },
+  { num: 7,  pos: "WG",  name: "S. March",           nation: "ENG", apps: 4,  g: 0,  a: 0,
+    keyStats: { goals: 0,  sot: 3,  drib: 0.5, convPct: 0,
+                xG: 0.4, xA: 0.2, bigChMissed: 1, shotAcc: 35, assists: 0, minPerGoal: 0, offsides: 0.1, foulsWon: 0.4 } },
+  { num: 18, pos: "ST",  name: "D. Welbeck",         nation: "ENG", apps: 32, g: 13, a: 4, starter: true, topScorer: true,
+    keyStats: { goals: 13, sot: 51, drib: 0.8, convPct: 18,
+                xG: 9.8, xA: 3.1, bigChMissed: 7, shotAcc: 54, assists: 4, minPerGoal: 195, offsides: 0.8, foulsWon: 1.2 } },
+  { num: 9,  pos: "ST",  name: "S. Tzimas",          nation: "GRE", apps: 15, g: 4,  a: 1,
+    keyStats: { goals: 4,  sot: 18, drib: 0.4, convPct: 10,
+                xG: 3.8, xA: 0.9, bigChMissed: 4, shotAcc: 44, assists: 1, minPerGoal: 270, offsides: 0.6, foulsWon: 0.8 } },
+  { num: 19, pos: "ST",  name: "C. Kostoulas",       nation: "GRE", apps: 18, g: 2,  a: 1,
+    keyStats: { goals: 2,  sot: 12, drib: 0.6, convPct: 9,
+                xG: 2.6, xA: 0.8, bigChMissed: 5, shotAcc: 38, assists: 1, minPerGoal: 540, offsides: 0.7, foulsWon: 0.9 } }
 ];
 
 // Starting XI average positions on pitch (4-2-3-1) — bottom is own goal
@@ -89,6 +154,28 @@ const formations = {
       { num: 1,  name: "Verbruggen",  x: 50, y: 91 }
     ]
   },
+  // Phase 3 variant — attacking shape adjusted to stay ONSIDE relative to Newcastle's
+  // defensive line (their back four sits at y=20-22 in their 4-3-3 mid-block).
+  // Front line pushed back so no Brighton player is ahead of the deepest defender.
+  inPossessionVsBlock: {
+    label: "In Possession",
+    shape: "3-2-5",
+    description: "Veltman and De Cuyper invert into midfield. Wieffer drops between the CBs to form a back 3. Mitoma and Minteh stretch the touchlines high. Hinshelwood floats inside.",
+    color: SCOUTS.green,
+    players: [
+      { num: 18, name: "Welbeck",     x: 50, y: 24 },  // dropped back from y=14 to stay level with their CBs
+      { num: 22, name: "Mitoma",      x: 8,  y: 28 },  // dropped back from y=25
+      { num: 13, name: "Hinshelwood", x: 36, y: 34 },  // floats slightly behind Welbeck
+      { num: 11, name: "Minteh",      x: 92, y: 28 },  // dropped back from y=25
+      { num: 17, name: "Baleba",      x: 64, y: 38 },  // adjusted to support
+      { num: 34, name: "Veltman",     x: 30, y: 52 },
+      { num: 27, name: "Wieffer",     x: 50, y: 65 },
+      { num: 29, name: "De Cuyper",   x: 70, y: 52 },
+      { num: 5,  name: "Dunk",        x: 36, y: 75 },
+      { num: 6,  name: "van Hecke",   x: 64, y: 75 },
+      { num: 1,  name: "Verbruggen",  x: 50, y: 91 }
+    ]
+  },
   outPossession: {
     label: "Out of Possession",
     shape: "4-4-2",
@@ -106,6 +193,60 @@ const formations = {
       { num: 6,  name: "van Hecke",   x: 62, y: 80 },
       { num: 34, name: "Veltman",     x: 88, y: 78 },
       { num: 1,  name: "Verbruggen",  x: 50, y: 91 }
+    ]
+  }
+};
+
+// Next opponent — used for the 4-phase formation interaction animation
+const nextOpponent = {
+  name: "Newcastle United",
+  short: "NEW",
+  venue: "St James' Park (A)",
+  shape: "4-3-3",
+  manager: "Eddie Howe",
+  notes: "High-pressing 4-3-3 under Howe. Wingers stay wide and high in possession; full-backs support. Out of possession, an aggressive 4-3-3 mid-block that triggers vertical pressure on the CBs."
+};
+
+// Opponent formations (predicted) — shown as 11 black dummy circles, not specific players
+// Positions are mirrored so that opponent attacks DOWNWARD (toward Brighton's goal at bottom)
+// and defends their goal at the TOP of the pitch
+const opponentFormations = {
+  inPossession: {
+    label: "Newcastle In Possession",
+    shape: "4-3-3 → 2-3-5 (FBs up)",
+    description: "Their full-backs push high; CDM stays. Three midfielders in a triangle. Wingers stay wide and high — testing our full-backs.",
+    // Opposition attacks DOWNWARD — forwards near bottom (Brighton goal), defenders at top (their goal)
+    players: [
+      { id: "O-GK", x: 50, y: 8 },
+      { id: "O-CB1", x: 38, y: 26 },
+      { id: "O-CB2", x: 62, y: 26 },
+      { id: "O-LB",  x: 12, y: 42 },
+      { id: "O-RB",  x: 88, y: 42 },
+      { id: "O-DM",  x: 50, y: 44 },
+      { id: "O-CM1", x: 32, y: 56 },
+      { id: "O-CM2", x: 68, y: 56 },
+      { id: "O-LW",  x: 16, y: 68 },
+      { id: "O-RW",  x: 84, y: 68 },
+      { id: "O-ST",  x: 50, y: 82 }
+    ]
+  },
+  outPossession: {
+    label: "Newcastle Out of Possession",
+    shape: "4-3-3 mid-block",
+    description: "Compact 4-3-3 mid-block. Striker triggers pressure on our CBs; wingers tuck slightly to deny inside passes. Aggressive transition when they win it.",
+    // Opposition defending their own goal at the TOP — back four near their goal, striker pushed up
+    players: [
+      { id: "O-GK", x: 50, y: 8 },
+      { id: "O-LB",  x: 14, y: 22 },
+      { id: "O-CB1", x: 38, y: 20 },
+      { id: "O-CB2", x: 62, y: 20 },
+      { id: "O-RB",  x: 86, y: 22 },
+      { id: "O-CM1", x: 32, y: 36 },
+      { id: "O-DM",  x: 50, y: 38 },
+      { id: "O-CM2", x: 68, y: 36 },
+      { id: "O-LW",  x: 22, y: 50 },
+      { id: "O-ST",  x: 50, y: 50 },
+      { id: "O-RW",  x: 78, y: 50 }
     ]
   }
 };
@@ -248,25 +389,52 @@ const positionNorms = {
   ST:  { topSpeed: 32, hsrM: 580, sprints: 16 }
 };
 
-// Per-player GPS from most recent training session
+// Per-player GPS from most recent training session + load recommendation
+// status: "full" | "build" | "maintain" | "manage" | "recover" | "gk"
 const playerGPS = [
-  { num: 22, name: "K. Mitoma",     pos: "LW",  topSpeed: 34.2, totalDistKm: 9.8, hsrM: 720, sprints: 22, accels: 28, intensity: 8.6 },
-  { num: 11, name: "Y. Minteh",     pos: "RW",  topSpeed: 33.8, totalDistKm: 9.6, hsrM: 680, sprints: 21, accels: 26, intensity: 8.4 },
-  { num: 41, name: "J. Hinshelwood",pos: "CAM", topSpeed: 32.8, totalDistKm: 10.1, hsrM: 560, sprints: 16, accels: 24, intensity: 8.5 },
-  { num: 17, name: "C. Baleba",     pos: "DM",  topSpeed: 33.1, totalDistKm: 10.4, hsrM: 580, sprints: 14, accels: 22, intensity: 8.8 },
-  { num: 27, name: "M. Wieffer",    pos: "DM",  topSpeed: 32.4, totalDistKm: 10.2, hsrM: 510, sprints: 13, accels: 21, intensity: 8.3 },
-  { num: 29, name: "M. De Cuyper",  pos: "LB",  topSpeed: 32.6, totalDistKm: 9.9,  hsrM: 620, sprints: 19, accels: 25, intensity: 8.2 },
-  { num: 34, name: "J. Veltman",    pos: "RB",  topSpeed: 31.8, totalDistKm: 9.4,  hsrM: 580, sprints: 17, accels: 22, intensity: 7.9 },
-  { num: 33, name: "M. O'Riley",    pos: "CM",  topSpeed: 32.2, totalDistKm: 10.0, hsrM: 530, sprints: 14, accels: 22, intensity: 8.2 },
-  { num: 18, name: "D. Welbeck",    pos: "ST",  topSpeed: 32.1, totalDistKm: 9.2,  hsrM: 540, sprints: 14, accels: 20, intensity: 8.0 },
-  { num: 10, name: "G. Rutter",     pos: "CAM", topSpeed: 32.4, totalDistKm: 9.4,  hsrM: 510, sprints: 15, accels: 22, intensity: 8.1 },
-  { num: 26, name: "Y. Ayari",      pos: "CM",  topSpeed: 32.0, totalDistKm: 9.7,  hsrM: 490, sprints: 13, accels: 20, intensity: 7.9 },
-  { num: 5,  name: "L. Dunk",       pos: "CB",  topSpeed: 30.2, totalDistKm: 8.7,  hsrM: 320, sprints: 8,  accels: 14, intensity: 7.4 },
-  { num: 6,  name: "J. van Hecke",  pos: "CB",  topSpeed: 31.4, totalDistKm: 8.9,  hsrM: 360, sprints: 10, accels: 16, intensity: 7.6 },
-  { num: 30, name: "P. Groß",       pos: "CM",  topSpeed: 30.6, totalDistKm: 9.5,  hsrM: 440, sprints: 11, accels: 18, intensity: 7.7 },
-  { num: 9,  name: "S. Tzimas",     pos: "ST",  topSpeed: 31.5, totalDistKm: 8.8,  hsrM: 490, sprints: 12, accels: 18, intensity: 7.6 },
-  { num: 1,  name: "B. Verbruggen", pos: "GK",  topSpeed: 28.4, totalDistKm: 4.2,  hsrM: 80,  sprints: 3,  accels: 7,  intensity: 5.8 }
+  { num: 22, name: "K. Mitoma",     pos: "LW",  topSpeed: 34.2, totalDistKm: 9.8, hsrM: 720, sprints: 22, accels: 28, intensity: 8.6,
+    status: "full",    rec: "Maintain full load — top speed and HSR profile suits match demand. No reductions needed." },
+  { num: 11, name: "Y. Minteh",     pos: "RW",  topSpeed: 33.8, totalDistKm: 9.6, hsrM: 680, sprints: 21, accels: 26, intensity: 8.4,
+    status: "full",    rec: "Maintain full load — high-intensity profile mirrors his match output well." },
+  { num: 41, name: "J. Hinshelwood",pos: "CAM", topSpeed: 32.8, totalDistKm: 10.1, hsrM: 560, sprints: 16, accels: 24, intensity: 8.5,
+    status: "maintain",rec: "High intensity (8.5) with strong HSR. Monitor cumulative load over consecutive sessions." },
+  { num: 17, name: "C. Baleba",     pos: "DM",  topSpeed: 33.1, totalDistKm: 10.4, hsrM: 580, sprints: 14, accels: 22, intensity: 8.8,
+    status: "full",    rec: "Outlier engine — HSR +21% above DM norm. Design SSGs that exploit his capacity, don't waste it." },
+  { num: 27, name: "M. Wieffer",    pos: "DM",  topSpeed: 32.4, totalDistKm: 10.2, hsrM: 510, sprints: 13, accels: 21, intensity: 8.3,
+    status: "full",    rec: "Standard pivot profile — full load suits him. Pair with Baleba for double-DM SSG reps." },
+  { num: 29, name: "M. De Cuyper",  pos: "LB",  topSpeed: 32.6, totalDistKm: 9.9,  hsrM: 620, sprints: 19, accels: 25, intensity: 8.2,
+    status: "full",    rec: "Match-rep sprint exposure dialed in. Full session intensity recommended." },
+  { num: 34, name: "J. Veltman",    pos: "RB",  topSpeed: 31.8, totalDistKm: 9.4,  hsrM: 580, sprints: 17, accels: 22, intensity: 7.9,
+    status: "maintain",rec: "Standard load. Top speed slightly under match max — add 1× weekly sprint mechanics block." },
+  { num: 33, name: "M. O'Riley",    pos: "CM",  topSpeed: 32.2, totalDistKm: 10.0, hsrM: 530, sprints: 14, accels: 22, intensity: 8.2,
+    status: "full",    rec: "Full load. CM profile fits perfectly — distance, sprint count, accelerations all on target." },
+  { num: 18, name: "D. Welbeck",    pos: "ST",  topSpeed: 32.1, totalDistKm: 9.2,  hsrM: 540, sprints: 14, accels: 20, intensity: 8.0,
+    status: "manage",  rec: "Age 35 — manage session volume (75-80% reps). Maintain sprint exposure to preserve top speed." },
+  { num: 10, name: "G. Rutter",     pos: "CAM", topSpeed: 32.4, totalDistKm: 9.4,  hsrM: 510, sprints: 15, accels: 22, intensity: 8.1,
+    status: "build",   rec: "HSR below CAM norm. Add 1× targeted HSR block weekly to close the gap." },
+  { num: 26, name: "Y. Ayari",      pos: "CM",  topSpeed: 32.0, totalDistKm: 9.7,  hsrM: 490, sprints: 13, accels: 20, intensity: 7.9,
+    status: "build",   rec: "Sprint count slightly low for CM. Build via 5-min intermittent HSR blocks." },
+  { num: 5,  name: "L. Dunk",       pos: "CB",  topSpeed: 30.2, totalDistKm: 8.7,  hsrM: 320, sprints: 8,  accels: 14, intensity: 7.4,
+    status: "recover", rec: "Recovery focus. Sprint count -33% vs CB norm — age-related, expected. Light explosive only." },
+  { num: 6,  name: "J. van Hecke",  pos: "CB",  topSpeed: 31.4, totalDistKm: 8.9,  hsrM: 360, sprints: 10, accels: 16, intensity: 7.6,
+    status: "maintain",rec: "Solid CB output. Maintain — focus weekly on 1-2 high-acceleration reps to keep edge." },
+  { num: 30, name: "P. Groß",       pos: "CM",  topSpeed: 30.6, totalDistKm: 9.5,  hsrM: 440, sprints: 11, accels: 18, intensity: 7.7,
+    status: "manage",  rec: "Below CM HSR norm but accelerations elite — role-appropriate. Don't chase top speed at his age." },
+  { num: 9,  name: "S. Tzimas",     pos: "ST",  topSpeed: 31.5, totalDistKm: 8.8,  hsrM: 490, sprints: 12, accels: 18, intensity: 7.6,
+    status: "build",   rec: "Young striker — build sprint volume gradually. Target +2 sprints/week over the next microcycle." },
+  { num: 1,  name: "B. Verbruggen", pos: "GK",  topSpeed: 28.4, totalDistKm: 4.2,  hsrM: 80,  sprints: 3,  accels: 7,  intensity: 5.8,
+    status: "gk",      rec: "GK-specific protocol. Footwork, dives and short-burst sprints (2-3 sets weekly). No outfield volume." }
 ];
+
+// Status color/label mapping for the recommendation badges
+const gpsStatus = {
+  full:     { color: SCOUTS.green,   label: "FULL LOAD",        icon: "●" },
+  build:    { color: "#FFD700",      label: "BUILD",            icon: "↑" },
+  maintain: { color: BHA.blueLight,  label: "MAINTAIN",         icon: "=" },
+  manage:   { color: "#FF8C00",      label: "MANAGE VOLUME",    icon: "◐" },
+  recover:  { color: "#FF3D5A",      label: "RECOVERY",         icon: "◯" },
+  gk:       { color: "#FFD700",      label: "GK PROTOCOL",      icon: "✦" }
+};
 
 // Match-day demands (averaged from recent PL games)
 const matchVsTraining = [
@@ -846,7 +1014,7 @@ function ScoutsBrand({ small = false }) {
             fontWeight: 900,
             fontSize: small ? 10 : 12,
             letterSpacing: "0.06em",
-            textShadow: `0 0 8px ${SCOUTS.green}, 0 0 14px ${SCOUTS.green}66`
+            textShadow: `0 0 6px ${SCOUTS.green}, 0 0 12px ${SCOUTS.green}AA, 0 0 18px ${SCOUTS.green}55, 0 0 30px ${SCOUTS.green}33`
           }}>
             SCOUTSPLAYBOOK
           </span>
@@ -1004,95 +1172,146 @@ function TeamPositionPitch({ players = [] }) {
 }
 
 function MorphingFormationPitch() {
-  const [phase, setPhase] = useState("inPossession");
+  // Phase index: 0=Our IP, 1=Our OOP, 2=Our IP vs Their OOP, 3=Our OOP vs Their IP
+  const [phaseIdx, setPhaseIdx] = useState(0);
   const [paused, setPaused] = useState(false);
 
-  // Auto-cycle between phases every 4.2 seconds when not paused
+  // The 4 phases of the cycle
+  const phases = [
+    {
+      key: "us-ip",
+      ourFormation: "inPossession",
+      theirFormation: null,
+      label: "Phase 1 · We attack",
+      shortLabel: "1: Us · Attack",
+      narrative: "Our 3-2-5 attacking shape, viewed alone. The starting picture for the buildup."
+    },
+    {
+      key: "us-oop",
+      ourFormation: "outPossession",
+      theirFormation: null,
+      label: "Phase 2 · We defend",
+      shortLabel: "2: Us · Defend",
+      narrative: "Our 4-4-2 compact mid-block, viewed alone. The shape we recover into when we lose the ball."
+    },
+    {
+      key: "interaction-attack",
+      ourFormation: "inPossessionVsBlock",
+      theirFormation: "outPossession",
+      label: "Phase 3 · We attack vs their block",
+      shortLabel: "3: vs Their Block",
+      narrative: "Our 3-2-5 against Newcastle's predicted 4-3-3 mid-block. The front line stays disciplined — level with their back four, never offside. Wieffer drops between CBs to overload their first defensive line."
+    },
+    {
+      key: "interaction-defend",
+      ourFormation: "outPossession",
+      theirFormation: "inPossession",
+      label: "Phase 4 · We defend vs their attack",
+      shortLabel: "4: vs Their Press",
+      narrative: "Our 4-4-2 against Newcastle's 2-3-5 attacking shape. Their full-backs push high — our wingers must track them on the way back. Welbeck and Hinshelwood squeeze their CBs."
+    }
+  ];
+
+  const phase = phases[phaseIdx];
+  const ourFormation = formations[phase.ourFormation];
+  const theirFormation = phase.theirFormation ? opponentFormations[phase.theirFormation] : null;
+
+  // Auto-cycle every 4.5 seconds when not paused
   useEffect(() => {
     if (paused) return;
     const timer = setInterval(() => {
-      setPhase(p => (p === "inPossession" ? "outPossession" : "inPossession"));
-    }, 4200);
+      setPhaseIdx(p => (p + 1) % 4);
+    }, 4500);
     return () => clearInterval(timer);
   }, [paused]);
 
-  const formation = formations[phase];
-
   // Pitch geometry
-  const aspectRatio = 280 / 380; // width / height
+  const aspectRatio = 280 / 380;
   const PX_PCT = 16 / 280 * 100;
   const PY_PCT = 16 / 380 * 100;
 
-  // Pick a player from current formation; falls back to startingXI ordering for stable React keys
-  const getPos = (num) => formation.players.find(p => p.num === num) || startingXI.find(p => p.num === num);
+  const getOurPos = (num) => ourFormation.players.find(p => p.num === num) || startingXI.find(p => p.num === num);
+  const getTheirPos = (id) => theirFormation ? theirFormation.players.find(p => p.id === id) : null;
 
-  // Manual button handler — switches phase AND pauses auto-cycle
-  const pickPhase = (p) => {
-    setPhase(p);
+  const pickPhase = (idx) => {
+    setPhaseIdx(idx);
     setPaused(true);
   };
 
+  // Color logic per phase (our team always colored, theirs always black)
+  const ourColor = phase.ourFormation === "inPossession" ? SCOUTS.green : "#FF6B35";
+
   return (
     <div className="w-full">
-      {/* Phase toggle bar */}
-      <div className="flex items-center gap-1.5 mb-3 p-1 rounded-lg bg-white/[0.04] border border-white/10">
-        <button
-          onClick={() => pickPhase("inPossession")}
-          className="flex-1 py-2 px-2 rounded text-[10px] font-bold uppercase tracking-wider transition-all"
-          style={{
-            background: phase === "inPossession" ? SCOUTS.green + "22" : "transparent",
-            color: phase === "inPossession" ? SCOUTS.green : "rgba(255,255,255,0.45)",
-            border: `1px solid ${phase === "inPossession" ? SCOUTS.green + "55" : "transparent"}`
-          }}
-        >
-          <div className="flex items-center justify-center gap-1.5">
-            {phase === "inPossession" && !paused && (
-              <span className="inline-block w-1.5 h-1.5 rounded-full" style={{
-                background: SCOUTS.green,
-                animation: "morphPulse 1.2s ease-in-out infinite"
-              }} />
-            )}
-            <span>In Possession · 3-2-5</span>
-          </div>
-        </button>
-        <button
-          onClick={() => pickPhase("outPossession")}
-          className="flex-1 py-2 px-2 rounded text-[10px] font-bold uppercase tracking-wider transition-all"
-          style={{
-            background: phase === "outPossession" ? "#FF6B3522" : "transparent",
-            color: phase === "outPossession" ? "#FF8C50" : "rgba(255,255,255,0.45)",
-            border: `1px solid ${phase === "outPossession" ? "#FF6B3555" : "transparent"}`
-          }}
-        >
-          <div className="flex items-center justify-center gap-1.5">
-            {phase === "outPossession" && !paused && (
-              <span className="inline-block w-1.5 h-1.5 rounded-full" style={{
-                background: "#FF8C50",
-                animation: "morphPulse 1.2s ease-in-out infinite"
-              }} />
-            )}
-            <span>Out of Possession · 4-4-2</span>
-          </div>
-        </button>
+      {/* Next-opponent banner */}
+      <div className="mb-3 p-2.5 rounded-lg border flex items-center gap-2.5" style={{
+        background: "rgba(255,255,255,0.03)",
+        borderColor: "rgba(255,255,255,0.12)"
+      }}>
+        <div className="rounded-md flex-shrink-0 flex items-center justify-center font-black" style={{
+          width: 30, height: 30,
+          background: "#000",
+          border: "1.5px solid #444",
+          color: "#fff",
+          fontSize: 10
+        }}>
+          {nextOpponent.short}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[9px] uppercase tracking-widest font-mono text-white/40">Next match</div>
+          <div className="text-xs font-bold text-white truncate">vs {nextOpponent.name}</div>
+          <div className="text-[9px] text-white/40 truncate">{nextOpponent.venue} · {nextOpponent.shape} · {nextOpponent.manager}</div>
+        </div>
+      </div>
+
+      {/* Phase selector — 4 small buttons, 2×2 grid */}
+      <div className="grid grid-cols-2 gap-1.5 mb-3 p-1 rounded-lg bg-white/[0.04] border border-white/10">
+        {phases.map((ph, idx) => {
+          const isActive = phaseIdx === idx;
+          const isInteraction = ph.theirFormation !== null;
+          const baseColor = ph.ourFormation === "inPossession" ? SCOUTS.green : "#FF6B35";
+          return (
+            <button
+              key={ph.key}
+              onClick={() => pickPhase(idx)}
+              className="py-1.5 px-2 rounded text-[9px] font-bold uppercase tracking-wider transition-all"
+              style={{
+                background: isActive ? baseColor + "22" : "transparent",
+                color: isActive ? baseColor : "rgba(255,255,255,0.4)",
+                border: `1px solid ${isActive ? baseColor + "55" : "transparent"}`
+              }}
+            >
+              <div className="flex items-center justify-center gap-1">
+                {isActive && !paused && (
+                  <span className="inline-block w-1 h-1 rounded-full" style={{
+                    background: baseColor,
+                    animation: "morphPulse 1.2s ease-in-out infinite"
+                  }} />
+                )}
+                <span className="truncate">{ph.shortLabel}</span>
+                {isInteraction && <span className="opacity-60">⊗</span>}
+              </div>
+            </button>
+          );
+        })}
         {paused && (
           <button
             onClick={() => setPaused(false)}
-            className="px-2.5 py-2 rounded text-[10px] font-bold uppercase tracking-wider transition-all"
+            className="col-span-2 py-1.5 px-2 rounded text-[9px] font-bold uppercase tracking-wider transition-all mt-0.5"
             style={{
               background: BHA.blueLight + "15",
               color: BHA.blueLight,
               border: `1px solid ${BHA.blueLight}44`
             }}
-            title="Resume auto-cycle"
           >
-            ↻ Auto
+            ↻ Resume Auto-cycle
           </button>
         )}
       </div>
 
       {/* Pitch container with absolute-positioned, animated player markers */}
       <div className="relative w-full" style={{ aspectRatio: `${aspectRatio}`, maxWidth: 360, margin: "0 auto" }}>
-        {/* SVG pitch markings — static background */}
+        {/* SVG pitch markings */}
         <svg viewBox="0 0 280 380" className="absolute inset-0 w-full h-full" style={{ borderRadius: 6 }}>
           <defs>
             <pattern id="grassPatternBHA2" x="0" y="0" width="24" height="48" patternUnits="userSpaceOnUse">
@@ -1101,26 +1320,58 @@ function MorphingFormationPitch() {
             </pattern>
           </defs>
           <rect x="16" y="16" width="248" height="348" fill="url(#grassPatternBHA2)" stroke="#fff" strokeOpacity="0.5" strokeWidth="1.5" rx="2" />
-          {/* Halfway line */}
           <line x1="16" y1="190" x2="264" y2="190" stroke="#fff" strokeOpacity="0.4" strokeWidth="1" />
-          {/* Centre circle */}
           <circle cx="140" cy="190" r="32" fill="none" stroke="#fff" strokeOpacity="0.4" strokeWidth="1" />
-          {/* Top penalty area (attacking) */}
           <rect x="60.6" y="16" width="158.7" height="55.7" fill="none" stroke="#fff" strokeOpacity="0.4" strokeWidth="1" />
           <rect x="95.4" y="16" width="89.3" height="24.4" fill="none" stroke="#fff" strokeOpacity="0.4" strokeWidth="1" />
-          {/* Bottom penalty area (defending) */}
           <rect x="60.6" y="308.3" width="158.7" height="55.7" fill="none" stroke="#fff" strokeOpacity="0.4" strokeWidth="1" />
           <rect x="95.4" y="339.6" width="89.3" height="24.4" fill="none" stroke="#fff" strokeOpacity="0.4" strokeWidth="1" />
-          {/* Attack arrow */}
           <text x="140" y="11" fill={SCOUTS.green} fontSize="8" fontWeight="bold" textAnchor="middle">▲ ATTACK</text>
         </svg>
 
-        {/* Animated player markers — HTML divs absolutely positioned with CSS transitions */}
-        {/* The stable key (player num) is what allows React to animate the same element between positions */}
+        {/* Opposition dummy circles (always rendered, opacity controlled by phase) */}
+        {/* These are rendered FIRST so they sit behind our players */}
+        {["O-GK", "O-CB1", "O-CB2", "O-LB", "O-RB", "O-DM", "O-CM1", "O-CM2", "O-LW", "O-RW", "O-ST"].map(id => {
+          // Default position when opponent not shown: park them off-pitch (subtle)
+          // Use last shown formation as fallback for smooth transitions
+          const pos = theirFormation
+            ? getTheirPos(id)
+            : (opponentFormations.outPossession.players.find(p => p.id === id)); // park position
+          if (!pos) return null;
+          const leftPct = PX_PCT + (pos.x / 100) * (100 - 2 * PX_PCT);
+          const topPct = PY_PCT + (pos.y / 100) * (100 - 2 * PY_PCT);
+          const visible = theirFormation !== null;
+          return (
+            <div
+              key={id}
+              className="absolute"
+              style={{
+                left: `${leftPct}%`,
+                top: `${topPct}%`,
+                transform: "translate(-50%, -50%)",
+                transition: "left 1300ms cubic-bezier(0.45, 0, 0.15, 1), top 1300ms cubic-bezier(0.45, 0, 0.15, 1), opacity 700ms ease",
+                opacity: visible ? 1 : 0,
+                pointerEvents: "none"
+              }}
+            >
+              {/* Black dummy circle */}
+              <div
+                className="rounded-full"
+                style={{
+                  width: 16, height: 16,
+                  background: "#0a0a0a",
+                  border: "1.5px solid rgba(255,255,255,0.55)",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.7)"
+                }}
+              />
+            </div>
+          );
+        })}
+
+        {/* Our team players — rendered SECOND so they sit on top */}
         {[18, 22, 13, 11, 27, 17, 29, 5, 6, 34, 1].map(num => {
-          const p = getPos(num);
+          const p = getOurPos(num);
           if (!p) return null;
-          // Scale x/y from 0-100 pct into our padded pitch (16px padding on each side of 280×380)
           const leftPct = PX_PCT + (p.x / 100) * (100 - 2 * PX_PCT);
           const topPct = PY_PCT + (p.y / 100) * (100 - 2 * PY_PCT);
           const isGK = num === 1;
@@ -1133,15 +1384,16 @@ function MorphingFormationPitch() {
                 top: `${topPct}%`,
                 transform: "translate(-50%, -50%)",
                 transition: "left 1300ms cubic-bezier(0.45, 0, 0.15, 1), top 1300ms cubic-bezier(0.45, 0, 0.15, 1)",
-                pointerEvents: "none"
+                pointerEvents: "none",
+                zIndex: 2
               }}
             >
-              {/* Heat halo behind the dot */}
+              {/* Heat halo */}
               <div className="absolute rounded-full" style={{
                 width: 56, height: 56,
                 left: "50%", top: "50%",
                 transform: "translate(-50%, -50%)",
-                background: `radial-gradient(circle, ${formation.color}44 0%, ${formation.color}11 50%, transparent 75%)`,
+                background: `radial-gradient(circle, ${ourColor}44 0%, ${ourColor}11 50%, transparent 75%)`,
                 transition: "background 1100ms ease"
               }} />
               {/* Player dot */}
@@ -1153,7 +1405,7 @@ function MorphingFormationPitch() {
                   color: isGK ? "#000" : "#fff",
                   border: "2px solid #fff",
                   fontSize: 10,
-                  boxShadow: `0 2px 6px rgba(0,0,0,0.6), 0 0 0 1px ${formation.color}55`,
+                  boxShadow: `0 2px 6px rgba(0,0,0,0.6), 0 0 0 1px ${ourColor}55`,
                   transition: "box-shadow 1100ms ease"
                 }}
               >
@@ -1173,27 +1425,44 @@ function MorphingFormationPitch() {
         })}
       </div>
 
-      {/* Formation description card — also smoothly transitions */}
+      {/* Phase description card */}
       <div className="mt-3 p-3 rounded-lg border" style={{
-        borderColor: formation.color + "44",
-        background: formation.color + "0A",
+        borderColor: ourColor + "44",
+        background: ourColor + "0A",
         transition: "border-color 800ms ease, background 800ms ease"
       }}>
-        <div className="flex items-center gap-2 mb-1.5">
-          <div className="font-mono font-black text-xs uppercase tracking-widest" style={{ color: formation.color }}>
-            {formation.label}
+        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+          <div className="font-mono font-black text-[11px] uppercase tracking-widest" style={{ color: ourColor }}>
+            {phase.label}
           </div>
+          {phase.theirFormation && (
+            <div className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded" style={{
+              background: "rgba(0,0,0,0.4)",
+              color: "rgba(255,255,255,0.7)",
+              border: "1px solid rgba(255,255,255,0.2)"
+            }}>
+              vs {nextOpponent.short}
+            </div>
+          )}
           <div className="text-[10px] font-mono text-white/40">·</div>
-          <div className="font-mono font-bold text-[11px] text-white/70">{formation.shape}</div>
+          <div className="font-mono font-bold text-[10px] text-white/70">{ourFormation.shape}</div>
+          {phase.theirFormation && (
+            <>
+              <div className="text-[10px] font-mono text-white/40">vs</div>
+              <div className="font-mono font-bold text-[10px] text-white/55">{theirFormation.shape}</div>
+            </>
+          )}
         </div>
         <p className="text-[11px] text-white/65 leading-relaxed italic">
-          {formation.description}
+          {phase.narrative}
         </p>
       </div>
 
       {/* Footnote */}
       <p className="text-[9px] text-white/30 italic text-center mt-2">
-        {paused ? "Paused — tap '↻ Auto' to resume cycling between phases" : "Auto-cycling between phases · tap a label to pause"}
+        {paused
+          ? "Paused — tap '↻ Resume' to restart the 4-phase cycle"
+          : `Cycling through 4 phases · ${nextOpponent.short} shown as ${"○".repeat(3)} dummy markers in phases 3 & 4`}
       </p>
     </div>
   );
@@ -1632,6 +1901,284 @@ function ZoneCard({ zone }) {
 }
 
 // ============ SSG CARD ============
+// ============ ANIMATED SSG PITCH (morphing between 3 phases — setup, action, outcome + ball) ============
+// Computes "action" and "outcome" positions algorithmically based on player roles per SSG
+function computeActionPositions(ssg, phase = "action") {
+  // phase: "action" = mid-play, "outcome" = play completes (extends the motion further)
+  const mult = phase === "outcome" ? 1.7 : 1.0;
+  return ssg.players.map((p, i) => {
+    let dx = 0, dy = 0;
+
+    // Set Piece (SSG-07): all attackers converge on the box
+    if (ssg.id === "SSG-07") {
+      if (p.team === "att") {
+        const targetX = 30 + (i * 12) % 50;
+        const targetY = 14 + (i % 3) * 6;
+        dx = (targetX - p.x) * 0.7;
+        dy = (targetY - p.y) * 0.6;
+      } else if (p.team === "def") {
+        dx = (50 - p.x) * 0.25;
+        dy = Math.max(0, 18 - p.y) * 0.4;
+      }
+    }
+    else if (ssg.id === "SSG-08") {
+      if (p.team === "att") {
+        dy = -22;
+        dx = (i % 2 === 0 ? -8 : 8);
+      } else if (p.team === "def") {
+        dy = -10;
+        dx = (p.x < 50 ? -4 : 4);
+      }
+    }
+    else if (ssg.id === "SSG-02") {
+      if (p.team === "att") {
+        dy = -28;
+        dx = (i % 2 === 0 ? -3 : 3);
+      } else if (p.team === "def") {
+        dy = -8;
+      }
+    }
+    else if (ssg.id === "SSG-03") {
+      if (p.team === "att") {
+        dy = -16;
+        dx = p.x < 50 ? 12 : -12;
+      } else if (p.team === "def") {
+        dx = (50 - p.x) * 0.2;
+        dy = -6;
+      }
+    }
+    else {
+      if (p.team === "att") {
+        dy = -18;
+        dx = (i % 2 === 0 ? -4 : 4);
+      } else if (p.team === "def") {
+        dy = -12;
+        dx = 0;
+      }
+    }
+
+    return {
+      ...p,
+      ax: Math.max(8, Math.min(92, p.x + dx * mult)),
+      ay: Math.max(8, Math.min(95, p.y + dy * mult))
+    };
+  });
+}
+
+// Ball trajectory per SSG — 3 points (setup, action, outcome)
+function ballPath(ssg) {
+  const paths = {
+    "SSG-01": [{ x: 50, y: 82 }, { x: 50, y: 50 }, { x: 50, y: 22 }],   // build-up through zones
+    "SSG-02": [{ x: 50, y: 58 }, { x: 50, y: 35 }, { x: 50, y: 16 }],   // recovery to shot
+    "SSG-03": [{ x: 18, y: 60 }, { x: 32, y: 32 }, { x: 50, y: 20 }],   // wide → cut-back → finish
+    "SSG-04": [{ x: 22, y: 42 }, { x: 42, y: 25 }, { x: 50, y: 12 }],   // service → arrival → shot
+    "SSG-05": [{ x: 32, y: 55 }, { x: 62, y: 45 }, { x: 50, y: 28 }],   // possession cycle
+    "SSG-06": [{ x: 30, y: 55 }, { x: 50, y: 38 }, { x: 65, y: 22 }],   // 3-player combo
+    "SSG-07": [{ x: 8,  y: 12 }, { x: 32, y: 18 }, { x: 50, y: 14 }],   // corner → flight → header
+    "SSG-08": [{ x: 50, y: 78 }, { x: 50, y: 50 }, { x: 50, y: 26 }]    // CB carry forward
+  };
+  return paths[ssg.id] || [{ x: 50, y: 65 }, { x: 50, y: 45 }, { x: 50, y: 25 }];
+}
+
+function AnimatedSSGPitch({ ssg, highlightZones = [], highlightColor = SCOUTS.green, width = 240, height = 300 }) {
+  const [phase, setPhase] = useState(0); // 0 = setup, 1 = action, 2 = outcome
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    if (paused) return;
+    const timer = setInterval(() => {
+      setPhase(p => (p + 1) % 3);
+    }, 2400);
+    return () => clearInterval(timer);
+  }, [paused]);
+
+  // Pre-compute positions for all 3 phases
+  const playersAction = computeActionPositions(ssg, "action");
+  const playersOutcome = computeActionPositions(ssg, "outcome");
+  const balls = ballPath(ssg);
+  const currentBall = balls[phase];
+
+  // Pitch geometry
+  const PX = 8, PY = 8;
+  const fieldW = width - 2 * PX;
+  const fieldH = height - 2 * PY;
+  const PX_PCT = PX / width * 100;
+  const PY_PCT = PY / height * 100;
+
+  // Cyberpunk team colours
+  const teamColor = {
+    att: BHA.blueLight,
+    def: "#FF6B35",
+    neu: CYBER.amber
+  };
+
+  // Phase metadata
+  const phaseInfo = [
+    { label: "Setup",     color: BHA.blueLight, narrative: "Initial positions before the rep begins." },
+    { label: "Action",    color: CYBER.cyan,    narrative: "Mid-play — players move, ball is in motion." },
+    { label: "Outcome",   color: SCOUTS.green,  narrative: "Play completes — final positions reached." }
+  ];
+  const ph = phaseInfo[phase];
+
+  // Get player position for current phase
+  const getPos = (idx, phaseIdx) => {
+    if (phaseIdx === 0) return ssg.players[idx];
+    if (phaseIdx === 1) return { x: playersAction[idx].ax, y: playersAction[idx].ay };
+    return { x: playersOutcome[idx].ax, y: playersOutcome[idx].ay };
+  };
+
+  return (
+    <div className="w-full">
+      {/* Phase indicator bar with all 3 stages */}
+      <div className="flex items-center justify-between mb-1.5 px-1">
+        <div className="flex items-center gap-1.5">
+          {phaseInfo.map((info, idx) => (
+            <div key={idx} className="flex items-center gap-1">
+              <span
+                className="inline-block rounded-full"
+                style={{
+                  width: phase === idx ? 6 : 4,
+                  height: phase === idx ? 6 : 4,
+                  background: phase === idx ? info.color : "#444",
+                  boxShadow: phase === idx ? `0 0 6px ${info.color}, 0 0 12px ${info.color}55` : "none",
+                  animation: (phase === idx && !paused) ? "morphPulse 1.2s ease-in-out infinite" : "none",
+                  transition: "all 300ms ease"
+                }}
+              />
+              {phase === idx && (
+                <span className="text-[8px] font-mono font-bold uppercase tracking-wider" style={{
+                  color: info.color,
+                  textShadow: `0 0 4px ${info.color}88`
+                }}>
+                  {info.label}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={() => setPaused(!paused)}
+          className="text-[8px] font-mono uppercase tracking-wider text-white/40 hover:text-white transition-colors"
+        >
+          {paused ? "▶ Play" : "❚❚ Pause"}
+        </button>
+      </div>
+
+      {/* Pitch container */}
+      <div className="relative w-full" style={{ aspectRatio: `${width}/${height}` }}>
+        {/* SVG pitch background */}
+        <svg viewBox={`0 0 ${width} ${height}`} className="absolute inset-0 w-full h-full" style={{ borderRadius: 4 }}>
+          <defs>
+            <pattern id={`ssgGrass-${ssg.id}`} x="0" y="0" width="20" height="40" patternUnits="userSpaceOnUse">
+              <rect width="20" height="40" fill="#142E1E" />
+              <rect width="20" height="20" fill="#1B3D2A" opacity="0.55" />
+            </pattern>
+          </defs>
+          <rect x={PX} y={PY} width={fieldW} height={fieldH} fill={`url(#ssgGrass-${ssg.id})`} stroke="#fff" strokeOpacity="0.4" strokeWidth="1" rx="2" />
+          <line x1={PX} y1={PY + fieldH / 2} x2={PX + fieldW} y2={PY + fieldH / 2} stroke="#fff" strokeOpacity="0.3" strokeWidth="0.8" />
+          <circle cx={PX + fieldW / 2} cy={PY + fieldH / 2} r="22" fill="none" stroke="#fff" strokeOpacity="0.3" strokeWidth="0.8" />
+          <rect x={PX + fieldW * 0.22} y={PY} width={fieldW * 0.56} height={fieldH * 0.14} fill="none" stroke="#fff" strokeOpacity="0.3" strokeWidth="0.8" />
+          <rect x={PX + fieldW * 0.22} y={PY + fieldH * 0.86} width={fieldW * 0.56} height={fieldH * 0.14} fill="none" stroke="#fff" strokeOpacity="0.3" strokeWidth="0.8" />
+          <text x={width / 2} y="7" fill={SCOUTS.green} fontSize="6" fontWeight="bold" textAnchor="middle" opacity="0.7">▲</text>
+        </svg>
+
+        {/* Animated player markers */}
+        {ssg.players.map((origP, idx) => {
+          const pos = getPos(idx, phase);
+          const leftPct = PX_PCT + (pos.x / 100) * (100 - 2 * PX_PCT);
+          const topPct = PY_PCT + (pos.y / 100) * (100 - 2 * PY_PCT);
+          const color = teamColor[origP.team] || "#fff";
+          return (
+            <div
+              key={`${origP.team}-${idx}`}
+              className="absolute"
+              style={{
+                left: `${leftPct}%`,
+                top: `${topPct}%`,
+                transform: "translate(-50%, -50%)",
+                transition: "left 1100ms cubic-bezier(0.45, 0, 0.15, 1), top 1100ms cubic-bezier(0.45, 0, 0.15, 1)",
+                pointerEvents: "none",
+                zIndex: origP.team === "att" ? 3 : origP.team === "def" ? 2 : 1
+              }}
+            >
+              <div className="absolute rounded-full" style={{
+                width: 28, height: 28,
+                left: "50%", top: "50%",
+                transform: "translate(-50%, -50%)",
+                background: `radial-gradient(circle, ${color}55 0%, transparent 70%)`,
+              }} />
+              <div
+                className="relative flex items-center justify-center rounded-full font-black"
+                style={{
+                  width: 16, height: 16,
+                  background: color,
+                  color: origP.team === "neu" ? "#000" : "#fff",
+                  border: "1.5px solid #fff",
+                  fontSize: 8,
+                  boxShadow: `0 1px 3px rgba(0,0,0,0.7), 0 0 6px ${color}66`
+                }}
+              >
+                {origP.num}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Animated BALL */}
+        {(() => {
+          const leftPct = PX_PCT + (currentBall.x / 100) * (100 - 2 * PX_PCT);
+          const topPct = PY_PCT + (currentBall.y / 100) * (100 - 2 * PY_PCT);
+          return (
+            <div
+              className="absolute"
+              style={{
+                left: `${leftPct}%`,
+                top: `${topPct}%`,
+                transform: "translate(-50%, -50%)",
+                transition: "left 1100ms cubic-bezier(0.55, 0, 0.45, 1), top 1100ms cubic-bezier(0.55, 0, 0.45, 1)",
+                pointerEvents: "none",
+                zIndex: 10
+              }}
+            >
+              {/* Ball glow halo */}
+              <div className="absolute rounded-full" style={{
+                width: 22, height: 22,
+                left: "50%", top: "50%",
+                transform: "translate(-50%, -50%)",
+                background: `radial-gradient(circle, ${CYBER.amber}AA 0%, ${CYBER.amber}33 40%, transparent 70%)`,
+                animation: "morphPulse 0.9s ease-in-out infinite"
+              }} />
+              {/* Ball — white with black pentagon hint */}
+              <div
+                className="relative rounded-full"
+                style={{
+                  width: 10, height: 10,
+                  background: "radial-gradient(circle at 35% 35%, #fff 0%, #ddd 70%, #888 100%)",
+                  border: `1.5px solid #000`,
+                  boxShadow: `0 0 8px ${CYBER.amber}, 0 0 14px ${CYBER.amber}66, 0 1px 2px rgba(0,0,0,0.9)`
+                }}
+              />
+            </div>
+          );
+        })()}
+      </div>
+
+      {/* Mini legend */}
+      <div className="flex gap-2 mt-2 text-[8px] font-mono justify-center items-center">
+        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: teamColor.att }} />ATTACK</span>
+        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: teamColor.def }} />DEFEND</span>
+        {ssg.players.some(p => p.team === "neu") && (
+          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: teamColor.neu }} />NEUTRAL</span>
+        )}
+        <span className="flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: "#fff", border: "1px solid #000" }} />
+          <span style={{ color: CYBER.amber }}>BALL</span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function SSGCard({ ssg }) {
   const [expanded, setExpanded] = useState(false);
   return (
@@ -1655,7 +2202,7 @@ function SSGCard({ ssg }) {
         <Bracket side="right" color={BHA.blueLight} />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 p-4">
-        <div className="sm:col-span-2"><PitchSVG players={ssg.players} highlightZones={ssg.zones} /></div>
+        <div className="sm:col-span-2"><AnimatedSSGPitch ssg={ssg} highlightZones={ssg.zones} /></div>
         <div className="sm:col-span-3 space-y-3">
           <div>
             <div className="text-[9px] uppercase tracking-widest font-bold mb-1.5" style={{ color: BHA.blueLight }}>Key Concepts</div>
@@ -1779,6 +2326,12 @@ function StatPill({ label, value, sub, color }) {
 function SpeedThreshold() {
   const [sortBy, setSortBy] = useState("topSpeed");
   const [view, setView] = useState("team");
+  // Animation state — bar opens left-to-right on tab mount
+  const [barAnimated, setBarAnimated] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setBarAnimated(true), 150);
+    return () => clearTimeout(t);
+  }, []);
 
   const sortedPlayers = [...playerGPS].sort((a, b) => b[sortBy] - a[sortBy]);
 
@@ -1820,35 +2373,107 @@ function SpeedThreshold() {
       </div>
 
       {/* Speed zone distribution */}
-      <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
-        <div className="flex items-center justify-between mb-3">
+      <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4 relative overflow-hidden">
+        {/* Subtle scanline backdrop for cyberpunk feel */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.15]" style={{
+          background: `linear-gradient(180deg, transparent 0%, ${SCOUTS.green}05 50%, transparent 100%)`,
+          backgroundSize: "100% 4px"
+        }} />
+
+        <div className="relative flex items-center justify-between mb-3">
           <div>
-            <h3 className="text-sm font-bold text-white">Speed Zone Distribution</h3>
+            <h3 className="text-sm font-bold text-white" style={{
+              textShadow: `0 0 6px ${SCOUTS.green}66`
+            }}>Speed Zone Distribution</h3>
             <p className="text-[10px] text-white/40 mt-0.5">Team-average % of session time spent in each zone</p>
           </div>
           <span className="text-[10px] font-mono text-white/40">StatSports Apex</span>
         </div>
 
-        {/* Stacked horizontal bar */}
-        <div className="flex h-8 rounded overflow-hidden mb-3 border border-white/10">
-          {speedZones.map(z => (
-            <div key={z.id} style={{ width: `${z.teamPct}%`, background: z.color }} className="flex items-center justify-center relative group" title={`${z.name}: ${z.teamPct}%`}>
-              {z.teamPct >= 8 && <span className="text-[9px] font-bold text-black/80">{z.teamPct}%</span>}
+        {/* Stacked horizontal bar — cyberpunk glow + stagger reveal */}
+        <div className="relative flex h-10 rounded mb-3 border" style={{
+          borderColor: barAnimated ? SCOUTS.green + "44" : "rgba(255,255,255,0.1)",
+          background: "rgba(0,0,0,0.5)",
+          boxShadow: barAnimated ? `0 0 12px ${SCOUTS.green}22, inset 0 0 8px rgba(0,0,0,0.6)` : "inset 0 0 8px rgba(0,0,0,0.6)",
+          transition: "border-color 600ms ease, box-shadow 600ms ease",
+          overflow: "hidden"
+        }}>
+          {speedZones.map((z, i) => (
+            <div
+              key={z.id}
+              title={`${z.name}: ${z.teamPct}%`}
+              className="flex items-center justify-center relative"
+              style={{
+                width: barAnimated ? `${z.teamPct}%` : "0%",
+                background: `linear-gradient(180deg, ${z.color} 0%, ${z.color}DD 50%, ${z.color}AA 100%)`,
+                transition: `width 800ms cubic-bezier(0.34, 1.2, 0.64, 1) ${i * 120}ms`,
+                boxShadow: barAnimated ? `inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -2px 4px rgba(0,0,0,0.3), 0 0 14px ${z.color}88, 0 0 24px ${z.color}33` : "none",
+                borderRight: i < speedZones.length - 1 ? "1px solid rgba(0,0,0,0.4)" : "none"
+              }}
+            >
+              {/* Top highlight glow line */}
+              <div className="absolute top-0 left-0 right-0" style={{
+                height: 1.5,
+                background: `linear-gradient(90deg, transparent 0%, ${z.color} 50%, transparent 100%)`,
+                opacity: barAnimated ? 0.9 : 0,
+                transition: `opacity 600ms ease ${i * 120 + 400}ms`
+              }} />
+              {/* Percentage text — white with dark outline for visibility against any neon background */}
+              {z.teamPct >= 8 && (
+                <span className="relative z-10" style={{
+                  color: "#fff",
+                  fontWeight: 900,
+                  fontSize: 12,
+                  letterSpacing: "0.02em",
+                  // 4-directional dark outline + drop shadow + subtle colored glow outside
+                  textShadow: `
+                    -1px -1px 0 rgba(0,0,0,0.95),
+                     1px -1px 0 rgba(0,0,0,0.95),
+                    -1px  1px 0 rgba(0,0,0,0.95),
+                     1px  1px 0 rgba(0,0,0,0.95),
+                     0    2px 3px rgba(0,0,0,0.8),
+                     0    0   8px ${z.color}AA
+                  `,
+                  opacity: barAnimated ? 1 : 0,
+                  transition: `opacity 400ms ease ${i * 120 + 600}ms`
+                }}>
+                  {z.teamPct}%
+                </span>
+              )}
             </div>
           ))}
         </div>
 
-        {/* Zone legend */}
+        {/* Zone legend with staggered fade-in + cyberpunk glow on the swatch */}
         <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
-          {speedZones.map(z => (
-            <div key={z.id} className="rounded p-2 bg-black/30 border border-white/5">
+          {speedZones.map((z, i) => (
+            <div
+              key={z.id}
+              className="rounded p-2 bg-black/40 border relative overflow-hidden"
+              style={{
+                borderColor: barAnimated ? z.color + "55" : "rgba(255,255,255,0.05)",
+                boxShadow: barAnimated ? `inset 0 0 8px ${z.color}15, 0 0 6px ${z.color}22` : "none",
+                opacity: barAnimated ? 1 : 0,
+                transform: barAnimated ? "translateY(0)" : "translateY(8px)",
+                transition: `opacity 400ms ease ${i * 80 + 800}ms, transform 400ms cubic-bezier(0.4, 0, 0.2, 1) ${i * 80 + 800}ms, border-color 400ms ease ${i * 80 + 800}ms, box-shadow 400ms ease ${i * 80 + 800}ms`
+              }}
+            >
               <div className="flex items-center gap-1.5 mb-1">
-                <div className="w-2 h-2 rounded-sm" style={{ background: z.color }} />
-                <span className="text-[9px] font-mono font-bold text-white/80">{z.id}</span>
+                <div className="w-2.5 h-2.5 rounded-sm" style={{
+                  background: z.color,
+                  boxShadow: `0 0 6px ${z.color}, 0 0 10px ${z.color}88`
+                }} />
+                <span className="text-[9px] font-mono font-bold" style={{
+                  color: z.color,
+                  textShadow: `0 0 4px ${z.color}88`
+                }}>{z.id}</span>
               </div>
               <div className="text-[10px] font-bold text-white leading-tight">{z.name}</div>
               <div className="text-[9px] text-white/40 font-mono mt-0.5">{z.range}</div>
-              <div className="text-[10px] font-mono mt-1" style={{ color: z.color }}>{z.teamDistKm} km</div>
+              <div className="text-[10px] font-mono mt-1 font-bold" style={{
+                color: z.color,
+                textShadow: `0 0 6px ${z.color}66`
+              }}>{z.teamDistKm} km</div>
             </div>
           ))}
         </div>
@@ -1893,24 +2518,53 @@ function SpeedThreshold() {
         <div className="divide-y divide-white/5">
           {sortedPlayers.map(p => {
             const status = getStatus(p);
+            const rec = gpsStatus[p.status] || gpsStatus.maintain;
             return (
-              <div key={p.num} className="grid grid-cols-12 gap-1 px-3 py-2 text-[10px] items-center hover:bg-white/[0.03]">
-                <div className="col-span-1 font-mono text-white/50">{p.num}</div>
-                <div className="col-span-3 font-bold text-white/90 leading-tight">{p.name}</div>
-                <div className="col-span-1 font-mono text-white/60 text-[9px]">{p.pos}</div>
-                <div className="col-span-2 text-right font-mono font-bold text-white">{p.topSpeed.toFixed(1)}</div>
-                <div className="col-span-2 text-right font-mono text-white/80">{p.hsrM}</div>
-                <div className="col-span-1 text-right font-mono text-white/80">{p.sprints}</div>
-                <div className="col-span-2 text-right">
-                  <span className="font-mono font-bold text-[10px] px-1.5 py-0.5 rounded" style={{
-                    color: status.color,
-                    background: status.color + "1A",
-                    border: `1px solid ${status.color}44`
-                  }}>{status.text}</span>
+              <div key={p.num} className="hover:bg-white/[0.03] transition-colors">
+                {/* Main row: existing GPS data */}
+                <div className="grid grid-cols-12 gap-1 px-3 pt-2 pb-1 text-[10px] items-center">
+                  <div className="col-span-1 font-mono text-white/50">{p.num}</div>
+                  <div className="col-span-3 font-bold text-white/90 leading-tight">{p.name}</div>
+                  <div className="col-span-1 font-mono text-white/60 text-[9px]">{p.pos}</div>
+                  <div className="col-span-2 text-right font-mono font-bold text-white">{p.topSpeed.toFixed(1)}</div>
+                  <div className="col-span-2 text-right font-mono text-white/80">{p.hsrM}</div>
+                  <div className="col-span-1 text-right font-mono text-white/80">{p.sprints}</div>
+                  <div className="col-span-2 text-right">
+                    <span className="font-mono font-bold text-[10px] px-1.5 py-0.5 rounded" style={{
+                      color: status.color,
+                      background: status.color + "1A",
+                      border: `1px solid ${status.color}44`
+                    }}>{status.text}</span>
+                  </div>
+                </div>
+                {/* Recommendation row */}
+                <div className="px-3 pb-2 pl-7 flex items-start gap-2">
+                  <span className="text-[9px] font-mono font-black uppercase tracking-wider px-1.5 py-0.5 rounded flex-shrink-0" style={{
+                    color: rec.color,
+                    background: rec.color + "15",
+                    border: `1px solid ${rec.color}44`
+                  }}>
+                    {rec.icon} {rec.label}
+                  </span>
+                  <p className="text-[10px] text-white/55 leading-relaxed italic flex-1 pt-0.5">
+                    {p.rec}
+                  </p>
                 </div>
               </div>
             );
           })}
+        </div>
+        {/* Recommendation legend */}
+        <div className="px-3 py-2.5 border-t border-white/10 bg-black/30">
+          <div className="text-[9px] uppercase tracking-widest font-mono text-white/40 mb-1.5">Load status key</div>
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
+            {Object.entries(gpsStatus).map(([k, v]) => (
+              <div key={k} className="flex items-center gap-1 text-[9px]">
+                <span className="font-mono font-bold" style={{ color: v.color }}>{v.icon}</span>
+                <span className="font-mono font-bold" style={{ color: v.color }}>{v.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -1992,14 +2646,6 @@ function TeamPerformance() {
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [statTab, setStatTab] = useState("summary");
 
-  const positionOrder = ["GK", "CB", "RB", "LB", "DM", "CM", "CAM", "WG", "LW", "RW", "ST"];
-  const sortedSquad = [...squad].sort((a, b) => {
-    const pa = positionOrder.indexOf(a.pos);
-    const pb = positionOrder.indexOf(b.pos);
-    if (pa !== pb) return pa - pb;
-    return b.mr - a.mr;
-  });
-
   const activeCategory = teamStatCategories[statTab];
 
   return (
@@ -2032,55 +2678,226 @@ function TeamPerformance() {
         {/* Squad table */}
         <div className="lg:col-span-4 rounded-lg border border-white/10 bg-white/[0.03] overflow-hidden">
           <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider" style={{ color: BHA.blueLight }}>Squad</span>
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider" style={{ color: BHA.blueLight }}>Squad · Key stats by position</span>
             <span className="text-[9px] text-white/40 font-mono">{squad.length} players</span>
           </div>
-          <div className="grid grid-cols-12 gap-1 px-2 py-1.5 text-[9px] font-mono uppercase tracking-wider text-white/40 bg-black/20">
-            <div className="col-span-2">POS</div>
-            <div className="col-span-6">NAME</div>
-            <div className="col-span-1 text-center">MR</div>
-            <div className="col-span-1 text-center">G</div>
-            <div className="col-span-2 text-center">AST</div>
+          <div className="max-h-[520px] overflow-y-auto">
+            {(() => {
+              // Group squad by position group
+              const groupedSquad = {
+                GK:  { label: "Goalkeepers", color: "#FFD700", players: squad.filter(p => p.pos === "GK") },
+                DEF: { label: "Defenders",   color: "#3D8EFF", players: squad.filter(p => ["CB", "LB", "RB"].includes(p.pos)) },
+                MID: { label: "Midfielders", color: SCOUTS.green, players: squad.filter(p => ["DM", "CM", "CAM"].includes(p.pos)) },
+                FWD: { label: "Forwards",    color: "#FF6B35", players: squad.filter(p => ["LW", "RW", "WG", "ST"].includes(p.pos)) }
+              };
+
+              // Position-group-specific column definitions
+              const colDefs = {
+                GK:  [{ key: "cs",       label: "CS",   tooltip: "Clean sheets" },
+                      { key: "savePct",  label: "SAV%", tooltip: "Save percentage" },
+                      { key: "distPct",  label: "DST%", tooltip: "Distribution accuracy" },
+                      { key: "sweeper",  label: "SWP",  tooltip: "Sweeper actions /90" }],
+                DEF: [{ key: "tackles",  label: "TKL",  tooltip: "Tackles /90" },
+                      { key: "ints",     label: "INT",  tooltip: "Interceptions /90" },
+                      { key: "clr",      label: "CLR",  tooltip: "Clearances /90" },
+                      { key: "aer",      label: "AER%", tooltip: "Aerial duels won %" }],
+                MID: [{ key: "passPct",  label: "PAS%", tooltip: "Pass accuracy %" },
+                      { key: "progPass", label: "PRG",  tooltip: "Progressive passes /90" },
+                      { key: "recov",    label: "REC",  tooltip: "Recoveries /90" },
+                      { key: "distKm",   label: "DST",  tooltip: "Distance km/match" }],
+                FWD: [{ key: "goals",    label: "GLS",  tooltip: "Goals" },
+                      { key: "sot",      label: "SoT",  tooltip: "Shots on target" },
+                      { key: "drib",     label: "DRB",  tooltip: "Dribbles /90" },
+                      { key: "convPct",  label: "CNV%", tooltip: "Shot conversion %" }]
+              };
+
+              // Color a value relative to its column
+              const valueColor = (groupKey, statKey, value) => {
+                // Quick heuristic thresholds for visual highlighting
+                const benchmarks = {
+                  GK:  { cs: [10, 6], savePct: [72, 67], distPct: [76, 70], sweeper: [1.1, 0.9] },
+                  DEF: { tackles: [2.5, 2.0], ints: [2.0, 1.6], clr: [3.5, 2.5], aer: [70, 60] },
+                  MID: { passPct: [85, 80], progPass: [4.0, 2.5], recov: [6.0, 4.5], distKm: [10.0, 9.5] },
+                  FWD: { goals: [10, 5], sot: [40, 20], drib: [2.0, 1.0], convPct: [13, 10] }
+                };
+                const bm = benchmarks[groupKey] && benchmarks[groupKey][statKey];
+                if (!bm) return "#fff";
+                if (value >= bm[0]) return SCOUTS.green;
+                if (value >= bm[1]) return "#FFD700";
+                return "#FF9D3D";
+              };
+
+              return Object.entries(groupedSquad).map(([groupKey, group]) => {
+                const cols = colDefs[groupKey];
+                return (
+                  <div key={groupKey}>
+                    {/* Group header */}
+                    <div className="px-2 py-1.5 flex items-center justify-between" style={{
+                      background: group.color + "15",
+                      borderTop: `1px solid ${group.color}33`,
+                      borderBottom: `1px solid ${group.color}22`
+                    }}>
+                      <span className="text-[10px] font-mono font-black uppercase tracking-widest" style={{ color: group.color }}>
+                        {group.label}
+                      </span>
+                      <span className="text-[9px] text-white/40 font-mono">{group.players.length}</span>
+                    </div>
+                    {/* Column headers — position-specific */}
+                    <div className="grid grid-cols-12 gap-1 px-2 py-1 text-[8px] font-mono uppercase tracking-wider text-white/40 bg-black/20">
+                      <div className="col-span-5">Name</div>
+                      {cols.map((c, i) => (
+                        <div key={c.key} className="col-span-1 text-center" title={c.tooltip}>{c.label}</div>
+                      ))}
+                      <div className="col-span-1 text-center">App</div>
+                      <div className="col-span-2 text-right text-white/30">G+A</div>
+                    </div>
+                    {/* Player rows */}
+                    <div className="divide-y divide-white/5">
+                      {group.players.map(p => (
+                        <div
+                          key={p.num}
+                          onClick={() => setSelectedPlayer(p)}
+                          className="grid grid-cols-12 gap-1 px-2 py-1.5 text-[10px] cursor-pointer transition-colors hover:bg-white/[0.04]"
+                          style={{
+                            background: selectedPlayer && selectedPlayer.num === p.num ? group.color + "1A" : p.starter ? group.color + "08" : "transparent",
+                            borderLeft: p.starter ? `2px solid ${group.color}` : "2px solid transparent"
+                          }}
+                        >
+                          <div className="col-span-5 text-white/90 leading-tight flex items-center gap-1 min-w-0">
+                            <span className="text-[8px] font-mono text-white/40 flex-shrink-0">#{p.num}</span>
+                            <span className="font-bold truncate">{p.name}</span>
+                            {p.captain && <span className="text-[7px] font-mono px-1 rounded flex-shrink-0" style={{ background: BHA.blue, color: "#fff" }}>C</span>}
+                            {p.topScorer && <span className="text-[8px] flex-shrink-0">⭐</span>}
+                          </div>
+                          {cols.map(c => {
+                            const v = p.keyStats && p.keyStats[c.key];
+                            return (
+                              <div key={c.key} className="col-span-1 text-center font-mono font-bold" style={{
+                                color: typeof v === "number" ? valueColor(groupKey, c.key, v) : "#fff5"
+                              }}>
+                                {typeof v === "number" ? (v % 1 === 0 ? v : v.toFixed(1)) : "—"}
+                              </div>
+                            );
+                          })}
+                          <div className="col-span-1 text-center font-mono text-white/60">{p.apps}</div>
+                          <div className="col-span-2 text-right font-mono text-white/55">{p.g}+{p.a}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              });
+            })()}
           </div>
-          <div className="max-h-[480px] overflow-y-auto divide-y divide-white/5">
-            {sortedSquad.map(p => (
-              <div key={p.num} onClick={() => setSelectedPlayer(p)} className="grid grid-cols-12 gap-1 px-2 py-2 text-[10px] cursor-pointer transition-colors hover:bg-white/[0.04]" style={{
-                background: selectedPlayer && selectedPlayer.num === p.num ? BHA.blueLight + "1A" : p.starter ? "rgba(74,158,255,0.04)" : "transparent",
-                borderLeft: p.starter ? `2px solid ${BHA.blueLight}` : "2px solid transparent"
-              }}>
-                <div className="col-span-2 font-mono font-bold text-white/60">{p.pos}</div>
-                <div className="col-span-6 text-white/90 leading-tight">
-                  <span className="font-bold">{p.name}</span>
-                  {p.captain && <span className="ml-1 text-[8px] font-mono px-1 rounded" style={{ background: BHA.blue, color: "#fff" }}>C</span>}
-                  {p.topScorer && <span className="ml-1 text-[8px]">⭐</span>}
+          {selectedPlayer && (() => {
+            // Position-grouped detail panel — shows all keyStats organised into sections
+            const isGK = selectedPlayer.pos === "GK";
+            const isDEF = ["CB", "LB", "RB"].includes(selectedPlayer.pos);
+            const isMID = ["DM", "CM", "CAM"].includes(selectedPlayer.pos);
+            const isFWD = ["LW", "RW", "WG", "ST"].includes(selectedPlayer.pos);
+            const ks = selectedPlayer.keyStats || {};
+            const groupColor = isGK ? "#FFD700" : isDEF ? "#3D8EFF" : isMID ? SCOUTS.green : "#FF6B35";
+
+            // Defensive formatter — returns "—" for any undefined / null value
+            const fmt = (val, suffix = "") => (val === undefined || val === null) ? "—" : (val + suffix);
+
+            // Define groups of extended stats per position
+            const detailGroups = isGK ? [
+              { title: "Shot Stopping",  stats: [["Saves", fmt(ks.saves)], ["Save %", fmt(ks.savePct, "%")], ["Goals conceded", fmt(ks.goalsConc)], ["Shots faced", fmt(ks.shotsFaced)], ["Penalty saves", fmt(ks.penSaves)], ["Min/goal conceded", fmt(ks.minPerGoalConc, "'")]] },
+              { title: "Distribution",   stats: [["Pass accuracy", fmt(ks.distPct, "%")], ["Sweeper actions", fmt(ks.sweeper, " /90")]] },
+              { title: "Aerial / Box",   stats: [["High claims", fmt(ks.highClaims, " /90")], ["Crosses claimed", fmt(ks.crossesClaimed, " /90")]] }
+            ] : isDEF ? [
+              { title: "Defending",      stats: [["Tackles", fmt(ks.tackles, " /90")], ["Tackle %", fmt(ks.tklWonPct, "%")], ["Interceptions", fmt(ks.ints, " /90")], ["Clearances", fmt(ks.clr, " /90")], ["Blocks", fmt(ks.blocks, " /90")], ["Recoveries", fmt(ks.recoveries, " /90")]] },
+              { title: "Duels & Aerial", stats: [["Aerial duels won", fmt(ks.aer, "%")], ["All duels won", fmt(ks.duelsPct, "%")]] },
+              { title: "Discipline",     stats: [["Fouls", fmt(ks.fouls, " /90")], ["Yellow cards", fmt(ks.yellows)]] },
+              { title: "Build-up",       stats: [["Pass accuracy", fmt(ks.passPct, "%")], ["Progressive carries", fmt(ks.progCarries, " /90")]] }
+            ] : isMID ? [
+              { title: "Distribution",   stats: [["Pass accuracy", fmt(ks.passPct, "%")], ["Progressive passes", fmt(ks.progPass, " /90")], ["Ball carries", fmt(ks.ballCarries, " /90")]] },
+              { title: "Creating",       stats: [["Key passes", fmt(ks.keyPasses, " /90")], ["Through balls", fmt(ks.throughBalls, " /90")], ["Chances created", fmt(ks.chCreated, " /90")]] },
+              { title: "Defending",      stats: [["Tackles", fmt(ks.tackles, " /90")], ["Interceptions", fmt(ks.ints, " /90")], ["Recoveries", fmt(ks.recov, " /90")]] },
+              { title: "Workload",       stats: [["Distance", fmt(ks.distKm, " km")], ["Yellow cards", fmt(ks.yellows)], ["Fouls", fmt(ks.fouls, " /90")]] }
+            ] : isFWD ? [
+              { title: "Goal Output",    stats: [["Goals", fmt(ks.goals)], ["Assists", fmt(ks.assists)], ["Shots on target", fmt(ks.sot)], ["Shot accuracy", fmt(ks.shotAcc, "%")], ["Conversion", fmt(ks.convPct, "%")], ["Min/goal", fmt(ks.minPerGoal, "'")]] },
+              { title: "Expected",       stats: [["xG", fmt(ks.xG)], ["xA", fmt(ks.xA)], ["Goals − xG", (typeof ks.xG === "number" ? (selectedPlayer.g - ks.xG).toFixed(1) : "—")]] },
+              { title: "Quality",        stats: [["Big chances missed", fmt(ks.bigChMissed)], ["Successful dribbles", fmt(ks.drib, " /90")], ["Fouls won", fmt(ks.foulsWon, " /90")], ["Offsides", fmt(ks.offsides, " /90")]] }
+            ] : [];
+
+            return (
+              <div className="border-t border-white/10 bg-black/40 max-h-[60vh] overflow-y-auto">
+                {/* Header with cyberpunk-style glow */}
+                <div className="px-3 py-2.5 border-b border-white/10 flex items-center justify-between gap-2 sticky top-0 bg-black/85 backdrop-blur-sm z-10" style={{
+                  boxShadow: `inset 0 -1px 0 ${groupColor}33`
+                }}>
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded font-bold flex-shrink-0" style={{
+                      background: groupColor,
+                      color: "#000",
+                      boxShadow: `0 0 6px ${groupColor}88`
+                    }}>#{selectedPlayer.num}</span>
+                    <span className="text-sm font-bold text-white truncate" style={{
+                      textShadow: `0 0 8px ${groupColor}55`
+                    }}>{selectedPlayer.name}</span>
+                    {selectedPlayer.captain && <span className="text-[8px] font-mono px-1 rounded flex-shrink-0" style={{ background: BHA.blue, color: "#fff" }}>C</span>}
+                    {selectedPlayer.star && <span className="text-[10px] flex-shrink-0">⭐</span>}
+                  </div>
+                  <button onClick={() => setSelectedPlayer(null)} className="text-white/40 hover:text-white text-xs font-mono px-2 flex-shrink-0">✕</button>
                 </div>
-                <div className="col-span-1 text-center font-mono font-bold" style={{
-                  color: p.mr >= 7.3 ? SCOUTS.green : p.mr >= 7.0 ? "#FFD700" : p.mr >= 6.7 ? "#FF9D3D" : "#FF3D5A"
-                }}>{p.mr.toFixed(1)}</div>
-                <div className="col-span-1 text-center font-mono text-white/80">{p.g}</div>
-                <div className="col-span-2 text-center font-mono text-white/80">{p.a}</div>
+
+                <div className="px-3 py-3 space-y-3">
+                  {/* Top-line summary row */}
+                  <div className="grid grid-cols-4 gap-2 text-[10px]">
+                    <div className="rounded p-1.5 bg-white/[0.03]">
+                      <div className="text-white/40 uppercase tracking-widest text-[8px]">Pos</div>
+                      <div className="font-mono font-bold text-base" style={{ color: groupColor, textShadow: `0 0 4px ${groupColor}66` }}>{selectedPlayer.pos}</div>
+                    </div>
+                    <div className="rounded p-1.5 bg-white/[0.03]">
+                      <div className="text-white/40 uppercase tracking-widest text-[8px]">Apps</div>
+                      <div className="font-mono font-bold text-white text-base">{selectedPlayer.apps}</div>
+                    </div>
+                    <div className="rounded p-1.5 bg-white/[0.03]">
+                      <div className="text-white/40 uppercase tracking-widest text-[8px]">Goals</div>
+                      <div className="font-mono font-bold text-white text-base">{selectedPlayer.g}</div>
+                    </div>
+                    <div className="rounded p-1.5 bg-white/[0.03]">
+                      <div className="text-white/40 uppercase tracking-widest text-[8px]">Assists</div>
+                      <div className="font-mono font-bold text-white text-base">{selectedPlayer.a}</div>
+                    </div>
+                  </div>
+
+                  {/* Extended stat groups */}
+                  {detailGroups.map((group, idx) => (
+                    <div key={idx} className="rounded p-2.5" style={{
+                      background: groupColor + "08",
+                      border: `1px solid ${groupColor}22`
+                    }}>
+                      <div className="text-[9px] uppercase tracking-widest font-mono font-bold mb-2 flex items-center gap-1.5" style={{ color: groupColor }}>
+                        <span className="inline-block w-1 h-1 rounded-full" style={{ background: groupColor, boxShadow: `0 0 4px ${groupColor}` }} />
+                        {group.title}
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                        {group.stats.map(([label, value], i) => (
+                          <div key={i} className="flex justify-between text-[10px] items-baseline">
+                            <span className="text-white/55">{label}</span>
+                            <span className="font-mono font-bold text-white" style={{
+                              textShadow: `0 0 4px ${groupColor}44`
+                            }}>{value !== undefined ? value : "—"}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Footer tags */}
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    <span className="text-[9px] font-mono text-white/40">{selectedPlayer.nation}</span>
+                    {selectedPlayer.starter && <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: groupColor + "22", color: groupColor }}>STARTER</span>}
+                    {selectedPlayer.topScorer && <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: CYBER.amber + "22", color: CYBER.amber }}>TOP SCORER</span>}
+                    {selectedPlayer.star && <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: CYBER.magenta + "22", color: CYBER.magenta, boxShadow: `0 0 6px ${CYBER.magentaGlow}` }}>★ KEY PLAYER</span>}
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
-          {selectedPlayer && (
-            <div className="border-t border-white/10 px-3 py-3 bg-black/40 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded font-bold" style={{ background: BHA.blue, color: "#fff" }}>#{selectedPlayer.num}</span>
-                <span className="text-sm font-bold text-white">{selectedPlayer.name}</span>
-                <span className="text-[10px] text-white/40 font-mono ml-auto">{selectedPlayer.nation}</span>
-              </div>
-              <div className="grid grid-cols-4 gap-2 text-[10px]">
-                <div><div className="text-white/40 uppercase tracking-widest text-[8px]">Pos</div><div className="font-mono font-bold text-white">{selectedPlayer.pos}</div></div>
-                <div><div className="text-white/40 uppercase tracking-widest text-[8px]">Apps</div><div className="font-mono font-bold text-white">{selectedPlayer.apps}</div></div>
-                <div><div className="text-white/40 uppercase tracking-widest text-[8px]">Goals</div><div className="font-mono font-bold text-white">{selectedPlayer.g}</div></div>
-                <div><div className="text-white/40 uppercase tracking-widest text-[8px]">Assists</div><div className="font-mono font-bold text-white">{selectedPlayer.a}</div></div>
-              </div>
-              {selectedPlayer.cs !== undefined && (
-                <div className="text-[10px]"><span className="text-white/40">Clean sheets: </span><span className="font-mono font-bold text-white">{selectedPlayer.cs}</span></div>
-              )}
-              {selectedPlayer.star && <div className="text-[9px] italic text-white/50">⭐ Key first-team player</div>}
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* Position pitch */}
@@ -2203,8 +3020,16 @@ export default function App() {
           <div className="flex items-start gap-2">
             <div className="pt-3"><Bracket side="left" color={BHA.blueLight} /></div>
             <div className="flex-1 min-w-0 text-center">
-              <h1 className="text-3xl sm:text-4xl font-black leading-[0.95] tracking-tight" style={{ fontFamily: "'Georgia', serif", letterSpacing: "-0.035em" }}>
-                The Seagulls' <em style={{ color: BHA.blueLight, fontStyle: "italic" }}>Training</em> Dashboard
+              <h1 className="text-3xl sm:text-4xl font-black leading-[0.95] tracking-tight" style={{
+                fontFamily: "'Georgia', serif",
+                letterSpacing: "-0.035em",
+                textShadow: `0 0 12px rgba(255,255,255,0.25), 0 0 24px rgba(61,190,255,0.15)`
+              }}>
+                The Seagulls' <em style={{
+                  color: BHA.blueLight,
+                  fontStyle: "italic",
+                  textShadow: `0 0 8px ${BHA.blueLight}, 0 0 18px ${BHA.blueLight}88, 0 0 28px ${BHA.blueLight}44`
+                }}>Training</em> Dashboard
               </h1>
               <p className="text-xs text-white/50 leading-relaxed italic mt-2">
                 Performance, training focus and small-sided games — built from analysis of our recent matches.
