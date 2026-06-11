@@ -366,6 +366,371 @@ const seasonSummary = {
 
 // ============ SPEED THRESHOLD / GPS DATA (StatSports Apex) ============
 // Most recent week of training sessions (5 days of data, averaged per session)
+// ============ ATTACKING PATTERNS (offensive-coverage playbook — image-board style) ============
+// Choreographed combination plays, each with 3 animation phases (per-player paths + ball path)
+// and the evidence benchmark from the dissertation that justifies rehearsing it.
+// Pitch convention: vertical, attack = up (y small), same as formation/SSG pitches.
+const attackingPatterns = [
+  {
+    id: "PAT-01",
+    name: "Short Build Through the Defensive 1/3",
+    tagline: "Beat the first line with the ball, not over it. Short play through the defensive third — no aimless clearances.",
+    phaseLabels: ["Bait the press", "Break line 1", "Play through"],
+    coachingPoints: [
+      "Verbruggen plays short even under pressure — the press is an invitation, not a threat",
+      "Wieffer drops between the CBs to form a 3; full-backs push to stretch the press wide",
+      "Baleba shows between the lines — the first pass beyond the press is the trigger to accelerate"
+    ],
+    benchmark: "≥5-pass coverages succeed at 29.2% — the highest of any sequence length. Winners produced ~4 more per match than losers.",
+    ssgLink: ["SSG-02", "SSG-05"],
+    players: [
+      { num: 1,  label: "Verbruggen", team: "us",  path: [{ x: 50, y: 90 }, { x: 50, y: 90 }, { x: 50, y: 89 }] },
+      { num: 5,  label: "Dunk",       team: "us",  path: [{ x: 32, y: 78 }, { x: 28, y: 76 }, { x: 30, y: 72 }] },
+      { num: 6,  label: "v. Hecke",   team: "us",  path: [{ x: 68, y: 78 }, { x: 72, y: 76 }, { x: 70, y: 72 }] },
+      { num: 27, label: "Wieffer",    team: "us",  path: [{ x: 50, y: 68 }, { x: 50, y: 74 }, { x: 46, y: 64 }] },
+      { num: 17, label: "Baleba",     team: "us",  path: [{ x: 58, y: 60 }, { x: 56, y: 56 }, { x: 58, y: 50 }] },
+      { num: 34, label: "Veltman",    team: "us",  path: [{ x: 88, y: 62 }, { x: 90, y: 56 }, { x: 88, y: 48 }] },
+      { num: 29, label: "De Cuyper",  team: "us",  path: [{ x: 12, y: 62 }, { x: 10, y: 56 }, { x: 12, y: 48 }] },
+      { id: "X1", team: "opp", path: [{ x: 44, y: 72 }, { x: 36, y: 76 }, { x: 38, y: 70 }] },
+      { id: "X2", team: "opp", path: [{ x: 56, y: 70 }, { x: 52, y: 66 }, { x: 54, y: 60 }] },
+      { id: "X3", team: "opp", path: [{ x: 50, y: 58 }, { x: 54, y: 54 }, { x: 58, y: 52 }] }
+    ],
+    ball: [{ x: 50, y: 88 }, { x: 30, y: 77 }, { x: 57, y: 56 }]
+  },
+  {
+    id: "PAT-02",
+    name: "Full-Back Overlap Superiority",
+    tagline: "De Cuyper's overlap beyond Mitoma — numerical superiority created in the middle 1/3, exactly as the coaching boards drill it.",
+    phaseLabels: ["Engage 1v1", "Cut in · release", "Byline delivery"],
+    coachingPoints: [
+      "Mitoma engages his full-back 1v1 and holds the duel — patience drags the defender narrow",
+      "The inside cut is the release trigger: De Cuyper bursts outside into the vacated lane",
+      "Welbeck attacks near post, Hinshelwood arrives second wave — two targets for the delivery"
+    ],
+    benchmark: "Pre-offensive (middle 1/3) entries convert at 34.8% — the best first-action zone in the entire dataset. Overlaps are how we manufacture them.",
+    ssgLink: ["SSG-06"],
+    players: [
+      { num: 22, label: "Mitoma",      team: "us",  path: [{ x: 12, y: 36 }, { x: 22, y: 30 }, { x: 26, y: 28 }] },
+      { num: 29, label: "De Cuyper",   team: "us",  path: [{ x: 14, y: 55 }, { x: 8,  y: 38 }, { x: 10, y: 17 }] },
+      { num: 17, label: "Baleba",      team: "us",  path: [{ x: 40, y: 50 }, { x: 38, y: 46 }, { x: 36, y: 42 }] },
+      { num: 18, label: "Welbeck",     team: "us",  path: [{ x: 52, y: 24 }, { x: 50, y: 22 }, { x: 45, y: 16 }] },
+      { num: 13, label: "Hinshelwood", team: "us",  path: [{ x: 44, y: 34 }, { x: 46, y: 30 }, { x: 52, y: 22 }] },
+      { id: "X1", team: "opp", path: [{ x: 16, y: 28 }, { x: 22, y: 24 }, { x: 18, y: 20 }] },
+      { id: "X2", team: "opp", path: [{ x: 38, y: 20 }, { x: 34, y: 20 }, { x: 40, y: 16 }] },
+      { id: "X3", team: "opp", path: [{ x: 55, y: 18 }, { x: 52, y: 17 }, { x: 50, y: 15 }] }
+    ],
+    ball: [{ x: 12, y: 36 }, { x: 21, y: 30 }, { x: 9, y: 18 }]
+  },
+  {
+    id: "PAT-03",
+    name: "Central Cut-Back Arrival",
+    tagline: "Wide drive, near-post pin, cut-back to the central spot. High volume happens wide — high value concludes centrally.",
+    phaseLabels: ["Drive wide", "Pin the line", "Cut-back arrival"],
+    coachingPoints: [
+      "Minteh drives to the byline — never settles for the early hopeful cross",
+      "Welbeck's near-post run pins both CBs and drags the line toward goal",
+      "Hinshelwood arrives late into the central pocket the pin creates — first-time finish"
+    ],
+    benchmark: "Central-corridor conclusions: 34.3% success vs 14-15.1% in the wide channels — more than double. The cut-back manufactures central arrivals.",
+    ssgLink: ["SSG-03"],
+    players: [
+      { num: 11, label: "Minteh",      team: "us",  path: [{ x: 84, y: 28 }, { x: 90, y: 16 }, { x: 86, y: 14 }] },
+      { num: 18, label: "Welbeck",     team: "us",  path: [{ x: 55, y: 20 }, { x: 62, y: 13 }, { x: 58, y: 12 }] },
+      { num: 13, label: "Hinshelwood", team: "us",  path: [{ x: 55, y: 34 }, { x: 52, y: 24 }, { x: 50, y: 19 }] },
+      { num: 22, label: "Mitoma",      team: "us",  path: [{ x: 14, y: 28 }, { x: 20, y: 24 }, { x: 28, y: 22 }] },
+      { num: 17, label: "Baleba",      team: "us",  path: [{ x: 50, y: 46 }, { x: 50, y: 42 }, { x: 48, y: 36 }] },
+      { id: "X1", team: "opp", path: [{ x: 80, y: 22 }, { x: 86, y: 14 }, { x: 84, y: 13 }] },
+      { id: "X2", team: "opp", path: [{ x: 58, y: 16 }, { x: 62, y: 12 }, { x: 60, y: 11 }] },
+      { id: "X3", team: "opp", path: [{ x: 46, y: 16 }, { x: 48, y: 14 }, { x: 49, y: 16 }] }
+    ],
+    ball: [{ x: 82, y: 27 }, { x: 89, y: 15 }, { x: 51, y: 19 }]
+  },
+  {
+    id: "PAT-04",
+    name: "Five-Second Final-Third Strike",
+    tagline: "Win it, go vertical, strike — before the defence reorganises. Directness is the defining quality of effective final-third play.",
+    phaseLabels: ["Win it", "Go vertical", "Strike ≤3s"],
+    coachingPoints: [
+      "Baleba's recovery is the starting gun — first touch goes forward, never sideways",
+      "Welbeck spins in behind on the recovery trigger; Mitoma and Minteh sprint support lanes",
+      "Shot released inside 3 seconds of the final-third entry — extra touches hand the defence its shape back"
+    ],
+    benchmark: "FOA sequences ≤3 seconds: 21.2% success (best of all durations). Zero-pass directness: 22.1%. Speed beats reorganisation.",
+    ssgLink: ["SSG-02", "SSG-04"],
+    players: [
+      { num: 17, label: "Baleba",      team: "us",  path: [{ x: 55, y: 52 }, { x: 56, y: 46 }, { x: 54, y: 42 }] },
+      { num: 18, label: "Welbeck",     team: "us",  path: [{ x: 50, y: 26 }, { x: 48, y: 18 }, { x: 50, y: 12 }] },
+      { num: 22, label: "Mitoma",      team: "us",  path: [{ x: 15, y: 32 }, { x: 17, y: 22 }, { x: 22, y: 18 }] },
+      { num: 11, label: "Minteh",      team: "us",  path: [{ x: 85, y: 32 }, { x: 83, y: 24 }, { x: 80, y: 20 }] },
+      { num: 13, label: "Hinshelwood", team: "us",  path: [{ x: 45, y: 40 }, { x: 46, y: 34 }, { x: 44, y: 28 }] },
+      { id: "X1", team: "opp", path: [{ x: 52, y: 50 }, { x: 50, y: 52 }, { x: 48, y: 50 }] },
+      { id: "X2", team: "opp", path: [{ x: 44, y: 18 }, { x: 46, y: 16 }, { x: 47, y: 14 }] },
+      { id: "X3", team: "opp", path: [{ x: 60, y: 18 }, { x: 58, y: 16 }, { x: 56, y: 14 }] }
+    ],
+    ball: [{ x: 55, y: 51 }, { x: 49, y: 28 }, { x: 50, y: 13 }]
+  }
+];
+
+// ============ GAME MODEL (phase-by-phase playing principles — the manager's daily reference) ============
+// Modelled on the coaching-course boards: phase title + principles list + pitch with both teams.
+// Every principle is anchored to a dissertation finding (Bolarin 2022). Horizontal pitch, we attack RIGHT.
+// Each phase carries FOUR animation frames (the move developing) — players morph between them.
+// Compact coords: us = [shirtNum, x, y] ×11 (order fixed: 1,5,6,27,34,29,17,13,22,11,18);
+// them = [x, y] ×11 black dummies (index order fixed); ball = [x, y]. x: 0 left (our goal) → 100; y: 0 top (left flank).
+const gameModel = [
+  {
+    id: "buildup",
+    label: "Build-Up",
+    moment: "In Possession · Defensive 1/3",
+    color: SCOUTS.green,
+    zoneHighlight: { x0: 0, x1: 33.3, y0: 0, y1: 100 },
+    principles: [
+      "Short play through the defensive 1/3 — Verbruggen starts every sequence",
+      "Wieffer drops between the CBs to form a back 3 against the first press line",
+      "Full-backs invert to create numerical superiority in the middle 1/3",
+      "Third-man combinations to escape pressure — never force the line-breaking pass"
+    ],
+    evidence: [
+      "≥5-pass sequences succeed at 29.2% — the best of any length",
+      "Winners produced +97 more long sequences than losers per season",
+      "Deep starts are 19× less effective — escape this zone with control, fast"
+    ],
+    linkedSSGs: ["SSG-05", "SSG-08"],
+    frames: [
+      { label: "GK starts",
+        us: [[1,6,50],[5,15,36],[6,15,64],[27,22,50],[34,26,28],[29,26,72],[17,34,46],[13,44,42],[22,50,12],[11,50,88],[18,56,50]],
+        them: [[24,50],[30,28],[30,72],[44,36],[46,50],[44,64],[62,20],[58,40],[58,60],[62,80],[92,50]],
+        ball: [8,50] },
+      { label: "First line pressed",
+        us: [[1,7,50],[5,16,34],[6,16,66],[27,20,50],[34,27,30],[29,27,70],[17,33,46],[13,43,42],[22,50,12],[11,50,88],[18,56,50]],
+        them: [[18,46],[22,28],[26,70],[36,36],[39,50],[37,64],[54,20],[52,40],[52,60],[54,80],[88,50]],
+        ball: [15,36] },
+      { label: "Wieffer drops · FBs invert",
+        us: [[1,6,50],[5,18,32],[6,18,68],[27,13,50],[34,30,40],[29,30,60],[17,36,50],[13,46,40],[22,52,12],[11,52,88],[18,58,50]],
+        them: [[20,46],[22,32],[22,68],[36,38],[38,50],[36,62],[52,22],[50,42],[50,58],[52,78],[88,50]],
+        ball: [13,50] },
+      { label: "Escape pass — Baleba",
+        us: [[1,7,50],[5,20,34],[6,20,66],[27,16,50],[34,32,40],[29,32,60],[17,40,48],[13,50,38],[22,56,12],[11,56,88],[18,60,48]],
+        them: [[24,50],[30,34],[30,66],[42,40],[46,54],[42,60],[56,22],[54,42],[54,58],[56,78],[90,50]],
+        ball: [40,48] }
+    ]
+  },
+  {
+    id: "progression",
+    label: "Progression",
+    moment: "In Possession · Middle 1/3",
+    color: CYBER.cyan,
+    zoneHighlight: { x0: 33.3, x1: 66.6, y0: 0, y1: 100 },
+    principles: [
+      "Enter the pre-offensive zone under control — that's where sequences are won",
+      "Build in 3-player triangles, not 2-player pairs — the data is unambiguous",
+      "Switch the point to isolate Mitoma and Minteh 1v1 on the touchlines",
+      "Baleba breaks the lines on the carry once the pivot is screened off"
+    ],
+    evidence: [
+      "Pre-offensive entries succeed at 34.8% — the highest of any zone",
+      "3-player sequences: 24.5% success vs 2-player at only 18.8%",
+      "2P pairs are 38% of our volume — our biggest fixable inefficiency"
+    ],
+    linkedSSGs: ["SSG-01", "SSG-06"],
+    frames: [
+      { label: "Pre-offensive entry",
+        us: [[1,8,50],[5,22,34],[6,22,66],[27,22,50],[34,36,38],[29,36,62],[17,44,50],[13,54,42],[22,58,10],[11,58,90],[18,62,50]],
+        them: [[38,50],[46,26],[46,74],[55,38],[57,50],[55,62],[72,22],[70,42],[70,58],[72,78],[92,50]],
+        ball: [44,50] },
+      { label: "Triangle forms",
+        us: [[1,8,50],[5,22,34],[6,22,66],[27,24,50],[34,40,40],[29,38,62],[17,46,52],[13,52,46],[22,60,10],[11,60,90],[18,63,48]],
+        them: [[40,52],[48,28],[48,72],[53,40],[55,50],[53,60],[72,22],[70,42],[70,58],[72,78],[92,50]],
+        ball: [46,52] },
+      { label: "Switch the point",
+        us: [[1,8,50],[5,24,34],[6,24,66],[27,26,50],[34,42,38],[29,42,60],[17,48,50],[13,56,38],[22,64,10],[11,62,90],[18,66,44]],
+        them: [[44,46],[47,26],[52,66],[56,34],[58,46],[56,58],[70,18],[70,40],[70,56],[72,74],[93,50]],
+        ball: [58,15] },
+      { label: "Mitoma isolated 1v1",
+        us: [[1,8,50],[5,26,36],[6,26,64],[27,26,50],[34,46,36],[29,44,58],[17,52,48],[13,60,30],[22,68,12],[11,64,88],[18,66,44]],
+        them: [[46,48],[54,20],[54,70],[58,32],[60,44],[58,60],[74,16],[72,38],[72,56],[74,76],[93,50]],
+        ball: [66,12] }
+    ]
+  },
+  {
+    id: "finalthird",
+    label: "Final Third",
+    moment: "In Possession · Attacking 1/3",
+    color: "#FF6B35",
+    zoneHighlight: { x0: 66.6, x1: 100, y0: 0, y1: 100 },
+    principles: [
+      "Be direct — first-time finishes beat extra touches, every time",
+      "Execute within 3 seconds of entry, before their block reorganises",
+      "Arrive centrally: cut-backs to the corridor, not crosses to the keeper",
+      "Back the individual — our 1v1 quality is a weapon, not a risk"
+    ],
+    evidence: [
+      "0-pass sequences: 22.1% success — and success FALLS as passes rise (P=0.003)",
+      "≤3-second execution: 21.2% success, the best of any duration (P=0.012)",
+      "Central corridor 34.3% vs Left 14% / Right 15.1% — double the value",
+      "Solo actions: 21.8% success — highest of any player-count"
+    ],
+    linkedSSGs: ["SSG-03", "SSG-04"],
+    frames: [
+      { label: "Entry",
+        us: [[1,10,50],[5,30,36],[6,30,64],[27,40,50],[34,52,32],[29,52,68],[17,58,50],[13,68,42],[22,74,14],[11,74,86],[18,78,48]],
+        them: [[58,50],[64,22],[64,78],[72,36],[74,50],[72,64],[82,26],[81,42],[81,58],[82,74],[94,50]],
+        ball: [70,42] },
+      { label: "Mitoma to the byline",
+        us: [[1,10,50],[5,32,36],[6,32,64],[27,42,50],[34,56,32],[29,56,66],[17,62,50],[13,76,36],[22,84,14],[11,78,84],[18,80,44]],
+        them: [[62,50],[70,24],[70,76],[78,34],[78,48],[76,62],[86,22],[84,40],[84,56],[85,72],[95,48]],
+        ball: [84,16] },
+      { label: "Cut-back · central arrival",
+        us: [[1,10,50],[5,32,36],[6,32,64],[27,44,50],[34,58,32],[29,58,66],[17,64,48],[13,78,42],[22,86,16],[11,86,68],[18,84,44]],
+        them: [[64,50],[72,26],[72,74],[77,32],[79,49],[78,60],[87,26],[88,42],[84,58],[86,72],[95,49]],
+        ball: [83,44] },
+      { label: "First-time finish",
+        us: [[1,10,50],[5,32,36],[6,32,64],[27,44,50],[34,58,32],[29,58,66],[17,64,48],[13,80,42],[22,86,18],[11,86,66],[18,86,46]],
+        them: [[64,50],[72,26],[72,74],[77,32],[79,48],[78,60],[87,26],[89,40],[84,58],[86,72],[92,49]],
+        ball: [89,46] }
+    ]
+  },
+  {
+    id: "block",
+    label: "Defensive Block",
+    moment: "Out of Possession · 4-4-2 Mid-Block",
+    color: BHA.blueLight,
+    zoneHighlight: { x0: 33.3, x1: 66.6, y0: 33.3, y1: 66.6 },
+    principles: [
+      "Compact 4-4-2 — never more than 30m between Welbeck and the back line",
+      "Protect the central corridor above all — force them wide where value halves",
+      "Welbeck and Hinshelwood screen the pivot; press triggers on the back-pass",
+      "Wingers tuck inside the width of the box — full-backs take the touchline"
+    ],
+    evidence: [
+      "Central corridor concedes at 34.3% success — denying it is half the job",
+      "Wide channels succeed at only 14-15.1% — funnelling wide IS the strategy",
+      "Their FOA entries are the danger metric: winners average 26.7 per match"
+    ],
+    linkedSSGs: ["SSG-07"],
+    frames: [
+      { label: "Set the 4-4-2",
+        us: [[1,6,50],[5,14,40],[6,14,60],[27,28,60],[34,16,22],[29,16,78],[17,28,40],[13,40,58],[22,30,84],[11,30,16],[18,40,42]],
+        them: [[44,12],[46,32],[44,50],[46,68],[44,88],[62,26],[60,50],[62,74],[76,38],[76,62],[92,50]],
+        ball: [60,50] },
+      { label: "Ball circulates — block shifts",
+        us: [[1,6,48],[5,14,37],[6,14,57],[27,28,56],[34,16,19],[29,16,75],[17,28,36],[13,40,54],[22,30,80],[11,30,12],[18,40,38]],
+        them: [[44,10],[46,30],[44,48],[46,66],[44,86],[62,22],[60,46],[62,70],[76,38],[77,60],[92,50]],
+        ball: [76,38] },
+      { label: "Trigger — the back-pass",
+        us: [[1,6,48],[5,15,36],[6,14,58],[27,32,58],[34,18,20],[29,16,74],[17,32,40],[13,46,56],[22,34,82],[11,34,14],[18,50,44]],
+        them: [[44,10],[46,30],[44,48],[46,66],[44,86],[62,22],[60,46],[62,70],[78,40],[77,60],[90,50]],
+        ball: [88,48] },
+      { label: "Press jump · force wide",
+        us: [[1,6,48],[5,15,36],[6,14,58],[27,33,52],[34,20,18],[29,16,74],[17,34,34],[13,48,50],[22,32,76],[11,40,14],[18,52,36]],
+        them: [[66,14],[48,34],[46,52],[48,70],[44,88],[64,24],[62,48],[62,72],[78,40],[77,62],[91,50]],
+        ball: [70,16] }
+    ]
+  },
+  {
+    id: "counterpress",
+    label: "Counter-Press",
+    moment: "Transition · Ball Lost",
+    color: "#FF3D5A",
+    zoneHighlight: { x0: 40, x1: 66.6, y0: 16.6, y1: 60 },
+    principles: [
+      "Five-second swarm — the nearest three players collapse on the ball instantly",
+      "Trap toward the right pre-defensive channel — our primary recovery zone",
+      "Welbeck screens the back-pass; cut the central escape before the wide one",
+      "If the swarm fails at 5 seconds, drop and reform the 4-4-2 — no half-press"
+    ],
+    evidence: [
+      "Winners and losers recover EQUAL volumes — the edge is what happens next",
+      "Post-recovery conversion: winners 24.2% vs losers 20.5% — a 3.7pp gap",
+      "RPD trap zone: 8.2 recoveries per match, our most productive press area"
+    ],
+    linkedSSGs: ["SSG-02"],
+    frames: [
+      { label: "Ball lost",
+        us: [[1,8,50],[5,28,42],[6,28,62],[27,50,46],[34,46,30],[29,40,64],[17,50,36],[13,56,32],[22,58,22],[11,60,80],[18,62,44]],
+        them: [[55,39],[48,54],[60,64],[64,28],[68,48],[72,70],[78,34],[78,64],[84,50],[64,14],[92,50]],
+        ball: [54,38] },
+      { label: "Five-second swarm",
+        us: [[1,8,50],[5,28,42],[6,28,62],[27,51,42],[34,48,33],[29,42,62],[17,53,38],[13,56,36],[22,57,28],[11,60,78],[18,60,42]],
+        them: [[56,40],[50,52],[62,60],[64,26],[68,48],[72,70],[78,34],[78,64],[84,50],[64,14],[92,50]],
+        ball: [55,40] },
+      { label: "Trap shut",
+        us: [[1,8,50],[5,28,42],[6,28,60],[27,49,42],[34,45,28],[29,44,58],[17,48,34],[13,53,34],[22,52,24],[11,58,74],[18,58,40]],
+        them: [[50,30],[50,50],[62,58],[62,24],[68,46],[72,68],[78,34],[78,62],[84,50],[64,12],[92,50]],
+        ball: [49,31] },
+      { label: "Recovered",
+        us: [[1,8,50],[5,28,42],[6,28,60],[27,48,44],[34,44,30],[29,44,58],[17,47,36],[13,54,32],[22,54,24],[11,58,74],[18,58,40]],
+        them: [[52,28],[52,50],[62,58],[62,24],[68,46],[72,68],[78,34],[78,62],[84,50],[64,12],[92,50]],
+        ball: [47,36] }
+    ]
+  },
+  {
+    id: "counterattack",
+    label: "Counter-Attack",
+    moment: "Transition · Ball Won",
+    color: CYBER.magenta,
+    zoneHighlight: { x0: 66.6, x1: 100, y0: 0, y1: 100 },
+    principles: [
+      "First pass forward within two touches — the recovery is only the start",
+      "Hit the final third inside 3 seconds while their block is still turned",
+      "Mitoma and Minteh sprint the channels; Welbeck pins the centre-backs",
+      "Quality over panic — winners convert recoveries, they don't just make them"
+    ],
+    evidence: [
+      "Post-recovery conversion is THE winner separator: 24.2% benchmark",
+      "≤3s final-third execution succeeds at 21.2% — speed sustains disorganisation",
+      "0-pass directness wins in the FOA: 22.1% — the counter is our best look"
+    ],
+    linkedSSGs: ["SSG-02", "SSG-04"],
+    frames: [
+      { label: "Won it deep",
+        us: [[1,6,50],[5,14,40],[6,14,60],[27,26,52],[34,18,26],[29,18,74],[17,34,44],[13,42,40],[22,46,14],[11,46,86],[18,52,48]],
+        them: [[16,18],[20,46],[18,78],[26,34],[27,64],[30,54],[24,12],[24,88],[56,40],[58,60],[90,50]],
+        ball: [34,44] },
+      { label: "First pass forward",
+        us: [[1,7,50],[5,18,40],[6,18,60],[27,30,52],[34,24,26],[29,24,76],[17,40,46],[13,52,40],[22,58,12],[11,58,88],[18,60,46]],
+        them: [[25,20],[29,46],[27,76],[35,36],[36,62],[40,52],[33,14],[33,86],[60,42],[62,58],[90,50]],
+        ball: [52,40] },
+      { label: "Channels sprint",
+        us: [[1,7,50],[5,22,40],[6,22,60],[27,34,52],[34,30,26],[29,30,76],[17,50,46],[13,66,40],[22,72,12],[11,72,88],[18,70,46]],
+        them: [[36,22],[41,46],[38,74],[47,38],[48,60],[52,50],[45,16],[45,84],[72,40],[74,58],[91,50]],
+        ball: [66,40] },
+      { label: "Strike ≤3s",
+        us: [[1,8,50],[5,24,40],[6,24,60],[27,38,52],[34,34,26],[29,34,76],[17,56,46],[13,76,38],[22,82,14],[11,82,84],[18,85,45]],
+        them: [[45,24],[50,46],[47,72],[56,38],[57,58],[61,48],[54,18],[54,82],[83,38],[84,58],[92,49]],
+        ball: [88,45] }
+    ]
+  }
+];
+
+// ============ TACTICAL ZONE MODEL (thirds × channels — League Ireland / coaching-course grid) ============
+// Mirrors the dissertation's zonal analysis and the reference pitch-overlay boards.
+// Pitch is divided into 3 thirds (Defensive / Midfield / Attacking) × 3 channels (Left / Central / Right)
+// plus the dissertation's "pre-offensive" and "final offensive" area concepts layered on top.
+// Each cell carries our data + the evidence-based benchmark from Bolarin (2022).
+const tacticalZones = {
+  // Success rate of final actions concluding in each channel of the final third
+  // (dissertation: central corridor 34.3% vs Left 14% vs Right 15.1%)
+  channelSuccess: [
+    { channel: "Left",    finalThird: 14.0, ourShare: 31, color: "#FF9D3D", note: "High volume, low value. We over-load the left through Mitoma but waste the entries." },
+    { channel: "Central", finalThird: 34.3, ourShare: 23, color: SCOUTS.green, note: "More than double the wide-channel success. We must conclude more sequences here." },
+    { channel: "Right",   finalThird: 15.1, ourShare: 28, color: "#FF9D3D", note: "Minteh's side. Decent volume but the final ball quality drops centrally." }
+  ],
+  // Build-up / offensive-coverage success by the third where the sequence STARTS
+  // (dissertation: pre-offensive 34.8% highest; defensive-area starts 19× less effective)
+  thirdOrigin: [
+    { third: "Attacking",  label: "Final / Attacking 1/3", success: 26.3, volume: 45.3, color: SCOUTS.green, note: "Final-offensive-area entries had the highest success AND highest volume. Our scoring pathway." },
+    { third: "Midfield",   label: "Midfield 1/3 (pre-offensive)", success: 34.8, volume: 28.0, color: CYBER.cyan, note: "Pre-offensive entries had the single highest first-action success rate. Win the ball here." },
+    { third: "Defensive",  label: "Defensive 1/3", success: 21.3, volume: 26.7, color: "#FF6B35", note: "Defensive-third starts are 19× less effective (Lago-Ballesteros). Don't build slow from deep." }
+  ],
+  // Pressing-trap zones (image 1 "Pressing Dynamics") — where we try to win the ball back
+  pressTraps: [
+    { zone: "RPD", label: "Right pre-defensive", x: 68, y: 42, intensity: "primary", recoveries: 8.2, note: "Primary pressing trap. Force play into the right pre-defensive channel and swarm." },
+    { zone: "CPD", label: "Central pre-defensive", x: 46, y: 44, intensity: "secondary", recoveries: 6.1, note: "Secondary trap. Block central progression, screen the pivot." },
+    { zone: "CM",  label: "Central midfield", x: 55, y: 64, intensity: "trigger", recoveries: 4.4, note: "Press trigger zone — first pressure starts when ball enters here." }
+  ]
+};
+
 const speedZones = [
   { id: "Z1", name: "Standing / Walking", range: "0–7.2 km/h",   color: "#666",    teamPct: 51, teamDistKm: 5.5 },
   { id: "Z2", name: "Jogging",            range: "7.2–14.4 km/h", color: "#4A9EFF", teamPct: 31, teamDistKm: 3.4 },
@@ -2299,6 +2664,791 @@ function ChartCard({ title, subtitle, children, footnote, height = 220 }) {
   );
 }
 
+// ============ ANIMATED PATTERN PITCH (choreographed combination plays, 3 phases + ball) ============
+function AnimatedPatternPitch({ pattern, width = 240, height = 300 }) {
+  const [phase, setPhase] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    if (paused) return;
+    const timer = setInterval(() => {
+      setPhase(p => (p + 1) % 3);
+    }, 2600);
+    return () => clearInterval(timer);
+  }, [paused]);
+
+  const PX = 8, PY = 8;
+  const fieldW = width - 2 * PX;
+  const fieldH = height - 2 * PY;
+  const PX_PCT = PX / width * 100;
+  const PY_PCT = PY / height * 100;
+
+  const phaseColors = [BHA.blueLight, CYBER.cyan, SCOUTS.green];
+  const currentBall = pattern.ball[phase];
+
+  return (
+    <div className="w-full">
+      {/* Phase indicator — custom labels per pattern */}
+      <div className="flex items-center justify-between mb-1.5 px-1">
+        <div className="flex items-center gap-1.5">
+          {pattern.phaseLabels.map((lbl, idx) => (
+            <div key={idx} className="flex items-center gap-1">
+              <span
+                className="inline-block rounded-full"
+                style={{
+                  width: phase === idx ? 6 : 4,
+                  height: phase === idx ? 6 : 4,
+                  background: phase === idx ? phaseColors[idx] : "#444",
+                  boxShadow: phase === idx ? `0 0 6px ${phaseColors[idx]}, 0 0 12px ${phaseColors[idx]}55` : "none",
+                  animation: (phase === idx && !paused) ? "morphPulse 1.2s ease-in-out infinite" : "none",
+                  transition: "all 300ms ease"
+                }}
+              />
+              {phase === idx && (
+                <span className="text-[8px] font-mono font-bold uppercase tracking-wider" style={{
+                  color: phaseColors[idx],
+                  textShadow: `0 0 4px ${phaseColors[idx]}88`
+                }}>
+                  {lbl}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={() => setPaused(!paused)}
+          className="text-[8px] font-mono uppercase tracking-wider text-white/40 hover:text-white transition-colors"
+        >
+          {paused ? "▶ Play" : "❚❚ Pause"}
+        </button>
+      </div>
+
+      {/* Pitch container */}
+      <div className="relative w-full" style={{ aspectRatio: `${width}/${height}` }}>
+        <svg viewBox={`0 0 ${width} ${height}`} className="absolute inset-0 w-full h-full" style={{ borderRadius: 4 }}>
+          <defs>
+            <pattern id={`patGrass-${pattern.id}`} x="0" y="0" width="20" height="40" patternUnits="userSpaceOnUse">
+              <rect width="20" height="40" fill="#142E1E" />
+              <rect width="20" height="20" fill="#1B3D2A" opacity="0.55" />
+            </pattern>
+          </defs>
+          <rect x={PX} y={PY} width={fieldW} height={fieldH} fill={`url(#patGrass-${pattern.id})`} stroke="#fff" strokeOpacity="0.4" strokeWidth="1" rx="2" />
+          <line x1={PX} y1={PY + fieldH / 2} x2={PX + fieldW} y2={PY + fieldH / 2} stroke="#fff" strokeOpacity="0.3" strokeWidth="0.8" />
+          <circle cx={PX + fieldW / 2} cy={PY + fieldH / 2} r="22" fill="none" stroke="#fff" strokeOpacity="0.3" strokeWidth="0.8" />
+          <rect x={PX + fieldW * 0.22} y={PY} width={fieldW * 0.56} height={fieldH * 0.14} fill="none" stroke="#fff" strokeOpacity="0.3" strokeWidth="0.8" />
+          <rect x={PX + fieldW * 0.22} y={PY + fieldH * 0.86} width={fieldW * 0.56} height={fieldH * 0.14} fill="none" stroke="#fff" strokeOpacity="0.3" strokeWidth="0.8" />
+          <text x={width / 2} y="7" fill={SCOUTS.green} fontSize="6" fontWeight="bold" textAnchor="middle" opacity="0.7">▲</text>
+        </svg>
+
+        {/* Players — ours (numbered, blue) and theirs (black dummies) */}
+        {pattern.players.map((p, idx) => {
+          const pos = p.path[phase];
+          const leftPct = PX_PCT + (pos.x / 100) * (100 - 2 * PX_PCT);
+          const topPct = PY_PCT + (pos.y / 100) * (100 - 2 * PY_PCT);
+          const isUs = p.team === "us";
+          return (
+            <div
+              key={p.num !== undefined ? `us-${p.num}` : `opp-${p.id}`}
+              className="absolute"
+              style={{
+                left: `${leftPct}%`,
+                top: `${topPct}%`,
+                transform: "translate(-50%, -50%)",
+                transition: "left 1100ms cubic-bezier(0.45, 0, 0.15, 1), top 1100ms cubic-bezier(0.45, 0, 0.15, 1)",
+                pointerEvents: "none",
+                zIndex: isUs ? 3 : 2
+              }}
+            >
+              {isUs ? (
+                <>
+                  <div className="absolute rounded-full" style={{
+                    width: 30, height: 30,
+                    left: "50%", top: "50%",
+                    transform: "translate(-50%, -50%)",
+                    background: `radial-gradient(circle, ${BHA.blueLight}55 0%, transparent 70%)`,
+                  }} />
+                  <div
+                    className="relative flex items-center justify-center rounded-full font-black"
+                    style={{
+                      width: 17, height: 17,
+                      background: BHA.blue,
+                      color: "#fff",
+                      border: "1.5px solid #fff",
+                      fontSize: 8,
+                      boxShadow: `0 1px 3px rgba(0,0,0,0.7), 0 0 6px ${BHA.blueLight}66`
+                    }}
+                  >
+                    {p.num}
+                  </div>
+                  <div className="text-center mt-0.5 font-bold whitespace-nowrap" style={{
+                    fontSize: 7,
+                    color: "rgba(255,255,255,0.8)",
+                    textShadow: "0 1px 2px rgba(0,0,0,0.9)"
+                  }}>
+                    {p.label}
+                  </div>
+                </>
+              ) : (
+                <div
+                  className="rounded-full"
+                  style={{
+                    width: 14, height: 14,
+                    background: "#0a0a0a",
+                    border: "1.5px solid rgba(255,255,255,0.55)",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.7)"
+                  }}
+                />
+              )}
+            </div>
+          );
+        })}
+
+        {/* Ball */}
+        {(() => {
+          const leftPct = PX_PCT + (currentBall.x / 100) * (100 - 2 * PX_PCT);
+          const topPct = PY_PCT + (currentBall.y / 100) * (100 - 2 * PY_PCT);
+          return (
+            <div
+              className="absolute"
+              style={{
+                left: `${leftPct}%`,
+                top: `${topPct}%`,
+                transform: "translate(-50%, -50%)",
+                transition: "left 1100ms cubic-bezier(0.55, 0, 0.45, 1), top 1100ms cubic-bezier(0.55, 0, 0.45, 1)",
+                pointerEvents: "none",
+                zIndex: 10
+              }}
+            >
+              <div className="absolute rounded-full" style={{
+                width: 22, height: 22,
+                left: "50%", top: "50%",
+                transform: "translate(-50%, -50%)",
+                background: `radial-gradient(circle, ${CYBER.amber}AA 0%, ${CYBER.amber}33 40%, transparent 70%)`,
+                animation: "morphPulse 0.9s ease-in-out infinite"
+              }} />
+              <div
+                className="relative rounded-full"
+                style={{
+                  width: 10, height: 10,
+                  background: "radial-gradient(circle at 35% 35%, #fff 0%, #ddd 70%, #888 100%)",
+                  border: `1.5px solid #000`,
+                  boxShadow: `0 0 8px ${CYBER.amber}, 0 0 14px ${CYBER.amber}66, 0 1px 2px rgba(0,0,0,0.9)`
+                }}
+              />
+            </div>
+          );
+        })()}
+      </div>
+
+      {/* Legend */}
+      <div className="flex gap-2 mt-2 text-[8px] font-mono justify-center items-center">
+        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: BHA.blue, border: "1px solid #fff" }} />US</span>
+        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: "#0a0a0a", border: "1px solid rgba(255,255,255,0.5)" }} />OPPOSITION</span>
+        <span className="flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: "#fff", border: "1px solid #000" }} />
+          <span style={{ color: CYBER.amber }}>BALL</span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ============ PATTERN CARD (offensive-coverage board, image-2 style) ============
+function PatternCard({ pattern }) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.03] overflow-hidden">
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-white/10 flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[9px] font-mono font-black px-1.5 py-0.5 rounded" style={{
+              background: BHA.blueLight + "22",
+              color: BHA.blueLight,
+              border: `1px solid ${BHA.blueLight}44`
+            }}>{pattern.id}</span>
+          </div>
+          <h3 className="text-sm font-bold text-white leading-tight" style={{ textShadow: `0 0 8px ${BHA.blueLight}33` }}>
+            {pattern.name}
+          </h3>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 p-4">
+        {/* Animated board */}
+        <div className="sm:col-span-2">
+          <AnimatedPatternPitch pattern={pattern} />
+        </div>
+
+        {/* Coaching content */}
+        <div className="sm:col-span-3 space-y-3">
+          <p className="text-[11px] text-white/60 leading-relaxed italic">{pattern.tagline}</p>
+
+          {/* Coaching points — like the board's bullet list */}
+          <div>
+            <div className="text-[9px] uppercase tracking-widest font-mono font-bold mb-1.5" style={{ color: SCOUTS.green }}>Coaching points</div>
+            <ul className="space-y-1.5">
+              {pattern.coachingPoints.map((pt, i) => (
+                <li key={i} className="flex gap-2 text-[11px] text-white/70 leading-snug">
+                  <span className="flex-shrink-0" style={{ color: SCOUTS.green }}>—</span>
+                  <span>{pt}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Evidence benchmark */}
+          <div className="rounded p-2.5" style={{ background: CYBER.magenta + "0A", border: `1px solid ${CYBER.magenta}33` }}>
+            <div className="text-[9px] uppercase tracking-widest font-mono font-bold mb-1" style={{ color: CYBER.magenta }}>Evidence</div>
+            <p className="text-[10px] text-white/70 leading-relaxed">{pattern.benchmark}</p>
+          </div>
+
+          {/* Linked SSGs */}
+          <div className="flex flex-wrap gap-1.5">
+            <span className="text-[9px] text-white/40 font-mono pt-0.5">Train it:</span>
+            {pattern.ssgLink.map(s => (
+              <span key={s} className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded" style={{
+                color: SCOUTS.green,
+                background: SCOUTS.green + "12",
+                border: `1px solid ${SCOUTS.green}33`
+              }}>{s}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============ TACTICAL ZONES (thirds × channels overlay — from dissertation + ref boards) ============
+function TacticalZones() {
+  const [layer, setLayer] = useState("channelSuccess"); // channelSuccess | thirdOrigin | pressTraps
+  const [animated, setAnimated] = useState(false);
+  // Replay the appear animation every time the layer changes (and on first mount).
+  // Reset to hidden, then flip to shown a frame later so the CSS transitions run.
+  useEffect(() => {
+    setAnimated(false);
+    const t = setTimeout(() => setAnimated(true), 60);
+    return () => clearTimeout(t);
+  }, [layer]);
+
+  // Pitch geometry — horizontal pitch (attacking right), like the reference boards
+  const W = 100, H = 64;
+
+  const layers = {
+    channelSuccess: { label: "Channel Success", color: SCOUTS.green, desc: "Final-third success rate by channel. The central corridor more than doubles the wide channels (Bolarin 2022)." },
+    thirdOrigin:    { label: "Build Origin",     color: CYBER.cyan,  desc: "Offensive-coverage success by the third where the sequence starts. Pre-offensive entries are most effective." },
+    pressTraps:     { label: "Press Traps",      color: "#FF6B35",   desc: "Where we try to win the ball back. Primary trap in the right pre-defensive channel." }
+  };
+  const current = layers[layer];
+
+  return (
+    <div className="space-y-4">
+      {/* Layer selector */}
+      <div className="flex gap-1 p-1 rounded-lg bg-white/[0.04] border border-white/10">
+        {Object.entries(layers).map(([k, v]) => (
+          <button key={k} onClick={() => setLayer(k)} className="flex-1 py-2 text-[10px] font-bold rounded transition-all uppercase tracking-wider" style={{
+            background: layer === k ? v.color + "22" : "transparent",
+            color: layer === k ? v.color : "rgba(255,255,255,0.45)",
+            border: `1px solid ${layer === k ? v.color + "55" : "transparent"}`
+          }}>
+            {v.label}
+          </button>
+        ))}
+      </div>
+
+      {/* The pitch board */}
+      <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3 relative overflow-hidden">
+        <div className="relative w-full" style={{ aspectRatio: `${W}/${H}` }}>
+          <svg viewBox={`0 0 ${W} ${H}`} className="absolute inset-0 w-full h-full" style={{ borderRadius: 4 }}>
+            <defs>
+              <linearGradient id="zonePitchGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#1a3a26" />
+                <stop offset="66%" stopColor="#16302a" />
+                <stop offset="100%" stopColor="#3a2614" />
+              </linearGradient>
+            </defs>
+            {/* Pitch base */}
+            <rect x="2" y="2" width={W - 4} height={H - 4} fill="url(#zonePitchGrad)" stroke="#fff" strokeOpacity="0.35" strokeWidth="0.5" rx="1.5" />
+            {/* Third dividers (vertical — attacking is to the right) */}
+            <line x1={2 + (W - 4) / 3} y1="2" x2={2 + (W - 4) / 3} y2={H - 2} stroke="#fff" strokeOpacity="0.3" strokeWidth="0.4" strokeDasharray="1.5 1.5" />
+            <line x1={2 + 2 * (W - 4) / 3} y1="2" x2={2 + 2 * (W - 4) / 3} y2={H - 2} stroke="#fff" strokeOpacity="0.3" strokeWidth="0.4" strokeDasharray="1.5 1.5" />
+            {/* Channel dividers (horizontal) */}
+            <line x1="2" y1={2 + (H - 4) / 3} x2={W - 2} y2={2 + (H - 4) / 3} stroke="#fff" strokeOpacity="0.18" strokeWidth="0.3" strokeDasharray="1 1.5" />
+            <line x1="2" y1={2 + 2 * (H - 4) / 3} x2={W - 2} y2={2 + 2 * (H - 4) / 3} stroke="#fff" strokeOpacity="0.18" strokeWidth="0.3" strokeDasharray="1 1.5" />
+            {/* Halfway + centre circle */}
+            <line x1={W / 2} y1="2" x2={W / 2} y2={H - 2} stroke="#fff" strokeOpacity="0.2" strokeWidth="0.3" />
+            <circle cx={W / 2} cy={H / 2} r="6" fill="none" stroke="#fff" strokeOpacity="0.2" strokeWidth="0.3" />
+            {/* Penalty boxes */}
+            <rect x="2" y={H / 2 - 11} width="9" height="22" fill="none" stroke="#fff" strokeOpacity="0.25" strokeWidth="0.3" />
+            <rect x={W - 11} y={H / 2 - 11} width="9" height="22" fill="none" stroke="#fff" strokeOpacity="0.25" strokeWidth="0.3" />
+
+            {/* Third labels */}
+            <text x={2 + (W - 4) / 6} y="7" fill="#fff" fillOpacity="0.4" fontSize="2.6" fontStyle="italic" textAnchor="middle">Defensive 1/3</text>
+            <text x={W / 2} y="7" fill="#fff" fillOpacity="0.4" fontSize="2.6" fontStyle="italic" textAnchor="middle">Midfield 1/3</text>
+            <text x={2 + 5 * (W - 4) / 6} y="7" fill="#fff" fillOpacity="0.4" fontSize="2.6" fontStyle="italic" textAnchor="middle">Attacking 1/3</text>
+            <text x={W - 4} y={H / 2} fill={SCOUTS.green} fillOpacity="0.6" fontSize="3" fontWeight="bold" textAnchor="end">▶</text>
+
+            {/* ===== CHANNEL SUCCESS LAYER ===== */}
+            {layer === "channelSuccess" && tacticalZones.channelSuccess.map((c, i) => {
+              const yBand = 2 + (H - 4) / 3 * (i + 0.5);
+              const finalX = 2 + 5 * (W - 4) / 6; // attacking third centre
+              const r = 3 + (c.finalThird / 34.3) * 6; // scaled to the max success
+              return (
+                <g key={c.channel} style={{ opacity: animated ? 1 : 0, transition: `opacity 500ms ease ${i * 150}ms` }}>
+                  {/* glow blob in the attacking third */}
+                  <circle cx={finalX} cy={yBand} r={animated ? r : 0} fill={c.color} fillOpacity="0.25" style={{ transition: `r 700ms cubic-bezier(0.34,1.2,0.64,1) ${i * 150}ms` }} />
+                  <circle cx={finalX} cy={yBand} r={animated ? r * 0.55 : 0} fill={c.color} fillOpacity="0.5" style={{ transition: `r 700ms cubic-bezier(0.34,1.2,0.64,1) ${i * 150 + 80}ms` }} />
+                  <text x={finalX} y={yBand + 1} fill="#fff" fontSize="3.4" fontWeight="900" textAnchor="middle" style={{ textShadow: "0 0 3px #000" }}>{c.finalThird}%</text>
+                  <text x={finalX} y={yBand - r - 1.5} fill={c.color} fontSize="2.4" fontWeight="bold" textAnchor="middle">{c.channel}</text>
+                </g>
+              );
+            })}
+
+            {/* ===== THIRD ORIGIN LAYER ===== */}
+            {layer === "thirdOrigin" && tacticalZones.thirdOrigin.map((t, i) => {
+              // Defensive third is index 2, attacking is index 0 → position by label
+              const thirdIndex = t.third === "Defensive" ? 0 : t.third === "Midfield" ? 1 : 2;
+              const cx = 2 + (W - 4) / 3 * (thirdIndex + 0.5);
+              const cy = H / 2;
+              const blobR = 5 + (t.success / 34.8) * 8;
+              return (
+                <g key={t.third} style={{ opacity: animated ? 1 : 0, transition: `opacity 500ms ease ${i * 150}ms` }}>
+                  <rect
+                    x={2 + (W - 4) / 3 * thirdIndex} y="2"
+                    width={(W - 4) / 3} height={H - 4}
+                    fill={t.color} fillOpacity={animated ? 0.1 : 0}
+                    style={{ transition: `fill-opacity 600ms ease ${i * 150}ms` }}
+                  />
+                  <circle cx={cx} cy={cy} r={animated ? blobR : 0} fill={t.color} fillOpacity="0.3" style={{ transition: `r 700ms cubic-bezier(0.34,1.2,0.64,1) ${i * 150}ms` }} />
+                  <text x={cx} y={cy - 1} fill="#fff" fontSize="4" fontWeight="900" textAnchor="middle" style={{ textShadow: "0 0 3px #000" }}>{t.success}%</text>
+                  <text x={cx} y={cy + 4} fill="#fff" fillOpacity="0.7" fontSize="2.4" textAnchor="middle">{t.volume}% vol</text>
+                </g>
+              );
+            })}
+
+            {/* ===== PRESS TRAPS LAYER (minimal & static — hairline ring, core dot, label) ===== */}
+            {layer === "pressTraps" && tacticalZones.pressTraps.map(p => {
+              const cx = (p.x / 100) * W;
+              const cy = (p.y / 100) * H;
+              const isPrimary = p.intensity === "primary";
+              const R = isPrimary ? 7 : p.intensity === "secondary" ? 5.5 : 4;
+              const col = isPrimary ? "#FF3D5A" : p.intensity === "secondary" ? "#FF8C00" : "#9DB2BF";
+              return (
+                <g key={p.zone}>
+                  {/* Whisper of fill */}
+                  <circle cx={cx} cy={cy} r={R} fill={col} fillOpacity="0.08" />
+                  {/* One hairline ring */}
+                  <circle cx={cx} cy={cy} r={R} fill="none" stroke={col} strokeOpacity="0.5" strokeWidth="0.35" />
+                  {/* Core dot */}
+                  <circle cx={cx} cy={cy} r="1" fill={col} fillOpacity="0.9" />
+                  {/* Zone code only — recoveries live in the cards below */}
+                  <text x={cx} y={cy - R - 2} fill={col} fontSize="2.4" fontWeight="800" textAnchor="middle" fillOpacity="0.85">{p.zone}</text>
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+
+        {/* Layer description */}
+        <p className="text-[10px] text-white/55 leading-relaxed mt-2 italic px-1">{current.desc}</p>
+      </div>
+
+      {/* Data detail cards for the active layer */}
+      <div className="space-y-2">
+        {layer === "channelSuccess" && tacticalZones.channelSuccess.map(c => (
+          <div key={c.channel} className="rounded-lg border p-3" style={{ borderColor: c.color + "33", background: c.color + "08" }}>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-bold text-white">{c.channel} channel</span>
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] font-mono text-white/50">our vol: {c.ourShare}%</span>
+                <span className="text-sm font-black font-mono" style={{ color: c.color, textShadow: `0 0 6px ${c.color}66` }}>{c.finalThird}%</span>
+              </div>
+            </div>
+            <p className="text-[10px] text-white/55 leading-relaxed">{c.note}</p>
+          </div>
+        ))}
+        {layer === "thirdOrigin" && tacticalZones.thirdOrigin.map(t => (
+          <div key={t.third} className="rounded-lg border p-3" style={{ borderColor: t.color + "33", background: t.color + "08" }}>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-bold text-white">{t.label}</span>
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] font-mono text-white/50">vol: {t.volume}%</span>
+                <span className="text-sm font-black font-mono" style={{ color: t.color, textShadow: `0 0 6px ${t.color}66` }}>{t.success}%</span>
+              </div>
+            </div>
+            <p className="text-[10px] text-white/55 leading-relaxed">{t.note}</p>
+          </div>
+        ))}
+        {layer === "pressTraps" && tacticalZones.pressTraps.map(p => {
+          const col = p.intensity === "primary" ? "#FF3D5A" : p.intensity === "secondary" ? "#FF8C00" : "#9DB2BF";
+          return (
+            <div key={p.zone} className="rounded-lg border p-3" style={{ borderColor: col + "33", background: col + "08" }}>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-mono font-black px-1.5 py-0.5 rounded" style={{ background: col + "22", color: col }}>{p.zone}</span>
+                  <span className="text-xs font-bold text-white">{p.label}</span>
+                </div>
+                <span className="text-[10px] font-mono" style={{ color: col }}>{p.recoveries} rec/match</span>
+              </div>
+              <p className="text-[10px] text-white/55 leading-relaxed">{p.note}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Source footnote */}
+      <p className="text-[9px] text-white/30 italic text-center font-mono">
+        Zonal model & benchmarks: Bolarin (2022) · MSc Sports Performance Analysis · SETU
+      </p>
+    </div>
+  );
+}
+
+// ============ GAME MODEL (phase boards — tracking-data style sequence playback) ============
+// Designed to read like a tracking-data clip: near-continuous motion (no static holds),
+// the ball zips between players faster than they move, an amber path traces the ball's
+// route with event markers, players leave fading motion trails, and the loop restarts
+// with a hard cut (like a clip replay) instead of morphing backwards.
+function GameModel() {
+  const [phaseId, setPhaseId] = useState("buildup");
+  const [frame, setFrame] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [animated, setAnimated] = useState(false);
+  const [snap, setSnap] = useState(false); // true = render without transitions (clip restart)
+
+  const phase = gameModel.find(p => p.id === phaseId) || gameModel[0];
+  const F = phase.frames[frame];
+
+  // On phase switch: hard-cut to frame 0 and replay the text slide-ins
+  useEffect(() => {
+    setSnap(true);
+    setFrame(0);
+    setAnimated(false);
+    const t1 = setTimeout(() => setSnap(false), 50);
+    const t2 = setTimeout(() => setAnimated(true), 80);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [phaseId]);
+
+  // Near-continuous playback: frame advances every 2000ms while player motion runs 1850ms,
+  // so dots barely settle before the next leg begins — tracking-clip cadence.
+  useEffect(() => {
+    if (paused) return;
+    const timer = setInterval(() => {
+      setFrame(f => {
+        const nf = (f + 1) % 4;
+        if (nf === 0) setSnap(true); // wrap = clip restart, no reverse morph
+        return nf;
+      });
+    }, 2000);
+    return () => clearInterval(timer);
+  }, [paused, phaseId]);
+
+  // Release the snap one paint after a restart so transitions resume
+  useEffect(() => {
+    if (!snap) return;
+    const t = setTimeout(() => setSnap(false), 50);
+    return () => clearTimeout(t);
+  }, [snap]);
+
+  const W = 100, H = 64;
+  const px = (v) => 2 + (v / 100) * (W - 4);
+  const py = (v) => 2 + (v / 100) * (H - 4);
+  const lp = (v) => ((2 + (v / 100) * (W - 4)) / W) * 100;
+  const tp = (v) => ((2 + (v / 100) * (H - 4)) / H) * 100;
+
+  // Players drift (slow, near-linear, like tracking dots); the ball zips (fast, slight delay = pass release)
+  const PLAYER_MORPH = snap ? "none" : "left 1850ms cubic-bezier(0.35, 0, 0.65, 1), top 1850ms cubic-bezier(0.35, 0, 0.65, 1)";
+  const BALL_MORPH = snap ? "none" : "left 600ms cubic-bezier(0.25, 0, 0.35, 1) 150ms, top 600ms cubic-bezier(0.25, 0, 0.35, 1) 150ms";
+
+  // Ball path so far in this sequence (drawn like a telestration trace)
+  const ballTrail = phase.frames.slice(0, frame + 1).map(fr => fr.ball);
+  const prevUs = frame > 0 ? phase.frames[frame - 1].us : null;
+
+  const zoneLabels = [
+    { t: "LD",  x: 16.6, y: 16.6 }, { t: "CD",  x: 16.6, y: 50 }, { t: "RD",  x: 16.6, y: 83.3 },
+    { t: "LPD", x: 41.6, y: 16.6 }, { t: "CPD", x: 41.6, y: 50 }, { t: "RPD", x: 41.6, y: 83.3 },
+    { t: "LPO", x: 58.3, y: 16.6 }, { t: "CPO", x: 58.3, y: 50 }, { t: "RPO", x: 58.3, y: 83.3 },
+    { t: "LO",  x: 83.3, y: 16.6 }, { t: "CO",  x: 83.3, y: 50 }, { t: "RO",  x: 83.3, y: 83.3 }
+  ];
+  const zh = phase.zoneHighlight;
+
+  return (
+    <div className="space-y-4">
+      {/* Scoped keyframes for the motion-trail ghosts */}
+      <style>{`
+        @keyframes gmGhostFade {
+          0% { opacity: 0.22; }
+          100% { opacity: 0; }
+        }
+      `}</style>
+
+      {/* Phase selector — 2 rows × 3 */}
+      <div className="grid grid-cols-3 gap-1.5 p-1 rounded-lg bg-white/[0.04] border border-white/10">
+        {gameModel.map(p => (
+          <button key={p.id} onClick={() => setPhaseId(p.id)} className="py-2 px-1 rounded text-[9px] font-bold transition-all uppercase tracking-wider leading-tight" style={{
+            background: phaseId === p.id ? p.color + "22" : "transparent",
+            color: phaseId === p.id ? p.color : "rgba(255,255,255,0.45)",
+            border: `1px solid ${phaseId === p.id ? p.color + "55" : "transparent"}`,
+            textShadow: phaseId === p.id ? `0 0 6px ${p.color}55` : "none"
+          }}>
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Phase header + frame indicator */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <span className="text-[9px] font-mono font-black uppercase tracking-widest px-2 py-0.5 rounded" style={{
+          color: phase.color, background: phase.color + "1A", border: `1px solid ${phase.color}44`,
+          boxShadow: `0 0 8px ${phase.color}33`
+        }}>{phase.moment}</span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            {phase.frames.map((fr, idx) => (
+              <div key={idx} className="flex items-center gap-1">
+                <span className="inline-block rounded-full" style={{
+                  width: frame === idx ? 6 : 4,
+                  height: frame === idx ? 6 : 4,
+                  background: frame === idx ? phase.color : "#444",
+                  boxShadow: frame === idx ? `0 0 6px ${phase.color}, 0 0 12px ${phase.color}55` : "none",
+                  animation: (frame === idx && !paused) ? "morphPulse 1.2s ease-in-out infinite" : "none",
+                  transition: "all 300ms ease"
+                }} />
+                {frame === idx && (
+                  <span className="text-[8px] font-mono font-bold uppercase tracking-wider" style={{
+                    color: phase.color, textShadow: `0 0 4px ${phase.color}88`
+                  }}>{fr.label}</span>
+                )}
+              </div>
+            ))}
+          </div>
+          <button onClick={() => setPaused(!paused)} className="text-[8px] font-mono uppercase tracking-wider text-white/40 hover:text-white transition-colors">
+            {paused ? "▶ Play" : "❚❚ Pause"}
+          </button>
+        </div>
+      </div>
+
+      {/* The phase board — SVG pitch + trace, HTML overlay of moving players & ball */}
+      <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3 relative overflow-hidden">
+        <div className="relative w-full" style={{ aspectRatio: `${W}/${H}` }}>
+          <svg viewBox={`0 0 ${W} ${H}`} className="absolute inset-0 w-full h-full" style={{ borderRadius: 4 }}>
+            <defs>
+              <linearGradient id="gmPitchGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#16302a" />
+                <stop offset="50%" stopColor="#1a3a26" />
+                <stop offset="100%" stopColor="#16302a" />
+              </linearGradient>
+            </defs>
+            <rect x="2" y="2" width={W - 4} height={H - 4} fill="url(#gmPitchGrad)" stroke="#fff" strokeOpacity="0.35" strokeWidth="0.5" rx="1.5" />
+            <line x1={px(33.3)} y1="2" x2={px(33.3)} y2={H - 2} stroke="#fff" strokeOpacity="0.3" strokeWidth="0.4" strokeDasharray="1.5 1.5" />
+            <line x1={px(66.6)} y1="2" x2={px(66.6)} y2={H - 2} stroke="#fff" strokeOpacity="0.3" strokeWidth="0.4" strokeDasharray="1.5 1.5" />
+            <line x1={px(50)} y1="2" x2={px(50)} y2={H - 2} stroke="#fff" strokeOpacity="0.18" strokeWidth="0.3" strokeDasharray="2 1 0.5 1" />
+            <line x1="2" y1={py(33.3)} x2={W - 2} y2={py(33.3)} stroke="#fff" strokeOpacity="0.15" strokeWidth="0.3" strokeDasharray="1 1.5" />
+            <line x1="2" y1={py(66.6)} x2={W - 2} y2={py(66.6)} stroke="#fff" strokeOpacity="0.15" strokeWidth="0.3" strokeDasharray="1 1.5" />
+            <circle cx={W / 2} cy={H / 2} r="6" fill="none" stroke="#fff" strokeOpacity="0.2" strokeWidth="0.3" />
+            <rect x="2" y={H / 2 - 11} width="9" height="22" fill="none" stroke="#fff" strokeOpacity="0.25" strokeWidth="0.3" />
+            <rect x={W - 11} y={H / 2 - 11} width="9" height="22" fill="none" stroke="#fff" strokeOpacity="0.25" strokeWidth="0.3" />
+            <text x={px(16.6)} y="6.5" fill="#fff" fillOpacity="0.4" fontSize="2.4" fontStyle="italic" textAnchor="middle">Defensive 1/3</text>
+            <text x={W / 2} y="6.5" fill="#fff" fillOpacity="0.4" fontSize="2.4" fontStyle="italic" textAnchor="middle">Midfield 1/3</text>
+            <text x={px(83.3)} y="6.5" fill="#fff" fillOpacity="0.4" fontSize="2.4" fontStyle="italic" textAnchor="middle">Attacking 1/3</text>
+            {zoneLabels.map(z => (
+              <text key={z.t} x={px(z.x)} y={py(z.y)} fill="#fff" fillOpacity="0.13" fontSize="2.8" fontStyle="italic" fontWeight="bold" textAnchor="middle">{z.t}</text>
+            ))}
+            {/* Active-phase zone highlight */}
+            <rect
+              x={px(zh.x0)} y={py(zh.y0)}
+              width={px(zh.x1) - px(zh.x0)} height={py(zh.y1) - py(zh.y0)}
+              fill={phase.color} fillOpacity="0.07"
+              stroke={phase.color} strokeOpacity="0.55" strokeWidth="0.45" rx="1"
+            >
+              <animate attributeName="stroke-opacity" values="0.55;0.25;0.55" dur="2.8s" repeatCount="indefinite" />
+            </rect>
+
+            {/* Ball path trace — telestration-style amber route with event markers at each visited point */}
+            {ballTrail.length > 1 && (
+              <polyline
+                points={ballTrail.map(b => `${px(b[0])},${py(b[1])}`).join(" ")}
+                fill="none" stroke={CYBER.amber} strokeOpacity="0.55" strokeWidth="0.5"
+                strokeDasharray="1.6 1" strokeLinejoin="round"
+              />
+            )}
+            {ballTrail.slice(0, -1).map((b, i) => (
+              <g key={`bt-${i}`}>
+                <circle cx={px(b[0])} cy={py(b[1])} r="1.3" fill="none" stroke={CYBER.amber} strokeOpacity="0.7" strokeWidth="0.35" />
+                <circle cx={px(b[0])} cy={py(b[1])} r="0.4" fill={CYBER.amber} fillOpacity="0.8" />
+              </g>
+            ))}
+
+            <text x={W - 4} y={H - 4} fill={SCOUTS.green} fillOpacity="0.6" fontSize="3" fontWeight="bold" textAnchor="end">▶</text>
+          </svg>
+
+          {/* Motion-trail ghosts — previous-frame positions fading out (our XI only, declutters) */}
+          {!snap && prevUs && prevUs.map(u => {
+            const [num, x, y] = u;
+            return (
+              <div key={`g-${phaseId}-${frame}-${num}`} className="absolute" style={{
+                left: `${lp(x)}%`, top: `${tp(y)}%`,
+                transform: "translate(-50%, -50%)",
+                pointerEvents: "none", zIndex: 1,
+                animation: "gmGhostFade 1.7s ease-out forwards"
+              }}>
+                <div className="rounded-full" style={{
+                  width: 11, height: 11,
+                  background: num === 1 ? "#FFD700" : SCOUTS.green
+                }} />
+              </div>
+            );
+          })}
+
+          {/* Opposition — 11 black dummies, drifting */}
+          {F.them.map((t, i) => (
+            <div key={`t-${i}`} className="absolute" style={{
+              left: `${lp(t[0])}%`, top: `${tp(t[1])}%`,
+              transform: "translate(-50%, -50%)",
+              transition: PLAYER_MORPH, pointerEvents: "none", zIndex: 2
+            }}>
+              <div className="rounded-full" style={{
+                width: 10, height: 10,
+                background: "#0a0a0a",
+                border: "1.1px solid rgba(255,255,255,0.55)",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.7)"
+              }} />
+            </div>
+          ))}
+
+          {/* Our XI — flat tracking-style dots with shirt numbers (GK gold), drifting */}
+          {F.us.map(u => {
+            const [num, x, y] = u;
+            const isGK = num === 1;
+            return (
+              <div key={`u-${num}`} className="absolute" style={{
+                left: `${lp(x)}%`, top: `${tp(y)}%`,
+                transform: "translate(-50%, -50%)",
+                transition: PLAYER_MORPH, pointerEvents: "none", zIndex: 3
+              }}>
+                <div className="relative flex items-center justify-center rounded-full font-black" style={{
+                  width: 15, height: 15,
+                  background: isGK ? "#FFD700" : SCOUTS.green,
+                  color: isGK ? "#000" : "#fff",
+                  border: "1.1px solid rgba(255,255,255,0.9)",
+                  fontSize: 7,
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.6)"
+                }}>
+                  {num}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* The ball — zips ahead of the players, small amber glow */}
+          <div className="absolute" style={{
+            left: `${lp(F.ball[0])}%`, top: `${tp(F.ball[1])}%`,
+            transform: "translate(-50%, -50%)",
+            transition: BALL_MORPH,
+            pointerEvents: "none", zIndex: 5
+          }}>
+            <div className="absolute rounded-full" style={{
+              width: 14, height: 14,
+              left: "50%", top: "50%",
+              transform: "translate(-50%, -50%)",
+              background: `radial-gradient(circle, ${CYBER.amber}88 0%, transparent 70%)`
+            }} />
+            <div className="relative rounded-full" style={{
+              width: 7, height: 7,
+              background: "radial-gradient(circle at 35% 35%, #fff 0%, #ddd 70%, #999 100%)",
+              border: "1px solid #000",
+              boxShadow: `0 0 5px ${CYBER.amber}, 0 1px 2px rgba(0,0,0,0.9)`
+            }} />
+          </div>
+        </div>
+      </div>
+
+      {/* Principles — styled like the reference board's dashed list */}
+      <div className="rounded-lg border p-4" style={{ borderColor: phase.color + "33", background: phase.color + "08" }}>
+        <div className="text-[9px] uppercase tracking-widest font-mono font-bold mb-2.5 flex items-center gap-1.5" style={{ color: phase.color }}>
+          <span className="inline-block w-1 h-1 rounded-full" style={{ background: phase.color, boxShadow: `0 0 4px ${phase.color}` }} />
+          Principles · {phase.label}
+        </div>
+        <ul className="space-y-2">
+          {phase.principles.map((pr, i) => (
+            <li key={i} className="flex gap-2 text-[11px] text-white/75 leading-relaxed italic" style={{
+              fontFamily: "'Georgia', serif",
+              opacity: animated ? 1 : 0,
+              transform: animated ? "translateX(0)" : "translateX(-6px)",
+              transition: `opacity 400ms ease ${i * 90 + 200}ms, transform 400ms ease ${i * 90 + 200}ms`
+            }}>
+              <span style={{ color: phase.color }}>–</span>
+              <span>{pr}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Evidence chips */}
+      <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
+        <div className="text-[9px] uppercase tracking-widest font-mono font-bold mb-2.5 text-white/50">Why · the evidence</div>
+        <div className="space-y-1.5">
+          {phase.evidence.map((e, i) => (
+            <div key={i} className="flex gap-2 items-baseline text-[10px]" style={{
+              opacity: animated ? 1 : 0,
+              transition: `opacity 400ms ease ${i * 90 + 400}ms`
+            }}>
+              <span className="font-mono font-black flex-shrink-0" style={{ color: phase.color }}>▸</span>
+              <span className="text-white/60 leading-relaxed">{e}</span>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-1.5 mt-3 pt-2.5 border-t border-white/10">
+          {phase.linkedSSGs.map(s => (
+            <span key={s} className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded" style={{
+              color: SCOUTS.green, background: SCOUTS.green + "12", border: `1px solid ${SCOUTS.green}33`
+            }}>⚽ {s}</span>
+          ))}
+          <span className="text-[9px] font-mono text-white/30 italic ml-auto">Bolarin (2022) · SETU</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============ TACTICS TAB (fused: Zone Data + Game Model) ============
+function TacticsTab() {
+  const [subTab, setSubTab] = useState("zones"); // "zones" | "model"
+
+  return (
+    <div>
+      {/* Sub-tab strip */}
+      <div className="flex gap-1 mb-5 p-1 rounded-lg bg-white/[0.04] border border-white/10">
+        <button
+          onClick={() => setSubTab("zones")}
+          className="flex-1 py-2 text-[10px] font-bold rounded transition-all uppercase tracking-wider"
+          style={{
+            background: subTab === "zones" ? SCOUTS.green + "22" : "transparent",
+            color: subTab === "zones" ? SCOUTS.green : "rgba(255,255,255,0.45)",
+            border: `1px solid ${subTab === "zones" ? SCOUTS.green + "55" : "transparent"}`
+          }}
+        >
+          ▦ Zone Data
+        </button>
+        <button
+          onClick={() => setSubTab("model")}
+          className="flex-1 py-2 text-[10px] font-bold rounded transition-all uppercase tracking-wider"
+          style={{
+            background: subTab === "model" ? BHA.blueLight + "22" : "transparent",
+            color: subTab === "model" ? BHA.blueLight : "rgba(255,255,255,0.45)",
+            border: `1px solid ${subTab === "model" ? BHA.blueLight + "55" : "transparent"}`
+          }}
+        >
+          ⚙ Game Model
+        </button>
+      </div>
+
+      {subTab === "zones" && <TacticalZones />}
+      {subTab === "model" && <GameModel />}
+    </div>
+  );
+}
+
 function Section({ id, title, sub, children }) {
   return (
     <section className="mb-12">
@@ -3121,6 +4271,7 @@ export default function App() {
         <div className="flex gap-1 mb-6 p-1 rounded-lg bg-white/[0.03] border border-white/10 overflow-x-auto">
           {[
             { id: "team", label: "Team" },
+            { id: "tactics", label: "Tactics" },
             { id: "speed", label: "Speed" },
             { id: "training", label: "Training" },
             { id: "ssgs", label: "SSGs" },
@@ -3128,7 +4279,7 @@ export default function App() {
             { id: "kpis", label: "KPIs" },
             { id: "visuals", label: "Visuals" },
             { id: "insights", label: "Insights" },
-            { id: "index", label: "Complete Index" }
+            { id: "index", label: "Index" }
           ].map(v => (
             <button key={v.id} onClick={() => setView(v.id)} className="flex-1 py-2 text-[10px] font-bold rounded transition-all uppercase tracking-wider whitespace-nowrap" style={{
               background: view === v.id ? BHA.blueLight + "22" : "transparent",
@@ -3147,23 +4298,30 @@ export default function App() {
           </Section>
         )}
 
+        {/* ======== TACTICS (Zone Data + Game Model) ======== */}
+        {view === "tactics" && (
+          <Section id="02" title="Tactics" sub="One tactical reference: 'Zone Data' shows where our sequences succeed by thirds and channels; 'Game Model' is the phase-by-phase principles document with animated boards — both anchored to the dissertation's findings.">
+            <TacticsTab />
+          </Section>
+        )}
+
         {/* ======== SPEED THRESHOLD ======== */}
         {view === "speed" && (
-          <Section id="02" title="Speed Thresholds · GPS Data" sub="StatSports Apex data from the latest training microcycle. Use this to balance training intensity, monitor sprint exposure and flag players whose load needs adjusting.">
+          <Section id="03" title="Speed Thresholds · GPS Data" sub="StatSports Apex data from the latest training microcycle. Use this to balance training intensity, monitor sprint exposure and flag players whose load needs adjusting.">
             <SpeedThreshold />
           </Section>
         )}
 
         {/* ======== TRAINING FOCUS ======== */}
         {view === "training" && (
-          <Section id="03" title="Training" sub="The week's plan and the zone-by-zone focus areas that inform it. Mon-Sun shows what's on each day; Zone Focus is the reference document that drives session design.">
+          <Section id="04" title="Training" sub="The week's plan and the zone-by-zone focus areas that inform it. Mon-Sun shows what's on each day; Zone Focus is the reference document that drives session design.">
             <TrainingTab />
           </Section>
         )}
 
         {/* ======== SSGs ======== */}
         {view === "ssgs" && (
-          <Section id="04" title="Small-Sided Games" sub="Eight game-based training designs adapted to our specific strengths and weaknesses. Each session lists the player numbers from the current squad to make implementation immediate.">
+          <Section id="05" title="Small-Sided Games" sub="Eight game-based training designs adapted to our specific strengths and weaknesses. Each session lists the player numbers from the current squad to make implementation immediate.">
             <div className="space-y-4">
               {ssgs.map(s => <SSGCard key={s.id} ssg={s} />)}
             </div>
@@ -3172,7 +4330,7 @@ export default function App() {
 
         {/* ======== PITCH ======== */}
         {view === "pitch" && (
-          <Section id="05" title="Interactive Pitch" sub="Toggle between build-up success, possession loss rate, and final-third corridor data — all derived from our recent matches.">
+          <Section id="06" title="Interactive Pitch" sub="Toggle between build-up success, possession loss rate, and final-third corridor data — all derived from our recent matches.">
             <InteractivePitch />
             <div className="mt-6 p-4 rounded-lg border border-white/10 bg-white/[0.02]">
               <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2 font-mono">Reading the pitch</div>
@@ -3187,7 +4345,7 @@ export default function App() {
 
         {/* ======== KPIs ======== */}
         {view === "kpis" && (
-          <Section id="06" title="KPI Library" sub="Sixteen performance indicators tailored to us. Tap any card to expand its definition, benchmark, target and training application.">
+          <Section id="07" title="KPI Library" sub="Sixteen performance indicators tailored to us. Tap any card to expand its definition, benchmark, target and training application.">
             <div className="flex gap-1.5 mb-5 overflow-x-auto pb-1 -mx-4 px-4">
               {cats.map(([key, cat]) => (
                 <button key={key} onClick={() => setActiveCat(key)} className="shrink-0 px-3 py-2 rounded text-[11px] font-bold transition-all border" style={{
@@ -3211,7 +4369,7 @@ export default function App() {
 
         {/* ======== VISUALS ======== */}
         {view === "visuals" && (
-          <Section id="07" title="Visual Analysis" sub="Our recent-game data, visualised.">
+          <Section id="08" title="Visual Analysis" sub="Our recent-game data, visualised.">
             <div className="space-y-4">
               <ChartCard title="xG vs Actual Goals" subtitle="Final 9 matchweeks" footnote="We consistently underperform our xG. Across the season, we scored 0.07 goals less per match than expected — that's a finishing problem, not a chance creation problem.">
                 <ResponsiveContainer>
@@ -3275,7 +4433,7 @@ export default function App() {
 
         {/* ======== INSIGHTS ======== */}
         {view === "insights" && (
-          <Section id="08" title="Hidden Insights" sub="The patterns from our recent matches that conventional analysis misses.">
+          <Section id="09" title="Hidden Insights" sub="The patterns from our recent matches that conventional analysis misses.">
             <div className="space-y-3">
               {insights.map((ins, idx) => {
                 const s = severityStyles[ins.severity];
@@ -3297,7 +4455,7 @@ export default function App() {
 
         {/* ======== INDEX ======== */}
         {view === "index" && (
-          <Section id="09" title="Complete Index" sub="All training zones, SSGs and KPIs at a glance.">
+          <Section id="10" title="Index" sub="All training zones, SSGs and KPIs at a glance.">
             <div className="rounded-lg border border-white/10 overflow-hidden mb-6">
               <div className="px-3 py-2 bg-white/[0.04] text-[10px] font-mono uppercase tracking-wider" style={{ color: BHA.blueLight }}>Training Focus Zones</div>
               <div className="divide-y divide-white/5">
