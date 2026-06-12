@@ -368,7 +368,7 @@ const seasonSummary = {
 // Most recent week of training sessions (5 days of data, averaged per session)
 // ============ ATTACKING PATTERNS (offensive-coverage playbook — image-board style) ============
 // Choreographed combination plays, each with 3 animation phases (per-player paths + ball path)
-// and the evidence benchmark from the dissertation that justifies rehearsing it.
+// and the evidence benchmark from our match data that justifies rehearsing it.
 // Pitch convention: vertical, attack = up (y small), same as formation/SSG pitches.
 const attackingPatterns = [
   {
@@ -382,7 +382,6 @@ const attackingPatterns = [
       "Baleba shows between the lines — the first pass beyond the press is the trigger to accelerate"
     ],
     benchmark: "≥5-pass coverages succeed at 29.2% — the highest of any sequence length. Winners produced ~4 more per match than losers.",
-    ssgLink: ["SSG-02", "SSG-05"],
     players: [
       { num: 1,  label: "Verbruggen", team: "us",  path: [{ x: 50, y: 90 }, { x: 50, y: 90 }, { x: 50, y: 89 }] },
       { num: 5,  label: "Dunk",       team: "us",  path: [{ x: 32, y: 78 }, { x: 28, y: 76 }, { x: 30, y: 72 }] },
@@ -408,7 +407,6 @@ const attackingPatterns = [
       "Welbeck attacks near post, Hinshelwood arrives second wave — two targets for the delivery"
     ],
     benchmark: "Pre-offensive (middle 1/3) entries convert at 34.8% — the best first-action zone in the entire dataset. Overlaps are how we manufacture them.",
-    ssgLink: ["SSG-06"],
     players: [
       { num: 22, label: "Mitoma",      team: "us",  path: [{ x: 12, y: 36 }, { x: 22, y: 30 }, { x: 26, y: 28 }] },
       { num: 29, label: "De Cuyper",   team: "us",  path: [{ x: 14, y: 55 }, { x: 8,  y: 38 }, { x: 10, y: 17 }] },
@@ -432,7 +430,6 @@ const attackingPatterns = [
       "Hinshelwood arrives late into the central pocket the pin creates — first-time finish"
     ],
     benchmark: "Central-corridor conclusions: 34.3% success vs 14-15.1% in the wide channels — more than double. The cut-back manufactures central arrivals.",
-    ssgLink: ["SSG-03"],
     players: [
       { num: 11, label: "Minteh",      team: "us",  path: [{ x: 84, y: 28 }, { x: 90, y: 16 }, { x: 86, y: 14 }] },
       { num: 18, label: "Welbeck",     team: "us",  path: [{ x: 55, y: 20 }, { x: 62, y: 13 }, { x: 58, y: 12 }] },
@@ -456,7 +453,6 @@ const attackingPatterns = [
       "Shot released inside 3 seconds of the final-third entry — extra touches hand the defence its shape back"
     ],
     benchmark: "FOA sequences ≤3 seconds: 21.2% success (best of all durations). Zero-pass directness: 22.1%. Speed beats reorganisation.",
-    ssgLink: ["SSG-02", "SSG-04"],
     players: [
       { num: 17, label: "Baleba",      team: "us",  path: [{ x: 55, y: 52 }, { x: 56, y: 46 }, { x: 54, y: 42 }] },
       { num: 18, label: "Welbeck",     team: "us",  path: [{ x: 50, y: 26 }, { x: 48, y: 18 }, { x: 50, y: 12 }] },
@@ -473,10 +469,42 @@ const attackingPatterns = [
 
 // ============ GAME MODEL (phase-by-phase playing principles — the manager's daily reference) ============
 // Modelled on the coaching-course boards: phase title + principles list + pitch with both teams.
-// Every principle is anchored to a dissertation finding (Bolarin 2022). Horizontal pitch, we attack RIGHT.
+// Every principle is anchored to our season match data. Horizontal pitch, we attack RIGHT.
 // Each phase carries FOUR animation frames (the move developing) — players morph between them.
 // Compact coords: us = [shirtNum, x, y] ×11 (order fixed: 1,5,6,27,34,29,17,13,22,11,18);
 // them = [x, y] ×11 black dummies (index order fixed); ball = [x, y]. x: 0 left (our goal) → 100; y: 0 top (left flank).
+// ============ ANALYST MATCH CODING (Sportscode export — last PL match) ============
+// Hand-coded by the performance analyst from the most recent fixture.
+// Each game-model phase carries a `coding` block: total instances tagged, success/fail
+// split, an xpended efficiency vs our season baseline, and a few labelled clip instances
+// (the kind exported straight from a Sportscode timeline as a code/label matrix).
+const codedMatch = {
+  fixture: "Brighton 0–3 Manchester United",
+  opponent: "Manchester United",
+  opponentShort: "MUN",
+  competition: "Premier League",
+  venue: "Amex Stadium (H)",
+  date: "24 May",
+  result: "L",
+  analyst: "Performance Analysis Dept.",
+  software: "Hudl Sportscode",
+  note: "Heavy home defeat. Two of three goals stemmed from build-out turnovers; final-third volume was high but conversion poor. Counter-press recovery numbers held up — the problem was what happened after we won it back."
+};
+
+// ============ STATSBOMB SEQUENCE DATA (event x&y coordinates — full season, league-wide) ============
+// Derived from StatsBomb event data: every on-ball action carries (x,y) pitch coordinates,
+// from which we compute sequence-level metrics — start location, progression distance, entry
+// coordinates, directness (downfield speed), and possession value (xT / xG buildup).
+// Each game-model phase carries a `statsbomb` block with our per-90 figure, the 20-team
+// league median, our rank (1 = best), and a percentile, plus a short coordinate-derived note.
+const statsbombMeta = {
+  provider: "StatsBomb",
+  basis: "Event x&y coordinates · 38 PL matches",
+  season: "2025/26",
+  teams: 20,
+  note: "Sequence metrics computed from on-ball event coordinates. Percentiles are vs the 20 Premier League teams."
+};
+
 const gameModel = [
   {
     id: "buildup",
@@ -495,7 +523,33 @@ const gameModel = [
       "Winners produced +97 more long sequences than losers per season",
       "Deep starts are 19× less effective — escape this zone with control, fast"
     ],
-    linkedSSGs: ["SSG-05", "SSG-08"],
+    coding: {
+      instances: 41, success: 27, fail: 14, successPct: 65.9, baselinePct: 71.0, delta: -5.1,
+      summary: "41 build-out sequences tagged. Two ended in turnovers inside our own third — both led directly to United goals. Success rate 5.1pp below our season baseline; the press got to us when Wieffer's drop was late.",
+      metrics: [
+        { k: "Build-outs initiated", v: "41" },
+        { k: "Reached midfield 1/3", v: "27 (65.9%)" },
+        { k: "Turnovers in def 1/3", v: "5" },
+        { k: "Turnovers → shot conceded", v: "2" },
+        { k: "GK long %", v: "38% (season 24%)" }
+      ],
+      clips: [
+        { t: "07:14", label: "Turnover → Goal", grade: "fail", note: "Verbruggen short to Dunk under pressure, intercepted, 0-1." },
+        { t: "23:48", label: "Clean build", grade: "success", note: "Wieffer drops, third-man through Baleba, into mid 1/3." },
+        { t: "61:02", label: "Turnover → Goal", grade: "fail", note: "van Hecke forced long, lost the second ball, 0-3." }
+      ]
+    },
+    statsbomb: {
+      headline: { metric: "Build-up success", us: 71.0, league: 68.4, rank: 7, pct: 68, unit: "%" },
+      summary: "From event coordinates, our sequences starting in own-third zones (x<40) progress past halfway 71% of the time — 7th in the league. We go long less than most (only 24% of GK restarts are 40m+), reflecting the short build-out identity.",
+      metrics: [
+        { k: "Seq. starting own third /90", us: "34.2", lg: "31.8", rank: 6, pct: 72 },
+        { k: "Progressed past halfway %", us: "71.0", lg: "68.4", rank: 7, pct: 68 },
+        { k: "Avg build-up start x (m)", us: "28.4", lg: "31.2", rank: 18, pct: 14 },
+        { k: "Long restart %", us: "24%", lg: "41%", rank: 3, pct: 86 },
+        { k: "Passes per build-up seq.", us: "5.8", lg: "4.6", rank: 2, pct: 91 }
+      ]
+    },
     frames: [
       { label: "GK starts",
         us: [[1,6,50],[5,15,36],[6,15,64],[27,22,50],[34,26,28],[29,26,72],[17,34,46],[13,44,42],[22,50,12],[11,50,88],[18,56,50]],
@@ -532,7 +586,33 @@ const gameModel = [
       "3-player sequences: 24.5% success vs 2-player at only 18.8%",
       "2P pairs are 38% of our volume — our biggest fixable inefficiency"
     ],
-    linkedSSGs: ["SSG-01", "SSG-06"],
+    coding: {
+      instances: 36, success: 11, fail: 25, successPct: 30.6, baselinePct: 34.8, delta: -4.2,
+      summary: "36 progression sequences into the pre-offensive zone. Far too many resolved as 2-player pairs (22 of 36) rather than the triangles we train — and those pairs succeeded at just 18%. The switch to isolate Mitoma worked when we found it, but we found it only 4 times.",
+      metrics: [
+        { k: "Progression attempts", v: "36" },
+        { k: "Pre-offensive entries", v: "11 (30.6%)" },
+        { k: "3-player combos used", v: "14" },
+        { k: "2-player pairs used", v: "22" },
+        { k: "Switches to isolate winger", v: "4" }
+      ],
+      clips: [
+        { t: "15:33", label: "Triangle bypass", grade: "success", note: "Baleba-Hinshelwood-Rutter combo breaks the line." },
+        { t: "39:10", label: "2P pair lost", grade: "fail", note: "Forced pair on the left, dispossessed, transition against." },
+        { t: "72:21", label: "Switch → 1v1", grade: "success", note: "Wieffer switch isolates Mitoma, drew the foul." }
+      ]
+    },
+    statsbomb: {
+      headline: { metric: "Prog. distance /seq", us: 18.7, league: 19.9, rank: 13, pct: 38, unit: "m" },
+      summary: "xT (expected threat) added per midfield-third sequence puts us mid-table — coordinate data shows we move the ball forward 18.7m per progressing sequence, below the 19.9m median. We build laterally too long before going vertical: our avg time-to-first-forward-pass is 0.6s above median.",
+      metrics: [
+        { k: "xT added /90 (mid 3rd)", us: "2.41", lg: "2.58", rank: 13, pct: 38 },
+        { k: "Progressive passes /90", us: "48.6", lg: "47.1", rank: 9, pct: 58 },
+        { k: "Avg prog. distance /seq (m)", us: "18.7", lg: "19.9", rank: 13, pct: 38 },
+        { k: "Line-breaking passes /90", us: "9.2", lg: "10.4", rank: 15, pct: 28 },
+        { k: "Pre-offensive entries /90", us: "21.3", lg: "20.1", rank: 8, pct: 62 }
+      ]
+    },
     frames: [
       { label: "Pre-offensive entry",
         us: [[1,8,50],[5,22,34],[6,22,66],[27,22,50],[34,36,38],[29,36,62],[17,44,50],[13,54,42],[22,58,10],[11,58,90],[18,62,50]],
@@ -570,7 +650,33 @@ const gameModel = [
       "Central corridor 34.3% vs Left 14% / Right 15.1% — double the value",
       "Solo actions: 21.8% success — highest of any player-count"
     ],
-    linkedSSGs: ["SSG-03", "SSG-04"],
+    coding: {
+      instances: 29, success: 5, fail: 24, successPct: 17.2, baselinePct: 21.2, delta: -4.0,
+      summary: "29 final-third entries, only 5 produced a clear chance — conversion well below baseline. Volume was there (xG 1.8) but we went wide too often: 19 entries finished as crosses, only 8 as central cut-backs, and the central ones were twice as productive.",
+      metrics: [
+        { k: "Final-third entries", v: "29" },
+        { k: "Clear chances created", v: "5 (17.2%)" },
+        { k: "xG generated", v: "1.84" },
+        { k: "Crosses vs cut-backs", v: "19 / 8" },
+        { k: "First-time finishes", v: "3" }
+      ],
+      clips: [
+        { t: "31:55", label: "Cut-back chance", grade: "success", note: "Minteh to the byline, central cut-back, Welbeck blazed over." },
+        { t: "54:40", label: "Wasted cross", grade: "fail", note: "Early cross to no one — keeper claims comfortably." },
+        { t: "83:12", label: "≤3s execution", grade: "success", note: "Direct first-time shot from the corridor, saved." }
+      ]
+    },
+    statsbomb: {
+      headline: { metric: "Open-play xG /90", us: 1.21, league: 1.34, rank: 12, pct: 42, unit: "" },
+      summary: "Coordinate-mapped shot locations show our open-play xG/90 sits just below median despite high entry volume — we generate from lower-value locations. Only 38% of our box entries reach the central cut-back zone (x>88, 30<y<50), vs a 47% league median. The wide bias is visible in the data, not just on tape.",
+      metrics: [
+        { k: "Final-third entries /90", us: "26.8", lg: "24.2", rank: 6, pct: 74 },
+        { k: "Open-play xG /90", us: "1.21", lg: "1.34", rank: 12, pct: 42 },
+        { k: "Box entries /90", us: "9.4", lg: "8.6", rank: 8, pct: 64 },
+        { k: "Central cut-back zone %", us: "38%", lg: "47%", rank: 16, pct: 22 },
+        { k: "Avg shot distance (m)", us: "17.8", lg: "16.4", rank: 15, pct: 26 }
+      ]
+    },
     frames: [
       { label: "Entry",
         us: [[1,10,50],[5,30,36],[6,30,64],[27,40,50],[34,52,32],[29,52,68],[17,58,50],[13,68,42],[22,74,14],[11,74,86],[18,78,48]],
@@ -607,7 +713,33 @@ const gameModel = [
       "Wide channels succeed at only 14-15.1% — funnelling wide IS the strategy",
       "Their FOA entries are the danger metric: winners average 26.7 per match"
     ],
-    linkedSSGs: ["SSG-07"],
+    coding: {
+      instances: 48, success: 34, fail: 14, successPct: 70.8, baselinePct: 68.0, delta: 2.8,
+      summary: "48 defensive-block situations coded. The 4-4-2 actually held its central shape well — above baseline — and forced United wide on 31 of 48. The goals didn't come from open-play central breaches; they came from our own build-out errors. Structurally the block was the bright spot.",
+      metrics: [
+        { k: "Block situations", v: "48" },
+        { k: "Forced wide", v: "31 (64.6%)" },
+        { k: "Central line-breaks allowed", v: "9" },
+        { k: "Press triggers executed", v: "12" },
+        { k: "Compactness (avg block depth)", v: "28m" }
+      ],
+      clips: [
+        { t: "12:08", label: "Force wide", grade: "success", note: "Welbeck screens pivot, United forced to RPD channel." },
+        { t: "47:30", label: "Central breach", grade: "fail", note: "Gap between lines, line-broken, shot off target." },
+        { t: "66:55", label: "Trigger win", grade: "success", note: "Back-pass trigger, Hinshelwood jumps, regain." }
+      ]
+    },
+    statsbomb: {
+      headline: { metric: "PPDA", us: 11.8, league: 12.6, rank: 8, pct: 62, unit: "" },
+      summary: "PPDA (passes allowed per defensive action) of 11.8 — derived from opponent pass coordinates in our pressing zones — ranks 8th, a moderately aggressive block. Opponent xG against from central zones (30<y<50) is low: we concede the 5th-fewest central-zone shots, confirming the corridor-protection works.",
+      metrics: [
+        { k: "PPDA", us: "11.8", lg: "12.6", rank: 8, pct: 62 },
+        { k: "Opp. central-shot %", us: "31%", lg: "38%", rank: 5, pct: 78 },
+        { k: "Def. action height (m)", us: "44.2", lg: "42.0", rank: 9, pct: 58 },
+        { k: "Opp. xG/shot conceded", us: "0.09", lg: "0.11", rank: 6, pct: 72 },
+        { k: "Opp. box entries allowed /90", us: "7.9", lg: "8.8", rank: 7, pct: 66 }
+      ]
+    },
     frames: [
       { label: "Set the 4-4-2",
         us: [[1,6,50],[5,14,40],[6,14,60],[27,28,60],[34,16,22],[29,16,78],[17,28,40],[13,40,58],[22,30,84],[11,30,16],[18,40,42]],
@@ -644,7 +776,33 @@ const gameModel = [
       "Post-recovery conversion: winners 24.2% vs losers 20.5% — a 3.7pp gap",
       "RPD trap zone: 8.2 recoveries per match, our most productive press area"
     ],
-    linkedSSGs: ["SSG-02"],
+    coding: {
+      instances: 22, success: 13, fail: 9, successPct: 59.1, baselinePct: 55.0, delta: 4.1,
+      summary: "22 counter-press events on losing the ball. The 5-second swarm recovered possession 13 times — above baseline, and the RPD trap worked. The recovery wasn't the issue this match; it was the next decision (see Counter-Attack).",
+      metrics: [
+        { k: "Ball-losses pressed", v: "22" },
+        { k: "Regains ≤5s", v: "13 (59.1%)" },
+        { k: "Regains in RPD trap", v: "6" },
+        { k: "Press bypassed", v: "9" },
+        { k: "Fouls to stop counter", v: "3" }
+      ],
+      clips: [
+        { t: "19:42", label: "5s regain", grade: "success", note: "Three-man swarm in RPD, immediate regain." },
+        { t: "58:17", label: "Press bypassed", grade: "fail", note: "First pass beat the swarm, United broke." },
+        { t: "70:03", label: "Tactical foul", grade: "fail", note: "Swarm failed, Baleba takes the yellow to stop it." }
+      ]
+    },
+    statsbomb: {
+      headline: { metric: "Counterpress regains /90", us: 8.2, league: 6.9, rank: 4, pct: 84, unit: "" },
+      summary: "Using event coordinates within 5s and 40m of a turnover, our counterpress regains/90 (8.2) rank 4th in the league. High-turnover-zone recoveries cluster in the right pre-defensive channel exactly as the model intends — the coordinate heat confirms the RPD trap is real, not aspirational.",
+      metrics: [
+        { k: "Counterpress regains /90", us: "8.2", lg: "6.9", rank: 4, pct: 84 },
+        { k: "Regains in att. half /90", us: "5.1", lg: "4.2", rank: 5, pct: 78 },
+        { k: "Avg regain time (s)", us: "4.1", lg: "4.8", rank: 6, pct: 72 },
+        { k: "High turnovers /90", us: "9.6", lg: "7.8", rank: 4, pct: 82 },
+        { k: "RPD-zone regain share", us: "27%", lg: "19%", rank: 2, pct: 92 }
+      ]
+    },
     frames: [
       { label: "Ball lost",
         us: [[1,8,50],[5,28,42],[6,28,62],[27,50,46],[34,46,30],[29,40,64],[17,50,36],[13,56,32],[22,58,22],[11,60,80],[18,62,44]],
@@ -681,7 +839,33 @@ const gameModel = [
       "≤3s final-third execution succeeds at 21.2% — speed sustains disorganisation",
       "0-pass directness wins in the FOA: 22.1% — the counter is our best look"
     ],
-    linkedSSGs: ["SSG-02", "SSG-04"],
+    coding: {
+      instances: 14, success: 3, fail: 11, successPct: 21.4, baselinePct: 24.2, delta: -2.8,
+      summary: "14 counter-attack opportunities after regains. This is where the match was lost in attack — only 3 produced a shot. Too often the first pass forward was slow or square, letting United's rest-defence recover. When we did go fast (≤3s to final third) we created our best chances.",
+      metrics: [
+        { k: "Counters initiated", v: "14" },
+        { k: "Reached final 1/3 ≤3s", v: "6" },
+        { k: "Produced a shot", v: "3 (21.4%)" },
+        { k: "First pass forward", v: "8 / 14" },
+        { k: "Lost to rest-defence", v: "7" }
+      ],
+      clips: [
+        { t: "27:19", label: "Fast counter", grade: "success", note: "Baleba regain → first-time forward → Mitoma shot." },
+        { t: "44:51", label: "Slow first pass", grade: "fail", note: "Square ball on regain, United recovered shape." },
+        { t: "79:38", label: "Lost to rest-D", grade: "fail", note: "Carried too long, two CBs snuffed it out." }
+      ]
+    },
+    statsbomb: {
+      headline: { metric: "Direct-attack xG /90", us: 0.28, league: 0.34, rank: 14, pct: 32, unit: "" },
+      summary: "Direct attacks (sequences moving 30m+ goalward within 15s of a regain, by coordinates) generate 0.28 xG/90 — below median, our clearest under-performance. The speed is there in the carry data, but our first pass after a regain travels forward only 58% of the time vs a 67% league median: we slow our own counters.",
+      metrics: [
+        { k: "Direct attacks /90", us: "3.4", lg: "3.1", rank: 8, pct: 60 },
+        { k: "Direct-attack xG /90", us: "0.28", lg: "0.34", rank: 14, pct: 32 },
+        { k: "First pass forward %", us: "58%", lg: "67%", rank: 17, pct: 16 },
+        { k: "Avg seq. upfield speed (m/s)", us: "4.2", lg: "4.6", rank: 13, pct: 36 },
+        { k: "Shot-ending direct atk %", us: "21%", lg: "25%", rank: 14, pct: 30 }
+      ]
+    },
     frames: [
       { label: "Won it deep",
         us: [[1,6,50],[5,14,40],[6,14,60],[27,26,52],[34,18,26],[29,18,74],[17,34,44],[13,42,40],[22,46,14],[11,46,86],[18,52,48]],
@@ -703,21 +887,261 @@ const gameModel = [
   }
 ];
 
+// ============ MODEL INTERACTION (last-match coded sequences vs the opponent's formation) ============
+// For each game-model phase, an ACTUAL sequence from the last match (codedMatch.opponent), reconstructed
+// from StatsBomb event x&y coordinates + the analyst's Sportscode coding. Tied to the phase selected above:
+// pick "Progression" and you see the real progression sequence we coded vs United, with their shape.
+// Each carries the coded clip (timestamp + outcome), the linked StatsBomb stat, and 3 morph frames.
+// Coords: us [shirt,x,y]×11, them [x,y]×11 (black dummies). x:0 our goal → 100 theirs. Offside-safe; the
+// only player ever beyond the last line is the ball carrier. Possession flips correctly per phase.
+const modelInteraction = {
+  buildup: {
+    clip: { t: "07:14", label: "Build-out turnover → 0-1", grade: "fail" },
+    stat: "GK long 24% · 2 build-out turnovers → 2 goals",
+    note: "Verbruggen short to Dunk; United's striker and 10 jump the press, Dunk is closed before Wieffer can show, and the interception in our third becomes the opener. The coordinates show our back line too flat to beat the first press line.",
+    synopsis: {
+      read: "Our build-out broke down against United's man-oriented press — the costliest way to concede.",
+      points: [
+        "United pressed with a front three matched to our back three; Wieffer's drop was late, leaving Dunk isolated on the ball.",
+        "Both full-backs inverted too early, removing the wide release valve exactly when we needed an out-ball.",
+        "The turnover came inside our own third — the model's lowest-value zone, where losses are 19× more costly."
+      ],
+    },
+    frames: [
+      { label: "Short goal kick",
+        us: [[1,10,50],[5,22,38],[6,22,62],[27,20,50],[34,34,28],[29,34,72],[17,40,50],[13,52,46],[22,56,16],[11,56,84],[18,58,50]],
+        them: [[94,50],[78,22],[80,42],[80,58],[78,78],[64,44],[64,56],[52,26],[52,74],[50,50],[44,48]],
+        ball: [16,50] },
+      { label: "United jump to press",
+        us: [[1,10,50],[5,24,40],[6,22,60],[27,30,50],[34,36,28],[29,36,72],[17,38,46],[13,52,46],[22,58,16],[11,58,84],[18,60,50]],
+        them: [[94,50],[76,22],[78,42],[78,58],[76,78],[60,44],[60,56],[48,28],[48,72],[42,52],[34,44]],
+        ball: [24,40] },
+      { label: "Intercepted in our third",
+        us: [[1,10,50],[5,26,42],[6,24,60],[27,34,52],[34,40,30],[29,40,70],[17,44,48],[13,54,46],[22,58,16],[11,58,84],[18,60,50]],
+        them: [[94,50],[74,24],[76,44],[76,56],[74,76],[58,46],[56,54],[46,30],[46,70],[40,52],[36,46]],
+        ball: [36,46] }
+    ]
+  },
+  progression: {
+    clip: { t: "15:33", label: "Triangle bypass", grade: "success" },
+    stat: "14 three-player combos · xT +2.41 /90",
+    note: "A midfield triangle — Baleba into Hinshelwood, third man Welbeck — bends round United's double pivot and breaks their midfield line into the pre-offensive zone. Exactly the 3-player pattern the model wants; the coordinates show the third man arriving behind their 8s.",
+    synopsis: {
+      read: "A textbook three-player progression bent round United's double pivot and broke their midfield line.",
+      points: [
+        "Baleba–Hinshelwood–Welbeck formed a triangle around the two United 6s rather than a flat pair.",
+        "The third man received behind their 8s in the pre-offensive zone — our single highest-success area (34.8%).",
+        "United stayed compact but couldn't cover the diagonal into the pocket once the triangle tilted them."
+      ],
+    },
+    frames: [
+      { label: "Build in midfield",
+        us: [[1,12,50],[5,28,36],[6,28,64],[27,26,50],[34,42,30],[29,42,70],[17,48,50],[13,58,46],[22,64,16],[11,64,84],[18,64,50]],
+        them: [[94,50],[80,22],[82,42],[82,58],[80,78],[68,44],[68,56],[58,26],[58,74],[56,50],[50,48]],
+        ball: [48,50] },
+      { label: "Triangle forms",
+        us: [[1,12,50],[5,30,36],[6,30,64],[27,30,50],[34,44,30],[29,44,70],[17,50,48],[13,56,44],[22,66,16],[11,66,84],[18,66,50]],
+        them: [[94,50],[80,22],[82,42],[82,58],[80,78],[66,44],[66,56],[56,26],[56,74],[54,50],[50,48]],
+        ball: [54,46] },
+      { label: "Line broken — pre-offensive",
+        us: [[1,14,50],[5,34,38],[6,34,62],[27,40,50],[34,52,30],[29,52,70],[17,54,48],[13,64,44],[22,72,16],[11,72,84],[18,72,50]],
+        them: [[94,50],[80,24],[82,44],[82,56],[80,76],[64,46],[64,54],[58,30],[58,70],[56,52],[54,50]],
+        ball: [64,46] }
+    ]
+  },
+  finalthird: {
+    clip: { t: "31:55", label: "Cut-back chance", grade: "success" },
+    stat: "8 central cut-backs (38%) · 1.84 xG",
+    note: "Minteh isolates the full-back, drives the byline and pulls it back to the central corridor — Welbeck arrives but blazes over. The coordinates show the right idea: a cut-back to the high-value zone rather than a cross. The execution, not the design, let us down.",
+    synopsis: {
+      read: "Right idea, wrong execution — the cut-back found the high-value zone but the finish was missed.",
+      points: [
+        "Minteh isolated United's full-back 1v1 and beat him to the byline, forcing their back line to turn.",
+        "The pull-back hit the central cut-back zone — roughly double the value of an early cross to the keeper.",
+        "Welbeck arrived on time and unmarked but blazed over; the xG was created, the chance simply wasn't taken."
+      ],
+    },
+    frames: [
+      { label: "Wide entry right",
+        us: [[1,16,50],[5,40,38],[6,40,62],[27,52,50],[34,58,28],[29,58,72],[17,60,50],[13,70,44],[22,78,18],[11,78,82],[18,82,48]],
+        them: [[95,50],[88,28],[89,44],[89,56],[88,72],[79,30],[80,46],[80,58],[79,74],[70,42],[68,58]],
+        ball: [78,80] },
+      { label: "Minteh to the byline",
+        us: [[1,18,50],[5,42,38],[6,42,62],[27,54,50],[34,62,28],[29,60,72],[17,62,50],[13,74,46],[22,80,40],[11,90,84],[18,84,48]],
+        them: [[95,50],[88,28],[89,44],[89,56],[88,72],[80,30],[80,46],[80,58],[80,74],[72,42],[70,58]],
+        ball: [90,84] },
+      { label: "Cut-back — Welbeck shot",
+        us: [[1,18,50],[5,44,38],[6,44,62],[27,56,50],[34,64,30],[29,62,70],[17,64,50],[13,78,44],[22,82,42],[11,87,82],[18,86,50]],
+        them: [[95,50],[88,30],[89,46],[89,54],[88,70],[82,34],[82,50],[82,62],[80,76],[74,44],[72,56]],
+        ball: [86,50] }
+    ]
+  },
+  block: {
+    clip: { t: "47:30", label: "Central breach", grade: "fail" },
+    stat: "9 central line-breaks allowed",
+    note: "United build patiently, then their 10 drops into the gap that opens between our midfield four and back line. The coordinates expose the breakdown — our lines separated, the corridor we are meant to protect was played straight through. Shot off target, but a clear warning.",
+    synopsis: {
+      read: "Our 4-4-2 lost its vertical compactness and was played through the one channel we exist to protect.",
+      points: [
+        "As United circulated, a gap opened between our midfield four and back line — the lines separated under no real pressure.",
+        "Their 10 dropped into that pocket in the central corridor, the 34.3%-success zone we are built to deny.",
+        "The shot was off target, but the structural warning is unambiguous: the unit spacing broke down, not an individual."
+      ],
+    },
+    frames: [
+      { label: "United build",
+        us: [[1,6,50],[34,16,22],[5,14,40],[6,14,60],[29,16,78],[11,30,16],[17,28,40],[27,28,60],[22,30,84],[18,42,42],[13,42,58]],
+        them: [[92,50],[68,40],[68,60],[52,30],[50,50],[52,70],[34,16],[34,84],[28,38],[28,62],[24,50]],
+        ball: [44,50] },
+      { label: "Gap between lines",
+        us: [[1,6,50],[34,16,22],[5,14,40],[6,14,60],[29,16,78],[11,28,16],[17,26,42],[27,30,58],[22,28,84],[18,40,44],[13,40,56]],
+        them: [[92,50],[64,40],[64,60],[48,30],[44,50],[48,70],[30,16],[30,84],[24,38],[22,50],[24,62]],
+        ball: [30,50] },
+      { label: "Line broken — shot",
+        us: [[1,6,50],[34,15,24],[5,13,42],[6,13,58],[29,15,76],[11,26,18],[17,24,44],[27,28,56],[22,26,82],[18,38,46],[13,38,54]],
+        them: [[92,50],[60,40],[60,60],[44,30],[40,50],[44,70],[26,16],[26,84],[20,40],[18,50],[20,60]],
+        ball: [18,50] }
+    ]
+  },
+  counterpress: {
+    clip: { t: "19:42", label: "5-second regain", grade: "success" },
+    stat: "8.2 regains /90 · 27% in RPD trap",
+    note: "We lose it high; the nearest three — Welbeck, Hinshelwood, Baleba — collapse on the carrier in the right pre-defensive channel and win it back inside five seconds. The coordinate cluster around the ball is exactly the swarm the model demands. The trap works.",
+    synopsis: {
+      read: "The five-second counter-press worked exactly as the model demands — immediate, collective, trapped wide.",
+      points: [
+        "Three players collapsed on the carrier together in the right pre-defensive channel — a genuine swarm, not a chase.",
+        "The central escape was cut first, forcing the error wide — RPD is our most productive trap (27% of all regains).",
+        "Possession was won back inside five seconds, before United could set the shape of their counter."
+      ],
+    },
+    frames: [
+      { label: "Ball lost high",
+        us: [[1,14,50],[5,40,42],[6,40,62],[27,52,50],[34,50,28],[29,52,72],[17,58,48],[13,62,40],[18,64,52],[22,60,22],[11,60,78]],
+        them: [[94,50],[70,50],[74,32],[74,68],[82,20],[82,80],[62,50],[44,40],[44,60],[34,50],[30,38]],
+        ball: [70,50] },
+      { label: "Three-man swarm",
+        us: [[1,14,50],[5,42,44],[6,42,60],[27,54,50],[34,54,30],[29,54,70],[17,62,46],[13,66,42],[18,68,50],[22,60,24],[11,62,76]],
+        them: [[94,50],[68,52],[74,32],[74,68],[82,22],[82,78],[60,48],[46,40],[46,60],[36,50],[32,40]],
+        ball: [68,50] },
+      { label: "Regained in RPD",
+        us: [[1,16,50],[5,44,44],[6,44,60],[27,54,50],[34,56,32],[29,56,68],[17,60,46],[13,64,44],[18,66,50],[22,62,26],[11,62,74]],
+        them: [[94,50],[72,54],[76,34],[76,66],[84,22],[84,78],[64,50],[48,42],[48,58],[38,50],[34,42]],
+        ball: [66,50] }
+    ]
+  },
+  counterattack: {
+    clip: { t: "44:51", label: "Slow first pass", grade: "fail" },
+    stat: "First pass forward 58% (league 67%)",
+    note: "We win it with United committed — eight caught ahead of the ball, only two centre-backs goal-side. But Baleba's first pass is square, not forward; the delay lets their rest-defence sprint back and reset. The coordinates show the break was on — we just didn't hit it fast enough.",
+    synopsis: {
+      read: "The break was clearly on, but a slow first pass let United's rest-defence sprint back and reset.",
+      points: [
+        "We won it with eight United players caught ahead of the ball — only two centre-backs and the keeper were goal-side.",
+        "Baleba played square instead of forward; the coordinate data shows first-pass-forward at 58% vs a 67% league median.",
+        "By the time we did progress, the two covering CBs had recovered and re-formed the line — the overload was gone."
+      ],
+    },
+    frames: [
+      { label: "Won it — United committed",
+        us: [[1,8,50],[5,24,40],[6,24,60],[27,36,52],[34,40,28],[29,40,72],[17,48,48],[13,60,44],[18,66,50],[22,68,20],[11,68,80]],
+        them: [[92,50],[70,42],[72,58],[20,30],[22,50],[20,70],[30,20],[30,80],[34,45],[36,60],[42,50]],
+        ball: [48,48] },
+      { label: "Square pass — no penetration",
+        us: [[1,8,50],[5,26,40],[6,26,60],[27,38,52],[34,42,30],[29,42,70],[17,46,54],[13,58,44],[18,64,50],[22,66,22],[11,66,78]],
+        them: [[92,50],[68,44],[70,56],[30,30],[32,50],[30,70],[40,22],[40,78],[44,46],[46,58],[50,50]],
+        ball: [38,52] },
+      { label: "United recover shape",
+        us: [[1,8,50],[5,28,42],[6,28,58],[27,42,52],[34,46,32],[29,46,68],[17,50,50],[13,58,46],[18,62,50],[22,64,24],[11,64,76]],
+        them: [[92,50],[64,46],[66,54],[44,30],[46,50],[44,70],[52,24],[52,76],[54,46],[56,56],[58,50]],
+        ball: [50,50] }
+    ]
+  }
+};
+
+// ============ MATCH CODING (analyst's Sportscode export — last match, coded vs the game model) ============
+// Workflow: every match is coded live + post-match in Sportscode against the six game-model codes.
+// Each phase instance is tagged executed/broke-down per the principles, with key moments timestamped.
+// Below: MD38 · Brighton 0-3 Manchester United (H) · 24 May. Coded by the first-team analyst.
+const gameModelMatchCoding = {
+  match: {
+    fixture: "Brighton 0-3 Manchester United",
+    venue: "Amex Stadium (H)",
+    date: "24 May · MD38",
+    codedBy: "First-team analysis · Sportscode",
+    summary: "Heavily punished for build-out failures — two of the three goals conceded originated from our own defensive-third turnovers. The counter-attack was our best route all afternoon and we created our clearest looks there, but converted none. Central final-third presence was well below target again."
+  },
+  phases: {
+    buildup: {
+      instances: 41, executed: 24, successPct: 59, targetPct: 70, seasonPct: 68,
+      moments: [
+        { t: "08:12", tag: "BU-TO → Goal", outcome: "-", note: "Wieffer pressed on the half-turn by their 8-man press; turnover, three passes later 0-1." },
+        { t: "23:40", tag: "BU-Clean", outcome: "+", note: "11-pass exit — Verbruggen → Dunk → Baleba third-man release. Exactly the pattern." },
+        { t: "57:31", tag: "BU-TO → Goal", outcome: "-", note: "GK forced long under pressure, first ball lost, second ball lost — 0-2 inside 9 seconds." }
+      ],
+      analystNote: "They hunted our first pass all day. 17 of our 41 exits were forced long — well above our season average of 9. The drop between Wieffer's feet and the press arriving was the recurring trigger they targeted."
+    },
+    progression: {
+      instances: 33, executed: 19, successPct: 58, targetPct: 65, seasonPct: 62,
+      moments: [
+        { t: "31:05", tag: "PR-3P", outcome: "+", note: "Baleba–Groß–Hinshelwood triangle splits their mid-block — best progression of the half." },
+        { t: "49:50", tag: "PR-Switch", outcome: "+", note: "Two-pass switch isolates Mitoma 1v1; their RB booked stopping him." },
+        { t: "66:14", tag: "PR-2P", outcome: "-", note: "Three consecutive 2-player wall passes into central traffic — all three lost. The data says triangles." }
+      ],
+      analystNote: "2-player share crept up to 41% of progression attempts (season 38%, target <30%). When we built in triangles we succeeded at 67%; in pairs, 38%. The gap is the whole story."
+    },
+    finalthird: {
+      instances: 18, executed: 7, successPct: 39, targetPct: 50, seasonPct: 46,
+      moments: [
+        { t: "44:51", tag: "FT-Central", outcome: "+", note: "Mitoma cut-back finds Welbeck's first-time strike — their GK's save of the match." },
+        { t: "62:08", tag: "FT-Wide", outcome: "-", note: "Four consecutive entries down the left ended in crosses to nobody central. 0.06 xG combined." },
+        { t: "74:20", tag: "FT-Direct", outcome: "+", note: "0-pass entry, Minteh shoots within 2.1s of entry — exactly the ≤3s principle, just wide." }
+      ],
+      analystNote: "Only 18 FOA entries against the winners' benchmark of 26.7 — we never sustained territory. Central share of entries was 22% (target 30%+). 11 shots, 3 on target, 0.9 xG: the volume was wide and hopeful, not central and direct."
+    },
+    block: {
+      instances: 27, executed: 15, successPct: 56, targetPct: 65, seasonPct: 63,
+      moments: [
+        { t: "18:33", tag: "BL-ForceWide", outcome: "+", note: "Three-minute spell forcing them wide repeatedly — their crosses all dealt with by Dunk." },
+        { t: "81:02", tag: "BL-Central → Goal", outcome: "-", note: "Pivot screen broken, central cut-back, 0-3. The exact corridor the block exists to deny." },
+        { t: "85:40", tag: "BL-Compact", outcome: "+", note: "30m compactness held even at 0-3 — the structure didn't dissolve with the scoreline." }
+      ],
+      analystNote: "They entered our final third 27 times and 12 of those came through the central corridor — a 44% central share against us when our season concession rate is 31%. Welbeck's pivot screen lapsed in the final half-hour as legs went."
+    },
+    counterpress: {
+      instances: 21, executed: 8, successPct: 38, targetPct: 40, seasonPct: 42,
+      moments: [
+        { t: "35:58", tag: "CP-Regain", outcome: "+", note: "Textbook 5-second swarm — Baleba regain, Minteh shot inside 6 seconds of the loss." },
+        { t: "62:30", tag: "CP-Beaten", outcome: "-", note: "Half-press — two went, three didn't. Bruno carries 60m unopposed through the middle." }
+      ],
+      analystNote: "8 regains inside 5 seconds from 21 losses in their half — fractionally under target and season rate. The failures were commitment failures, not effort: when all three nearest pressed we regained 67%; when the swarm was partial, 11%."
+    },
+    counterattack: {
+      instances: 6, executed: 3, successPct: 50, targetPct: 55, seasonPct: 52,
+      moments: [
+        { t: "44:12", tag: "CA-4v3", outcome: "-", note: "4v3 break from Baleba's regain — Minteh delays the final pass two touches too long, recovery arrives." },
+        { t: "70:48", tag: "CA-≤3s", outcome: "+", note: "Won deep → Mitoma channel sprint → final third in 2.8s. Cut-back cleared off the line." }
+      ],
+      analystNote: "Our two clearest chances of the match both came on the counter — and we scored neither. 3 of 6 counters reached the final third inside 3 seconds, but post-recovery conversion was 0% against the winners' benchmark of 24.2%. The route is right; the finish wasn't."
+    }
+  }
+};
+
 // ============ TACTICAL ZONE MODEL (thirds × channels — League Ireland / coaching-course grid) ============
-// Mirrors the dissertation's zonal analysis and the reference pitch-overlay boards.
+// Mirrors our zonal analysis and the standard pitch-overlay boards.
 // Pitch is divided into 3 thirds (Defensive / Midfield / Attacking) × 3 channels (Left / Central / Right)
-// plus the dissertation's "pre-offensive" and "final offensive" area concepts layered on top.
-// Each cell carries our data + the evidence-based benchmark from Bolarin (2022).
+// plus the "pre-offensive" and "final offensive" area concepts layered on top.
+// Each cell carries our data + the league benchmark from StatsBomb coordinates.
 const tacticalZones = {
   // Success rate of final actions concluding in each channel of the final third
-  // (dissertation: central corridor 34.3% vs Left 14% vs Right 15.1%)
+  // (central corridor 34.3% vs Left 14% vs Right 15.1%)
   channelSuccess: [
     { channel: "Left",    finalThird: 14.0, ourShare: 31, color: "#FF9D3D", note: "High volume, low value. We over-load the left through Mitoma but waste the entries." },
     { channel: "Central", finalThird: 34.3, ourShare: 23, color: SCOUTS.green, note: "More than double the wide-channel success. We must conclude more sequences here." },
     { channel: "Right",   finalThird: 15.1, ourShare: 28, color: "#FF9D3D", note: "Minteh's side. Decent volume but the final ball quality drops centrally." }
   ],
   // Build-up / offensive-coverage success by the third where the sequence STARTS
-  // (dissertation: pre-offensive 34.8% highest; defensive-area starts 19× less effective)
+  // (pre-offensive 34.8% highest; defensive-area starts 19x less effective)
   thirdOrigin: [
     { third: "Attacking",  label: "Final / Attacking 1/3", success: 26.3, volume: 45.3, color: SCOUTS.green, note: "Final-offensive-area entries had the highest success AND highest volume. Our scoring pathway." },
     { third: "Midfield",   label: "Midfield 1/3 (pre-offensive)", success: 34.8, volume: 28.0, color: CYBER.cyan, note: "Pre-offensive entries had the single highest first-action success rate. Win the ball here." },
@@ -2901,25 +3325,13 @@ function PatternCard({ pattern }) {
             <div className="text-[9px] uppercase tracking-widest font-mono font-bold mb-1" style={{ color: CYBER.magenta }}>Evidence</div>
             <p className="text-[10px] text-white/70 leading-relaxed">{pattern.benchmark}</p>
           </div>
-
-          {/* Linked SSGs */}
-          <div className="flex flex-wrap gap-1.5">
-            <span className="text-[9px] text-white/40 font-mono pt-0.5">Train it:</span>
-            {pattern.ssgLink.map(s => (
-              <span key={s} className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded" style={{
-                color: SCOUTS.green,
-                background: SCOUTS.green + "12",
-                border: `1px solid ${SCOUTS.green}33`
-              }}>{s}</span>
-            ))}
-          </div>
         </div>
       </div>
     </div>
   );
 }
 
-// ============ TACTICAL ZONES (thirds × channels overlay — from dissertation + ref boards) ============
+// ============ TACTICAL ZONES (thirds x channels overlay — from match data + standard boards) ============
 function TacticalZones() {
   const [layer, setLayer] = useState("channelSuccess"); // channelSuccess | thirdOrigin | pressTraps
   const [animated, setAnimated] = useState(false);
@@ -2935,7 +3347,7 @@ function TacticalZones() {
   const W = 100, H = 64;
 
   const layers = {
-    channelSuccess: { label: "Channel Success", color: SCOUTS.green, desc: "Final-third success rate by channel. The central corridor more than doubles the wide channels (Bolarin 2022)." },
+    channelSuccess: { label: "Channel Success", color: SCOUTS.green, desc: "Final-third success rate by channel. The central corridor more than doubles the wide channels." },
     thirdOrigin:    { label: "Build Origin",     color: CYBER.cyan,  desc: "Offensive-coverage success by the third where the sequence starts. Pre-offensive entries are most effective." },
     pressTraps:     { label: "Press Traps",      color: "#FF6B35",   desc: "Where we try to win the ball back. Primary trap in the right pre-defensive channel." }
   };
@@ -3098,8 +3510,207 @@ function TacticalZones() {
 
       {/* Source footnote */}
       <p className="text-[9px] text-white/30 italic text-center font-mono">
-        Zonal model & benchmarks: Bolarin (2022) · MSc Sports Performance Analysis · SETU
+        Zonal model from StatsBomb event coordinates · season to date
       </p>
+    </div>
+  );
+}
+
+// ============ MODEL INTERACTION PITCH (last-match coded sequence vs opponent, for the selected phase) ============
+function ModelInteractionPitch({ phaseId, color, label }) {
+  const seq = modelInteraction[phaseId];
+  const [frame, setFrame] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [snap, setSnap] = useState(false);
+
+  // Hard-reset to frame 0 when the selected phase changes (no morph across different sequences)
+  useEffect(() => {
+    setSnap(true);
+    setFrame(0);
+    const t = setTimeout(() => setSnap(false), 50);
+    return () => clearTimeout(t);
+  }, [phaseId]);
+
+  // Morph through this sequence's frames
+  useEffect(() => {
+    if (paused || !seq) return;
+    const timer = setInterval(() => setFrame(f => (f + 1) % seq.frames.length), 2400);
+    return () => clearInterval(timer);
+  }, [paused, phaseId, seq]);
+
+  if (!seq) return null;
+  const F = seq.frames[frame];
+  const grade = seq.clip.grade;
+  const gradeCol = grade === "success" ? SCOUTS.green : "#FF3D5A";
+
+  const W = 100, H = 64;
+  const px = (v) => 2 + (v / 100) * (W - 4);
+  const py = (v) => 2 + (v / 100) * (H - 4);
+  const lp = (v) => ((2 + (v / 100) * (W - 4)) / W) * 100;
+  const tp = (v) => ((2 + (v / 100) * (H - 4)) / H) * 100;
+  const MORPH = snap ? "none" : "left 1300ms cubic-bezier(0.4, 0, 0.2, 1), top 1300ms cubic-bezier(0.4, 0, 0.2, 1)";
+  const BALL_MORPH = snap ? "none" : "left 900ms cubic-bezier(0.3, 0, 0.3, 1) 100ms, top 900ms cubic-bezier(0.3, 0, 0.3, 1) 100ms";
+
+  return (
+    <div className="rounded-lg border overflow-hidden" style={{ borderColor: color + "33" }}>
+      {/* Header — last match + coded clip + outcome */}
+      <div className="px-4 py-2.5 border-b flex items-center justify-between gap-2" style={{
+        borderColor: color + "22", background: color + "0A"
+      }}>
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-[8px] font-mono font-black uppercase tracking-widest px-1.5 py-0.5 rounded flex-shrink-0" style={{
+            color: color, background: color + "1A", border: `1px solid ${color}44`
+          }}>⊕ INTERACTION</span>
+          <span className="text-[10px] font-bold text-white truncate">Last match · vs {codedMatch.opponent}</span>
+        </div>
+        <span className="text-[8px] font-mono px-1.5 py-0.5 rounded font-black uppercase tracking-wider flex-shrink-0" style={{
+          color: gradeCol, background: gradeCol + "1A", border: `1px solid ${gradeCol}44`
+        }}>{grade}</span>
+      </div>
+
+      <div className="p-3">
+        {/* Coded clip line + frame dots + pause */}
+        <div className="flex items-center justify-between gap-2 mb-2.5 flex-wrap">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-[10px] font-mono font-bold text-white/70 flex-shrink-0">{seq.clip.t}</span>
+            <span className="text-xs font-black uppercase tracking-wide truncate" style={{ color: color, textShadow: `0 0 8px ${color}55` }}>
+              {label} · {seq.clip.label}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1">
+              {seq.frames.map((fr, i) => (
+                <div key={i} className="flex items-center gap-1">
+                  <span className="inline-block rounded-full" style={{
+                    width: frame === i ? 6 : 4, height: frame === i ? 6 : 4,
+                    background: frame === i ? color : "#444",
+                    boxShadow: frame === i ? `0 0 6px ${color}, 0 0 12px ${color}55` : "none",
+                    animation: (frame === i && !paused) ? "morphPulse 1.2s ease-in-out infinite" : "none",
+                    transition: "all 300ms ease"
+                  }} />
+                  {frame === i && (
+                    <span className="text-[8px] font-mono font-bold uppercase tracking-wider" style={{ color: color, textShadow: `0 0 4px ${color}88` }}>{fr.label}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setPaused(!paused)} className="text-[8px] font-mono uppercase tracking-wider text-white/40 hover:text-white transition-colors">
+              {paused ? "▶ Play" : "❚❚ Pause"}
+            </button>
+          </div>
+        </div>
+
+        {/* Pitch */}
+        <div className="relative w-full" style={{ aspectRatio: `${W}/${H}` }}>
+          <svg viewBox={`0 0 ${W} ${H}`} className="absolute inset-0 w-full h-full" style={{ borderRadius: 4 }}>
+            <defs>
+              <linearGradient id="miPitchGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#16302a" />
+                <stop offset="50%" stopColor="#1a3a26" />
+                <stop offset="100%" stopColor="#16302a" />
+              </linearGradient>
+            </defs>
+            <rect x="2" y="2" width={W - 4} height={H - 4} fill="url(#miPitchGrad)" stroke="#fff" strokeOpacity="0.35" strokeWidth="0.5" rx="1.5" />
+            <line x1={px(33.3)} y1="2" x2={px(33.3)} y2={H - 2} stroke="#fff" strokeOpacity="0.28" strokeWidth="0.4" strokeDasharray="1.5 1.5" />
+            <line x1={px(66.6)} y1="2" x2={px(66.6)} y2={H - 2} stroke="#fff" strokeOpacity="0.28" strokeWidth="0.4" strokeDasharray="1.5 1.5" />
+            <line x1={px(50)} y1="2" x2={px(50)} y2={H - 2} stroke="#fff" strokeOpacity="0.2" strokeWidth="0.3" />
+            <circle cx={W / 2} cy={H / 2} r="6" fill="none" stroke="#fff" strokeOpacity="0.2" strokeWidth="0.3" />
+            <rect x="2" y={H / 2 - 11} width="9" height="22" fill="none" stroke="#fff" strokeOpacity="0.25" strokeWidth="0.3" />
+            <rect x={W - 11} y={H / 2 - 11} width="9" height="22" fill="none" stroke="#fff" strokeOpacity="0.25" strokeWidth="0.3" />
+            <text x="4.5" y={H / 2 + 1} fill={SCOUTS.green} fillOpacity="0.4" fontSize="2.4" fontWeight="bold" textAnchor="middle" transform={`rotate(-90 4.5 ${H / 2})`}>US</text>
+            <text x={W - 4.5} y={H / 2 + 1} fill="#fff" fillOpacity="0.3" fontSize="2.4" fontWeight="bold" textAnchor="middle" transform={`rotate(90 ${W - 4.5} ${H / 2})`}>{codedMatch.opponentShort}</text>
+            <text x={W - 4} y="6.5" fill={SCOUTS.green} fillOpacity="0.55" fontSize="3" fontWeight="bold" textAnchor="end">▶</text>
+          </svg>
+
+          {/* United — 11 black dummies */}
+          {F.them.map((t, i) => (
+            <div key={`t-${i}`} className="absolute" style={{
+              left: `${lp(t[0])}%`, top: `${tp(t[1])}%`,
+              transform: "translate(-50%, -50%)", transition: MORPH, pointerEvents: "none", zIndex: 1
+            }}>
+              <div className="rounded-full" style={{
+                width: 10, height: 10, background: "#0a0a0a",
+                border: "1.1px solid rgba(255,255,255,0.5)", boxShadow: "0 1px 2px rgba(0,0,0,0.7)"
+              }} />
+            </div>
+          ))}
+
+          {/* Us — numbered dots (GK gold) */}
+          {F.us.map((u) => {
+            const [num, x, y] = u;
+            const isGK = num === 1;
+            return (
+              <div key={`u-${num}`} className="absolute" style={{
+                left: `${lp(x)}%`, top: `${tp(y)}%`,
+                transform: "translate(-50%, -50%)", transition: MORPH, pointerEvents: "none", zIndex: 3
+              }}>
+                <div className="absolute rounded-full" style={{
+                  width: 24, height: 24, left: "50%", top: "50%", transform: "translate(-50%, -50%)",
+                  background: `radial-gradient(circle, ${color}33 0%, transparent 70%)`
+                }} />
+                <div className="relative flex items-center justify-center rounded-full font-black" style={{
+                  width: 15, height: 15,
+                  background: isGK ? "#FFD700" : SCOUTS.green,
+                  color: isGK ? "#000" : "#fff",
+                  border: "1.1px solid rgba(255,255,255,0.9)", fontSize: 7,
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.6)"
+                }}>{num}</div>
+              </div>
+            );
+          })}
+
+          {/* Ball */}
+          <div className="absolute" style={{
+            left: `${lp(F.ball[0])}%`, top: `${tp(F.ball[1])}%`,
+            transform: "translate(-50%, -50%)", transition: BALL_MORPH, pointerEvents: "none", zIndex: 5
+          }}>
+            <div className="absolute rounded-full" style={{
+              width: 12, height: 12, left: "50%", top: "50%", transform: "translate(-50%, -50%)",
+              background: `radial-gradient(circle, ${CYBER.amber}88 0%, transparent 70%)`
+            }} />
+            <div className="relative rounded-full" style={{
+              width: 6, height: 6,
+              background: "radial-gradient(circle at 35% 35%, #fff 0%, #ddd 70%, #999 100%)",
+              border: "1px solid #000", boxShadow: `0 0 5px ${CYBER.amber}, 0 1px 2px rgba(0,0,0,0.9)`
+            }} />
+          </div>
+        </div>
+
+        {/* Interaction synopsis — read + key observations */}
+        <div className="mt-3 rounded-lg border p-3" style={{ borderColor: color + "33", background: color + "08" }}>
+          <div className="text-[9px] uppercase tracking-widest font-mono font-bold mb-2 flex items-center gap-1.5" style={{ color: color }}>
+            <span className="inline-block w-1 h-1 rounded-full" style={{ background: color, boxShadow: `0 0 4px ${color}` }} />
+            Interaction synopsis
+          </div>
+          {/* Read */}
+          <p className="text-[11px] text-white/80 leading-relaxed font-semibold mb-2">{seq.synopsis.read}</p>
+          {/* Key observations */}
+          <ul className="space-y-1.5">
+            {seq.synopsis.points.map((pt, i) => (
+              <li key={i} className="flex gap-2 text-[10px] text-white/60 leading-relaxed">
+                <span className="font-mono font-black flex-shrink-0" style={{ color: color }}>▸</span>
+                <span>{pt}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Stat link + source */}
+        <div className="flex items-center justify-between gap-2 mt-2.5 pt-2.5 border-t border-white/10 flex-wrap">
+          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{
+            color: CYBER.cyan, background: CYBER.cyan + "12", border: `1px solid ${CYBER.cyan}33`
+          }}>◆ {seq.stat}</span>
+          <span className="text-[8px] font-mono text-white/30">StatsBomb x&y · Hudl Sportscode</span>
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center gap-3 mt-2 text-[8px] font-mono justify-center">
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full inline-block" style={{ background: SCOUTS.green }} />US</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full inline-block" style={{ background: "#FFD700" }} />GK</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full inline-block" style={{ background: "#0a0a0a", border: "1px solid rgba(255,255,255,0.5)" }} />{codedMatch.opponent}</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full inline-block" style={{ background: "#fff", border: "1px solid #000" }} /><span style={{ color: CYBER.amber }}>Ball</span></span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -3398,38 +4009,210 @@ function GameModel() {
             </div>
           ))}
         </div>
-        <div className="flex flex-wrap gap-1.5 mt-3 pt-2.5 border-t border-white/10">
-          {phase.linkedSSGs.map(s => (
-            <span key={s} className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded" style={{
-              color: SCOUTS.green, background: SCOUTS.green + "12", border: `1px solid ${SCOUTS.green}33`
-            }}>⚽ {s}</span>
-          ))}
-          <span className="text-[9px] font-mono text-white/30 italic ml-auto">Bolarin (2022) · SETU</span>
-        </div>
       </div>
+
+      {/* Formation interaction — the actual last-match coded sequence for this phase, vs the opponent */}
+      <ModelInteractionPitch phaseId={phaseId} color={phase.color} label={phase.label} />
+
+      {/* Analyst match coding — Sportscode export for the last PL match */}
+      {phase.coding && (() => {
+        const cd = phase.coding;
+        const up = cd.delta >= 0;
+        const deltaCol = up ? SCOUTS.green : "#FF3D5A";
+        const gradeCol = { success: SCOUTS.green, fail: "#FF3D5A" };
+        return (
+          <div className="rounded-lg border border-white/10 bg-white/[0.03] overflow-hidden">
+            {/* Header */}
+            <div className="px-4 py-2.5 border-b border-white/10 flex items-center justify-between gap-2" style={{
+              background: phase.color + "0A"
+            }}>
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-[8px] font-mono font-black uppercase tracking-widest px-1.5 py-0.5 rounded flex-shrink-0" style={{
+                  color: phase.color, background: phase.color + "1A", border: `1px solid ${phase.color}44`
+                }}>● CODED</span>
+                <span className="text-[10px] font-bold text-white truncate">{codedMatch.fixture}</span>
+              </div>
+              <span className="text-[9px] font-mono text-white/40 flex-shrink-0">{codedMatch.date}</span>
+            </div>
+
+            <div className="p-4 space-y-3">
+              {/* Instance bar — success / fail split */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[9px] uppercase tracking-widest font-mono text-white/40">{cd.instances} instances tagged · {phase.label}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-black font-mono" style={{ color: phase.color }}>{cd.successPct}%</span>
+                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded font-bold" style={{
+                      color: deltaCol, background: deltaCol + "15", border: `1px solid ${deltaCol}44`
+                    }}>{up ? "▲" : "▼"} {up ? "+" : ""}{cd.delta}pp vs base</span>
+                  </div>
+                </div>
+                {/* Stacked success/fail bar */}
+                <div className="flex h-6 rounded overflow-hidden border border-white/10" style={{ background: "rgba(0,0,0,0.4)" }}>
+                  <div className="flex items-center justify-center" style={{
+                    width: `${(cd.success / cd.instances) * 100}%`,
+                    background: `linear-gradient(180deg, ${SCOUTS.green} 0%, ${SCOUTS.green}CC 100%)`,
+                    boxShadow: `0 0 10px ${SCOUTS.green}66`
+                  }}>
+                    <span className="text-[9px] font-black text-black">{cd.success}</span>
+                  </div>
+                  <div className="flex items-center justify-center" style={{
+                    width: `${(cd.fail / cd.instances) * 100}%`,
+                    background: `linear-gradient(180deg, #FF3D5A 0%, #FF3D5ACC 100%)`,
+                    boxShadow: `0 0 10px #FF3D5A66`
+                  }}>
+                    <span className="text-[9px] font-black text-white">{cd.fail}</span>
+                  </div>
+                </div>
+                <div className="flex justify-between mt-1 text-[8px] font-mono text-white/35">
+                  <span>● success</span>
+                  <span>baseline {cd.baselinePct}%</span>
+                  <span>fail ●</span>
+                </div>
+              </div>
+
+              {/* Analyst summary */}
+              <p className="text-[11px] text-white/65 leading-relaxed italic border-l-2 pl-2.5" style={{ borderColor: phase.color + "55" }}>
+                {cd.summary}
+              </p>
+
+              {/* Metric matrix */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+                {cd.metrics.map((m, i) => (
+                  <div key={i} className="flex items-baseline justify-between text-[10px] py-0.5 border-b border-white/5">
+                    <span className="text-white/50">{m.k}</span>
+                    <span className="font-mono font-bold text-white">{m.v}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Coded clip instances — timeline-style rows */}
+              <div>
+                <div className="text-[9px] uppercase tracking-widest font-mono font-bold mb-1.5 text-white/40">Coded clips</div>
+                <div className="space-y-1">
+                  {cd.clips.map((clip, i) => (
+                    <div key={i} className="flex items-center gap-2 text-[10px] rounded px-2 py-1.5" style={{
+                      background: gradeCol[clip.grade] + "0C",
+                      borderLeft: `2px solid ${gradeCol[clip.grade]}`
+                    }}>
+                      <span className="font-mono font-bold text-white/70 flex-shrink-0">{clip.t}</span>
+                      <span className="font-mono font-bold flex-shrink-0 px-1.5 py-0.5 rounded text-[8px] uppercase tracking-wider" style={{
+                        color: gradeCol[clip.grade], background: gradeCol[clip.grade] + "1A"
+                      }}>{clip.label}</span>
+                      <span className="text-white/50 leading-tight truncate">{clip.note}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-1 text-[8px] font-mono text-white/30">
+                <span>Coded in {codedMatch.software}</span>
+                <span>{codedMatch.analyst}</span>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* StatsBomb sequence data — season-long, coordinate-derived, league context */}
+      {phase.statsbomb && (() => {
+        const sb = phase.statsbomb;
+        const hd = sb.headline;
+        const aboveMed = hd.us >= hd.league;
+        // Rank colour: top-6 green, 7-13 amber, 14-20 red
+        const rankCol = (r) => r <= 6 ? SCOUTS.green : r <= 13 ? CYBER.amber : "#FF3D5A";
+        const ord = (n) => { const s = ["th","st","nd","rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
+        return (
+          <div className="rounded-lg border overflow-hidden" style={{ borderColor: CYBER.cyan + "33" }}>
+            {/* Header */}
+            <div className="px-4 py-2.5 border-b flex items-center justify-between gap-2" style={{
+              borderColor: CYBER.cyan + "22", background: CYBER.cyan + "0A"
+            }}>
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-[8px] font-mono font-black uppercase tracking-widest px-1.5 py-0.5 rounded flex-shrink-0" style={{
+                  color: CYBER.cyan, background: CYBER.cyan + "1A", border: `1px solid ${CYBER.cyan}44`,
+                  boxShadow: `0 0 8px ${CYBER.cyan}33`
+                }}>◆ STATSBOMB</span>
+                <span className="text-[10px] font-bold text-white truncate">Season sequence data · x&y</span>
+              </div>
+              <span className="text-[9px] font-mono text-white/40 flex-shrink-0">{statsbombMeta.season}</span>
+            </div>
+
+            <div className="p-4 space-y-3">
+              {/* Headline metric + league rank */}
+              <div className="flex items-stretch gap-3">
+                <div className="flex-1 rounded-lg p-3" style={{ background: CYBER.cyan + "0C", border: `1px solid ${CYBER.cyan}22` }}>
+                  <div className="text-[9px] uppercase tracking-widest font-mono text-white/45 mb-1">{hd.metric}</div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-black font-mono" style={{ color: CYBER.cyan, textShadow: `0 0 10px ${CYBER.cyan}55` }}>{hd.us}{hd.unit}</span>
+                    <span className="text-[10px] font-mono text-white/40">league {hd.league}{hd.unit}</span>
+                  </div>
+                  <div className="text-[9px] font-mono mt-1" style={{ color: aboveMed ? SCOUTS.green : "#FF3D5A" }}>
+                    {aboveMed ? "▲ above" : "▼ below"} median
+                  </div>
+                </div>
+                <div className="rounded-lg p-3 flex flex-col items-center justify-center" style={{
+                  background: rankCol(hd.rank) + "12", border: `1px solid ${rankCol(hd.rank)}44`, minWidth: 92
+                }}>
+                  <div className="text-[8px] uppercase tracking-widest font-mono text-white/45 mb-0.5">League rank</div>
+                  <div className="text-2xl font-black font-mono" style={{ color: rankCol(hd.rank), textShadow: `0 0 10px ${rankCol(hd.rank)}55` }}>{ord(hd.rank)}</div>
+                  <div className="text-[8px] font-mono text-white/40">of {statsbombMeta.teams}</div>
+                </div>
+              </div>
+
+              {/* Coordinate-derived summary */}
+              <p className="text-[11px] text-white/65 leading-relaxed italic border-l-2 pl-2.5" style={{ borderColor: CYBER.cyan + "55" }}>
+                {sb.summary}
+              </p>
+
+              {/* Metric table with percentile bars + league median + rank */}
+              <div className="space-y-1.5">
+                <div className="grid grid-cols-12 gap-2 text-[8px] font-mono uppercase tracking-wider text-white/35 px-1">
+                  <div className="col-span-5">Metric (coordinate-derived)</div>
+                  <div className="col-span-2 text-right">Us</div>
+                  <div className="col-span-2 text-right">Lg med</div>
+                  <div className="col-span-3 text-right">Percentile</div>
+                </div>
+                {sb.metrics.map((m, i) => (
+                  <div key={i} className="grid grid-cols-12 gap-2 items-center text-[10px]">
+                    <div className="col-span-5 text-white/60 leading-tight">{m.k}</div>
+                    <div className="col-span-2 text-right font-mono font-bold text-white">{m.us}</div>
+                    <div className="col-span-2 text-right font-mono text-white/45">{m.lg}</div>
+                    <div className="col-span-3 flex items-center gap-1.5 justify-end">
+                      {/* percentile bar */}
+                      <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)", maxWidth: 56 }}>
+                        <div className="h-full rounded-full" style={{
+                          width: `${m.pct}%`,
+                          background: `linear-gradient(90deg, ${rankCol(m.rank)}AA, ${rankCol(m.rank)})`,
+                          boxShadow: `0 0 6px ${rankCol(m.rank)}88`
+                        }} />
+                      </div>
+                      <span className="font-mono font-bold w-6 text-right" style={{ color: rankCol(m.rank) }}>{m.pct}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-between pt-1 text-[8px] font-mono text-white/30">
+                <span>{statsbombMeta.provider} · {statsbombMeta.basis}</span>
+                <span>percentile vs {statsbombMeta.teams} teams</span>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
 
-// ============ TACTICS TAB (fused: Zone Data + Game Model) ============
+// ============ TACTICS TAB (fused: Game Model + Zone Data) ============
 function TacticsTab() {
-  const [subTab, setSubTab] = useState("zones"); // "zones" | "model"
+  const [subTab, setSubTab] = useState("model"); // "model" | "zones"
 
   return (
     <div>
       {/* Sub-tab strip */}
       <div className="flex gap-1 mb-5 p-1 rounded-lg bg-white/[0.04] border border-white/10">
-        <button
-          onClick={() => setSubTab("zones")}
-          className="flex-1 py-2 text-[10px] font-bold rounded transition-all uppercase tracking-wider"
-          style={{
-            background: subTab === "zones" ? SCOUTS.green + "22" : "transparent",
-            color: subTab === "zones" ? SCOUTS.green : "rgba(255,255,255,0.45)",
-            border: `1px solid ${subTab === "zones" ? SCOUTS.green + "55" : "transparent"}`
-          }}
-        >
-          ▦ Zone Data
-        </button>
         <button
           onClick={() => setSubTab("model")}
           className="flex-1 py-2 text-[10px] font-bold rounded transition-all uppercase tracking-wider"
@@ -3441,10 +4224,21 @@ function TacticsTab() {
         >
           ⚙ Game Model
         </button>
+        <button
+          onClick={() => setSubTab("zones")}
+          className="flex-1 py-2 text-[10px] font-bold rounded transition-all uppercase tracking-wider"
+          style={{
+            background: subTab === "zones" ? SCOUTS.green + "22" : "transparent",
+            color: subTab === "zones" ? SCOUTS.green : "rgba(255,255,255,0.45)",
+            border: `1px solid ${subTab === "zones" ? SCOUTS.green + "55" : "transparent"}`
+          }}
+        >
+          ▦ Zone Data
+        </button>
       </div>
 
-      {subTab === "zones" && <TacticalZones />}
       {subTab === "model" && <GameModel />}
+      {subTab === "zones" && <TacticalZones />}
     </div>
   );
 }
@@ -4300,7 +5094,7 @@ export default function App() {
 
         {/* ======== TACTICS (Zone Data + Game Model) ======== */}
         {view === "tactics" && (
-          <Section id="02" title="Tactics" sub="One tactical reference: 'Zone Data' shows where our sequences succeed by thirds and channels; 'Game Model' is the phase-by-phase principles document with animated boards — both anchored to the dissertation's findings.">
+          <Section id="02" title="Tactics" sub="One tactical reference: 'Zone Data' shows where our sequences succeed by thirds and channels; 'Game Model' is the phase-by-phase principles document with animated boards from our match data.">
             <TacticsTab />
           </Section>
         )}
