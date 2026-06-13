@@ -24,6 +24,7 @@ const CYBER = {
   cyan: "#00F5FF",            // electric cyan — for active state pulses
   hotpink: "#FF4DA6",         // hot pink — secondary accent
   amber: "#FFB800",           // warm amber (replacing yellow for warmer glow)
+  neonGreen: "#39FF74",       // neon green — successful-action / final-action glow
   magentaGlow: "rgba(255, 43, 214, 0.5)",
   cyanGlow: "rgba(0, 245, 255, 0.5)"
 };
@@ -3551,8 +3552,43 @@ function ModelInteractionPitch({ phaseId, color, label }) {
   const MORPH = snap ? "none" : "left 1300ms cubic-bezier(0.4, 0, 0.2, 1), top 1300ms cubic-bezier(0.4, 0, 0.2, 1)";
   const BALL_MORPH = snap ? "none" : "left 900ms cubic-bezier(0.3, 0, 0.3, 1) 100ms, top 900ms cubic-bezier(0.3, 0, 0.3, 1) 100ms";
 
+  // ===== FINAL-ACTION GLOW (on the last action of a successfully-coded sequence) =====
+  // Fires on the final frame — the decisive action — but only when the coded outcome was a
+  // success (we don't celebrate the last touch of a turnover or a goal conceded).
+  const thirdOf = (x) => (x < 33.3 ? 0 : x < 66.6 ? 1 : 2);
+  const isLastFrame = frame === seq.frames.length - 1;
+  const advanced = isLastFrame && grade === "success" && !snap;
+  const curThird = thirdOf(F.ball[0]);
+  const ourForward = F.us.filter(u => u[0] !== 1 && u[1] >= curThird * 33.3 - 4);
+  const attackingFinal = ourForward.length >= 2;
+  const nearestToBall = [...F.us]
+    .filter(u => u[0] !== 1)
+    .map(u => ({ num: u[0], d: Math.hypot(u[1] - F.ball[0], u[2] - F.ball[1]) }))
+    .sort((a, b) => a.d - b.d)
+    .slice(0, 4)
+    .map(o => o.num);
+  const involvedFrontEdge = curThird * 33.3;
+  const isInvolved = (num, x) => {
+    if (num === 1) return false;
+    if (attackingFinal) return x >= involvedFrontEdge - 4;
+    return nearestToBall.includes(num);
+  };
+  const enteredBand = { x0: curThird * 33.3, x1: (curThird + 1) * 33.3 };
+
   return (
     <div className="rounded-lg border overflow-hidden" style={{ borderColor: color + "33" }}>
+      <style>{`
+        @keyframes miPlayerGlow {
+          0%   { box-shadow: 0 1px 3px rgba(0,0,0,0.6); }
+          30%  { box-shadow: 0 0 10px var(--glowc), 0 0 18px var(--glowc), 0 1px 3px rgba(0,0,0,0.6); }
+          100% { box-shadow: 0 1px 3px rgba(0,0,0,0.6); }
+        }
+        @keyframes miZoneGlow {
+          0%   { opacity: 0; }
+          35%  { opacity: 0.16; }
+          100% { opacity: 0; }
+        }
+      `}</style>
       {/* Header — last match + coded clip + outcome */}
       <div className="px-4 py-2.5 border-b flex items-center justify-between gap-2" style={{
         borderColor: color + "22", background: color + "0A"
@@ -3620,6 +3656,17 @@ function ModelInteractionPitch({ phaseId, color, label }) {
             <text x="4.5" y={H / 2 + 1} fill={SCOUTS.green} fillOpacity="0.4" fontSize="2.4" fontWeight="bold" textAnchor="middle" transform={`rotate(-90 4.5 ${H / 2})`}>US</text>
             <text x={W - 4.5} y={H / 2 + 1} fill="#fff" fillOpacity="0.3" fontSize="2.4" fontWeight="bold" textAnchor="middle" transform={`rotate(90 ${W - 4.5} ${H / 2})`}>{codedMatch.opponentShort}</text>
             <text x={W - 4} y="6.5" fill={SCOUTS.green} fillOpacity="0.55" fontSize="3" fontWeight="bold" textAnchor="end">▶</text>
+
+            {/* Final-action glow on the zone the ball ends in */}
+            {advanced && (
+              <rect
+                key={`mi-zoneglow-${phaseId}-${frame}`}
+                x={px(enteredBand.x0)} y="2"
+                width={px(enteredBand.x1) - px(enteredBand.x0)} height={H - 4}
+                fill={CYBER.neonGreen} rx="1"
+                style={{ animation: "miZoneGlow 1.6s ease-out forwards" }}
+              />
+            )}
           </svg>
 
           {/* United — 11 black dummies */}
@@ -3639,21 +3686,26 @@ function ModelInteractionPitch({ phaseId, color, label }) {
           {F.us.map((u) => {
             const [num, x, y] = u;
             const isGK = num === 1;
+            const glow = advanced && isInvolved(num, x);
             return (
               <div key={`u-${num}`} className="absolute" style={{
                 left: `${lp(x)}%`, top: `${tp(y)}%`,
-                transform: "translate(-50%, -50%)", transition: MORPH, pointerEvents: "none", zIndex: 3
+                transform: "translate(-50%, -50%)", transition: MORPH, pointerEvents: "none", zIndex: glow ? 4 : 3
               }}>
                 <div className="absolute rounded-full" style={{
                   width: 24, height: 24, left: "50%", top: "50%", transform: "translate(-50%, -50%)",
-                  background: `radial-gradient(circle, ${color}33 0%, transparent 70%)`
+                  background: glow ? `radial-gradient(circle, ${CYBER.neonGreen}99 0%, transparent 70%)` : `radial-gradient(circle, ${color}33 0%, transparent 70%)`,
+                  transition: "background 300ms ease"
                 }} />
                 <div className="relative flex items-center justify-center rounded-full font-black" style={{
                   width: 15, height: 15,
                   background: isGK ? "#FFD700" : SCOUTS.green,
                   color: isGK ? "#000" : "#fff",
-                  border: "1.1px solid rgba(255,255,255,0.9)", fontSize: 7,
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.6)"
+                  border: glow ? `1.1px solid ${CYBER.neonGreen}` : "1.1px solid rgba(255,255,255,0.9)",
+                  fontSize: 7,
+                  "--glowc": CYBER.neonGreen,
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.6)",
+                  animation: glow ? "miPlayerGlow 1.6s ease-out forwards" : "none"
                 }}>{num}</div>
               </div>
             );
@@ -3775,6 +3827,34 @@ function GameModel() {
   const ballTrail = phase.frames.slice(0, frame + 1).map(fr => fr.ball);
   const prevUs = frame > 0 ? phase.frames[frame - 1].us : null;
 
+  // ===== FINAL-ACTION GLOW =====
+  // The glow fires on the LAST action of the sequence (the final frame) for every phase —
+  // celebrating the decisive moment (the through-ball, the regain, the strike, the block).
+  const thirdOf = (x) => (x < 33.3 ? 0 : x < 66.6 ? 1 : 2);
+  const isLastFrame = frame === phase.frames.length - 1;
+  const advanced = isLastFrame && !snap;
+  const curThird = thirdOf(F.ball[0]);
+  // Are any of our outfield players in/ahead of the ball's third? (attacking final action)
+  const ourForward = F.us.filter(u => u[0] !== 1 && u[1] >= curThird * 33.3 - 4);
+  const attackingFinal = ourForward.length >= 2;
+  // Attacking final action → glow the unit from the ball's third forward + glow that zone.
+  // Defensive final action (we're behind the ball, e.g. Defensive Block) → glow the players
+  // nearest the ball (the defenders making the stop) and the zone around the ball.
+  const ballNum = null; // ball isn't a player; proximity computed below
+  const nearestToBall = [...F.us]
+    .filter(u => u[0] !== 1)
+    .map(u => ({ num: u[0], d: Math.hypot(u[1] - F.ball[0], u[2] - F.ball[1]) }))
+    .sort((a, b) => a.d - b.d)
+    .slice(0, 4)
+    .map(o => o.num);
+  const involvedFrontEdge = curThird * 33.3;
+  const isInvolved = (num, x) => {
+    if (num === 1) return false;
+    if (attackingFinal) return x >= involvedFrontEdge - 4;
+    return nearestToBall.includes(num); // defensive: the players around the ball
+  };
+  const enteredBand = { x0: curThird * 33.3, x1: (curThird + 1) * 33.3 };
+
   const zoneLabels = [
     { t: "LD",  x: 16.6, y: 16.6 }, { t: "CD",  x: 16.6, y: 50 }, { t: "RD",  x: 16.6, y: 83.3 },
     { t: "LPD", x: 41.6, y: 16.6 }, { t: "CPD", x: 41.6, y: 50 }, { t: "RPD", x: 41.6, y: 83.3 },
@@ -3789,6 +3869,16 @@ function GameModel() {
       <style>{`
         @keyframes gmGhostFade {
           0% { opacity: 0.22; }
+          100% { opacity: 0; }
+        }
+        @keyframes gmPlayerGlow {
+          0%   { box-shadow: 0 1px 3px rgba(0,0,0,0.6); }
+          30%  { box-shadow: 0 0 10px var(--glowc), 0 0 18px var(--glowc), 0 1px 3px rgba(0,0,0,0.6); }
+          100% { box-shadow: 0 1px 3px rgba(0,0,0,0.6); }
+        }
+        @keyframes gmZoneGlow {
+          0%   { opacity: 0; }
+          35%  { opacity: 0.16; }
           100% { opacity: 0; }
         }
       `}</style>
@@ -3875,6 +3965,17 @@ function GameModel() {
               <animate attributeName="stroke-opacity" values="0.55;0.25;0.55" dur="2.8s" repeatCount="indefinite" />
             </rect>
 
+            {/* Final-action glow on the zone the ball ends in */}
+            {advanced && (
+              <rect
+                key={`zoneglow-${phaseId}-${frame}`}
+                x={px(enteredBand.x0)} y="2"
+                width={px(enteredBand.x1) - px(enteredBand.x0)} height={H - 4}
+                fill={CYBER.neonGreen} rx="1"
+                style={{ animation: "gmZoneGlow 1.6s ease-out forwards" }}
+              />
+            )}
+
             {/* Ball path trace — telestration-style amber route with event markers at each visited point */}
             {ballTrail.length > 1 && (
               <polyline
@@ -3931,19 +4032,22 @@ function GameModel() {
           {F.us.map(u => {
             const [num, x, y] = u;
             const isGK = num === 1;
+            const glow = advanced && isInvolved(num, x);
             return (
               <div key={`u-${num}`} className="absolute" style={{
                 left: `${lp(x)}%`, top: `${tp(y)}%`,
                 transform: "translate(-50%, -50%)",
-                transition: PLAYER_MORPH, pointerEvents: "none", zIndex: 3
+                transition: PLAYER_MORPH, pointerEvents: "none", zIndex: glow ? 4 : 3
               }}>
                 <div className="relative flex items-center justify-center rounded-full font-black" style={{
                   width: 15, height: 15,
                   background: isGK ? "#FFD700" : SCOUTS.green,
                   color: isGK ? "#000" : "#fff",
-                  border: "1.1px solid rgba(255,255,255,0.9)",
+                  border: glow ? `1.1px solid ${CYBER.neonGreen}` : "1.1px solid rgba(255,255,255,0.9)",
                   fontSize: 7,
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.6)"
+                  "--glowc": CYBER.neonGreen,
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.6)",
+                  animation: glow ? "gmPlayerGlow 1.6s ease-out forwards" : "none"
                 }}>
                   {num}
                 </div>
@@ -4292,6 +4396,12 @@ function SpeedThreshold() {
 
   return (
     <div className="space-y-5">
+      <style>{`
+        @keyframes speedBarSweep {
+          0% { left: -30%; }
+          55%, 100% { left: 100%; }
+        }
+      `}</style>
       {/* Hero stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
@@ -4334,58 +4444,95 @@ function SpeedThreshold() {
           <span className="text-[10px] font-mono text-white/40">StatSports Apex</span>
         </div>
 
-        {/* Stacked horizontal bar — cyberpunk glow + stagger reveal */}
-        <div className="relative flex h-10 rounded mb-3 border" style={{
-          borderColor: barAnimated ? SCOUTS.green + "44" : "rgba(255,255,255,0.1)",
-          background: "rgba(0,0,0,0.5)",
-          boxShadow: barAnimated ? `0 0 12px ${SCOUTS.green}22, inset 0 0 8px rgba(0,0,0,0.6)` : "inset 0 0 8px rgba(0,0,0,0.6)",
-          transition: "border-color 600ms ease, box-shadow 600ms ease",
-          overflow: "hidden"
-        }}>
+        {/* Percentage labels above the bar — light, spaced, no outline */}
+        <div className="relative flex mb-2">
           {speedZones.map((z, i) => (
-            <div
-              key={z.id}
-              title={`${z.name}: ${z.teamPct}%`}
-              className="flex items-center justify-center relative"
-              style={{
-                width: barAnimated ? `${z.teamPct}%` : "0%",
-                background: `linear-gradient(180deg, ${z.color} 0%, ${z.color}DD 50%, ${z.color}AA 100%)`,
-                transition: `width 800ms cubic-bezier(0.34, 1.2, 0.64, 1) ${i * 120}ms`,
-                boxShadow: barAnimated ? `inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -2px 4px rgba(0,0,0,0.3), 0 0 14px ${z.color}88, 0 0 24px ${z.color}33` : "none",
-                borderRight: i < speedZones.length - 1 ? "1px solid rgba(0,0,0,0.4)" : "none"
-              }}
-            >
-              {/* Top highlight glow line */}
-              <div className="absolute top-0 left-0 right-0" style={{
-                height: 1.5,
-                background: `linear-gradient(90deg, transparent 0%, ${z.color} 50%, transparent 100%)`,
-                opacity: barAnimated ? 0.9 : 0,
-                transition: `opacity 600ms ease ${i * 120 + 400}ms`
-              }} />
-              {/* Percentage text — white with dark outline for visibility against any neon background */}
-              {z.teamPct >= 8 && (
-                <span className="relative z-10" style={{
-                  color: "#fff",
-                  fontWeight: 900,
-                  fontSize: 12,
-                  letterSpacing: "0.02em",
-                  // 4-directional dark outline + drop shadow + subtle colored glow outside
-                  textShadow: `
-                    -1px -1px 0 rgba(0,0,0,0.95),
-                     1px -1px 0 rgba(0,0,0,0.95),
-                    -1px  1px 0 rgba(0,0,0,0.95),
-                     1px  1px 0 rgba(0,0,0,0.95),
-                     0    2px 3px rgba(0,0,0,0.8),
-                     0    0   8px ${z.color}AA
-                  `,
-                  opacity: barAnimated ? 1 : 0,
-                  transition: `opacity 400ms ease ${i * 120 + 600}ms`
-                }}>
-                  {z.teamPct}%
-                </span>
+            <div key={z.id} className="flex items-center justify-center" style={{
+              width: `${z.teamPct}%`,
+              opacity: barAnimated ? 1 : 0,
+              transition: `opacity 400ms ease ${i * 90 + 500}ms`
+            }}>
+              {z.teamPct >= 6 && (
+                <span className="tabular-nums" style={{
+                  color: "#ffffff", fontSize: 18, fontWeight: 800, letterSpacing: "0.01em",
+                  textShadow: `0 0 10px ${z.color}, 0 0 20px ${z.color}AA, 0 1px 2px rgba(0,0,0,0.8)`
+                }}>{z.teamPct}%</span>
               )}
             </div>
           ))}
+        </div>
+
+        {/* Stacked horizontal bar — large cyberpunk LED-meter with neon glow */}
+        <div className="relative rounded-lg mb-3" style={{
+          height: 44,
+          background: "linear-gradient(180deg, rgba(8,12,18,0.9) 0%, rgba(14,20,28,0.95) 100%)",
+          border: "1px solid rgba(255,255,255,0.10)",
+          boxShadow: barAnimated
+            ? `inset 0 1px 4px rgba(0,0,0,0.6), 0 0 18px ${BHA.blueLight}55, 0 0 40px ${BHA.blueLight}26, 0 6px 22px rgba(0,0,0,0.45)`
+            : `inset 0 1px 4px rgba(0,0,0,0.6), 0 6px 22px rgba(0,0,0,0.45)`,
+          transition: "box-shadow 700ms ease 300ms"
+        }}>
+          {/* inner clipping wrapper so segment glow can still bleed past the housing edges */}
+          <div className="absolute inset-0 rounded-lg overflow-hidden">
+            {/* faint vertical tick grid behind segments — reads as a calibrated instrument */}
+            <div className="absolute inset-0 pointer-events-none" style={{
+              backgroundImage: "repeating-linear-gradient(90deg, transparent 0, transparent 13px, rgba(255,255,255,0.05) 13px, rgba(255,255,255,0.05) 14px)"
+            }} />
+            {/* the segments */}
+            <div className="relative flex h-full">
+              {speedZones.map((z, i) => (
+                <div
+                  key={z.id}
+                  title={`${z.name}: ${z.teamPct}%`}
+                  className="relative h-full"
+                  style={{
+                    width: barAnimated ? `${z.teamPct}%` : "0%",
+                    background: `linear-gradient(180deg, ${z.color}F2 0%, ${z.color}C2 50%, ${z.color}E6 100%)`,
+                    boxShadow: barAnimated
+                      ? `inset 0 0 22px ${z.color}, inset 0 0 8px ${z.color}, 0 0 16px ${z.color}77`
+                      : "none",
+                    transition: `width 850ms cubic-bezier(0.22, 1, 0.36, 1) ${i * 90}ms, box-shadow 600ms ease ${i * 90 + 300}ms`
+                  }}
+                >
+                  {/* bright LED top edge-line */}
+                  <div className="absolute inset-x-0 top-0 pointer-events-none" style={{
+                    height: 2.5,
+                    background: `linear-gradient(180deg, #ffffff 0%, ${z.color} 100%)`,
+                    opacity: 0.95,
+                    boxShadow: `0 0 8px ${z.color}, 0 0 14px ${z.color}AA`
+                  }} />
+                  {/* glowing LED bottom edge-line */}
+                  <div className="absolute inset-x-0 bottom-0 pointer-events-none" style={{
+                    height: 1.5,
+                    background: z.color,
+                    opacity: 0.6,
+                    boxShadow: `0 0 6px ${z.color}`
+                  }} />
+                  {/* soft upper sheen */}
+                  <div className="absolute inset-x-0 top-0 pointer-events-none" style={{
+                    height: "42%",
+                    background: "linear-gradient(180deg, rgba(255,255,255,0.20) 0%, transparent 100%)"
+                  }} />
+                  {/* glowing neon seam on the trailing edge (not a dark gap) */}
+                  {i < speedZones.length - 1 && (
+                    <div className="absolute top-0 bottom-0 right-0 pointer-events-none" style={{
+                      width: 1,
+                      background: "rgba(255,255,255,0.9)",
+                      boxShadow: `0 0 8px rgba(255,255,255,0.8), 0 0 4px ${z.color}`,
+                      opacity: barAnimated ? 0.8 : 0,
+                      transition: `opacity 400ms ease ${i * 90 + 500}ms`
+                    }} />
+                  )}
+                </div>
+              ))}
+            </div>
+            {/* moving scan-sheen sweep across the whole bar for a live, cyberpunk feel */}
+            <div className="absolute inset-y-0 pointer-events-none" style={{
+              width: "30%",
+              background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)",
+              animation: barAnimated ? "speedBarSweep 4.5s ease-in-out infinite" : "none"
+            }} />
+          </div>
         </div>
 
         {/* Zone legend with staggered fade-in + cyberpunk glow on the swatch */}
