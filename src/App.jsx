@@ -5841,11 +5841,11 @@ export default function App() {
             { id: "team", label: "Team" },
             { id: "tactics", label: "Tactics" },
             { id: "speed", label: "Speed" },
+            { id: "kpis", label: "KPIs" },
+            { id: "visuals", label: "Visuals" },
             { id: "training", label: "Training" },
             { id: "ssgs", label: "SSGs" },
             { id: "pitch", label: "Pitch" },
-            { id: "kpis", label: "KPIs" },
-            { id: "visuals", label: "Visuals" },
             { id: "insights", label: "Insights" },
             { id: "index", label: "Index" }
           ].map(v => (
