@@ -3454,6 +3454,188 @@ function PatternCard({ pattern }) {
 }
 
 // ============ TACTICAL ZONES (thirds x channels overlay — from match data + standard boards) ============
+// ============================================================================
+// MATCH-REPORT-STYLE PANELS
+// Illustrative demonstration data, clearly labelled, until the engine output is
+// wired in via the live seam. Pitches are 105×68; we attack RIGHT unless noted.
+// ============================================================================
+
+// ---- Line Height & Team Length by phase (Zone Data) ----
+const LINE_HEIGHT_DATA = {
+  poss: { label: "In possession", note: "We build wide and deep, then compress and climb: the block narrows ~8m and the rear line steps up ~34m from build-up to the final third.",
+    phases: [
+      { name: "Build-up",    width: 50, length: 34, lineHeight: 22, color: SCOUTS.green },
+      { name: "Progression", width: 48, length: 32, lineHeight: 40, color: CYBER.cyan },
+      { name: "Final third",  width: 42, length: 30, lineHeight: 56, color: CYBER.amber },
+    ] },
+  oop: { label: "Out of possession", note: "Defending, length tightens to 22m in the low block — vertical compactness is our standout trait (TP-D4 / TP-D5).",
+    phases: [
+      { name: "High block", width: 40, length: 36, lineHeight: 46, color: "#FF4D6A" },
+      { name: "Mid block",  width: 40, length: 28, lineHeight: 32, color: BHA.blueLight },
+      { name: "Low block",  width: 36, length: 22, lineHeight: 16, color: "#9DB2BF" },
+    ] },
+};
+function LineHeightPanel() {
+  const [mode, setMode] = useState("poss");
+  const set = LINE_HEIGHT_DATA[mode];
+  const PW = 68, PL = 105;
+  const miniPitch = (ph) => {
+    const w = ph.width, L = ph.length, lh = ph.lineHeight;
+    const x0 = (PW - w) / 2, x1 = (PW + w) / 2;
+    const rearY = PL - lh;
+    const frontY = Math.max(3, rearY - L);
+    return (
+      <div className="rounded-lg border border-white/10 bg-black/20 p-2">
+        <div className="text-[9px] font-bold text-center mb-1" style={{ color: ph.color }}>{ph.name}</div>
+        <svg viewBox="-4 -4 76 113" className="w-full h-auto">
+          <rect x="0" y="0" width={PW} height={PL} fill="#142E1E" stroke="#fff" strokeOpacity="0.35" strokeWidth="0.5" />
+          <line x1="0" y1={PL / 2} x2={PW} y2={PL / 2} stroke="#fff" strokeOpacity="0.2" strokeWidth="0.4" />
+          <circle cx={PW / 2} cy={PL / 2} r="9.15" fill="none" stroke="#fff" strokeOpacity="0.2" strokeWidth="0.4" />
+          <rect x={(PW - 40.3) / 2} y="0" width="40.3" height="16.5" fill="none" stroke="#fff" strokeOpacity="0.25" strokeWidth="0.4" />
+          <rect x={(PW - 40.3) / 2} y={PL - 16.5} width="40.3" height="16.5" fill="none" stroke="#fff" strokeOpacity="0.25" strokeWidth="0.4" />
+          <rect x={x0} y={frontY} width={w} height={rearY - frontY} fill={ph.color} fillOpacity="0.18" stroke={ph.color} strokeOpacity="0.7" strokeWidth="0.6" />
+          <text x={PW / 2} y={frontY - 1.5} fill={ph.color} fontSize="5" fontWeight="bold" textAnchor="middle">{w}m</text>
+          <text x={x0 - 1.5} y={(frontY + rearY) / 2} fill="#fff" fillOpacity="0.7" fontSize="4.4" textAnchor="middle" transform={`rotate(-90 ${x0 - 1.5} ${(frontY + rearY) / 2})`}>{L}m</text>
+          <line x1={x1 + 2.5} y1={rearY} x2={x1 + 2.5} y2={PL} stroke="#fff" strokeOpacity="0.45" strokeWidth="0.4" strokeDasharray="1 1" />
+          <text x={x1 + 4} y={(rearY + PL) / 2} fill="#fff" fillOpacity="0.6" fontSize="4.2" textAnchor="middle" transform={`rotate(-90 ${x1 + 4} ${(rearY + PL) / 2})`}>{lh}m</text>
+          <text x={PW - 1} y="6" fill={SCOUTS.green} fontSize="5.5" fontWeight="bold" textAnchor="end">▲</text>
+        </svg>
+      </div>
+    );
+  };
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <h3 className="text-sm font-bold text-white">Line Height &amp; Team Length</h3>
+        <div className="flex gap-1">
+          {Object.entries(LINE_HEIGHT_DATA).map(([k, v]) => {
+            const on = k === mode;
+            return <button key={k} onClick={() => setMode(k)} className="px-2.5 py-1 text-[9px] font-bold rounded uppercase tracking-wider" style={{ background: on ? BHA.blueLight + "22" : "transparent", color: on ? BHA.blueLight : "rgba(255,255,255,0.45)", border: `1px solid ${on ? BHA.blueLight + "55" : "rgba(255,255,255,0.1)"}` }}>{v.label}</button>;
+          })}
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {set.phases.map(ph => <div key={ph.name}>{miniPitch(ph)}</div>)}
+      </div>
+      <p className="text-[10px] text-white/55 leading-relaxed mt-3 italic">Width = lateral spread · length = front-to-back compactness · line = rear line's height from our goal. {set.note}</p>
+    </div>
+  );
+}
+
+// ---- Defensive Actions Map (Zone Data) ----
+const DEF_TYPES = {
+  recovery:     { label: "Recovery",     color: BHA.blueLight },
+  tackle:       { label: "Tackle",       color: SCOUTS.green },
+  interception: { label: "Interception", color: CYBER.cyan },
+  block:        { label: "Block",        color: CYBER.amber },
+};
+const DEF_ACTIONS = [
+  [16, 30, "recovery"], [20, 44, "tackle"], [22, 20, "interception"], [14, 52, "recovery"], [25, 36, "recovery"],
+  [30, 24, "tackle"], [33, 48, "recovery"], [38, 32, "interception"], [42, 18, "tackle"], [40, 50, "recovery"],
+  [45, 40, "recovery"], [48, 28, "tackle"], [52, 44, "interception"], [50, 14, "recovery"], [55, 34, "recovery"],
+  [58, 52, "tackle"], [60, 22, "recovery"], [63, 40, "interception"], [56, 60, "recovery"], [44, 60, "tackle"],
+  [36, 8, "recovery"], [28, 56, "interception"], [18, 12, "block"], [26, 46, "block"], [47, 33, "block"],
+  [68, 30, "tackle"], [72, 46, "recovery"], [75, 20, "interception"], [70, 56, "recovery"], [66, 14, "tackle"],
+];
+function DefensiveActionsPanel() {
+  const counts = {}; DEF_ACTIONS.forEach(([, , t]) => { counts[t] = (counts[t] || 0) + 1; });
+  const third = (x) => (x < 35 ? 0 : x < 70 ? 1 : 2);
+  const thirds = [0, 0, 0]; DEF_ACTIONS.forEach(([x]) => { thirds[third(x)]++; });
+  const total = DEF_ACTIONS.length;
+  const thirdLabels = ["Defensive", "Middle", "Attacking"];
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
+      <h3 className="text-sm font-bold text-white mb-1">Defensive Actions Map</h3>
+      <p className="text-[10px] text-white/40 mb-3">Where we win the ball back — tackles, interceptions, recoveries &amp; blocks</p>
+      <svg viewBox="-2 -2 109 72" className="w-full h-auto" style={{ borderRadius: 6 }}>
+        <rect x="0" y="0" width="105" height="68" fill="#142E1E" stroke="#fff" strokeOpacity="0.4" strokeWidth="0.4" />
+        <line x1="35" y1="0" x2="35" y2="68" stroke="#fff" strokeOpacity="0.13" strokeWidth="0.3" strokeDasharray="1.5 1.5" />
+        <line x1="70" y1="0" x2="70" y2="68" stroke="#fff" strokeOpacity="0.13" strokeWidth="0.3" strokeDasharray="1.5 1.5" />
+        <line x1="52.5" y1="0" x2="52.5" y2="68" stroke="#fff" strokeOpacity="0.22" strokeWidth="0.3" />
+        <circle cx="52.5" cy="34" r="9.15" fill="none" stroke="#fff" strokeOpacity="0.22" strokeWidth="0.3" />
+        <rect x="0" y="13.85" width="16.5" height="40.3" fill="none" stroke="#fff" strokeOpacity="0.22" strokeWidth="0.3" />
+        <rect x="88.5" y="13.85" width="16.5" height="40.3" fill="none" stroke="#fff" strokeOpacity="0.22" strokeWidth="0.3" />
+        {DEF_ACTIONS.map(([x, y, t], i) => (
+          <circle key={i} cx={x} cy={y} r="1.5" fill={DEF_TYPES[t].color} fillOpacity="0.85" stroke="#0b1410" strokeWidth="0.3" />
+        ))}
+        <text x="103.5" y="4.4" fill={SCOUTS.green} fontSize="3.2" fontWeight="bold" textAnchor="end">ATTACK ▶</text>
+      </svg>
+      <div className="flex flex-wrap gap-3 mt-2">
+        {Object.entries(DEF_TYPES).map(([k, v]) => (
+          <div key={k} className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full" style={{ background: v.color }} />
+            <span className="text-[9px] text-white/55">{v.label} <span className="font-mono text-white/40">{counts[k] || 0}</span></span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 pt-3 border-t border-white/10">
+        <div className="text-[9px] uppercase tracking-widest text-white/40 mb-1.5">Where we regain — by third</div>
+        <div className="space-y-1.5">
+          {thirds.map((n, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="text-[9px] text-white/50 shrink-0" style={{ width: 56 }}>{thirdLabels[i]}</span>
+              <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${(n / total) * 100}%`, background: i === 1 ? CYBER.cyan : BHA.blueLight, boxShadow: `0 0 5px ${(i === 1 ? CYBER.cyan : BHA.blueLight)}88` }} /></div>
+              <span className="text-[10px] font-mono font-bold shrink-0" style={{ color: i === 1 ? CYBER.cyan : BHA.blueLight, width: 38, textAlign: "right" }}>{Math.round(100 * n / total)}%</span>
+            </div>
+          ))}
+        </div>
+        <p className="text-[9px] text-white/35 mt-2 italic leading-snug">Half our regains come in the middle third — the mid-block doing its job; the counter-press adds the high turnovers.</p>
+      </div>
+    </div>
+  );
+}
+
+// ---- Shot Map + xG (Visuals) ----
+const SHOT_OUT = {
+  goal:    { label: "Goal",       color: SCOUTS.green },
+  saved:   { label: "On target",  color: BHA.blueLight },
+  off:     { label: "Off target", color: CYBER.amber },
+  blocked: { label: "Blocked",    color: "#9DB2BF" },
+};
+const SHOTS = [
+  [97, 36, 0.71, "goal"], [92, 30, 0.18, "saved"], [90, 44, 0.12, "off"], [88, 34, 0.27, "blocked"],
+  [95, 40, 0.33, "saved"], [86, 26, 0.09, "off"], [99, 33, 0.44, "goal"], [84, 48, 0.06, "off"],
+  [82, 22, 0.05, "blocked"], [93, 38, 0.15, "saved"], [80, 34, 0.04, "off"], [89, 50, 0.08, "off"],
+  [96, 28, 0.21, "saved"], [85, 40, 0.07, "off"],
+];
+function ShotMapCard() {
+  const total = SHOTS.length;
+  const goals = SHOTS.filter(s => s[3] === "goal").length;
+  const onT = SHOTS.filter(s => s[3] === "goal" || s[3] === "saved").length;
+  const xg = SHOTS.reduce((a, s) => a + s[2], 0);
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
+      <div className="mb-3"><h3 className="text-sm font-bold text-white">Shot Map &amp; xG</h3><p className="text-[10px] text-white/40 mt-0.5">Attacking half · marker size = xG · colour = outcome</p></div>
+      <svg viewBox="48 -2 59 72" className="w-full h-auto" style={{ borderRadius: 6 }}>
+        <rect x="50" y="0" width="55" height="68" fill="#142E1E" stroke="#fff" strokeOpacity="0.4" strokeWidth="0.4" />
+        <line x1="52.5" y1="0" x2="52.5" y2="68" stroke="#fff" strokeOpacity="0.25" strokeWidth="0.4" />
+        <circle cx="52.5" cy="34" r="9.15" fill="none" stroke="#fff" strokeOpacity="0.22" strokeWidth="0.4" />
+        <rect x="88.5" y="13.85" width="16.5" height="40.3" fill="none" stroke="#fff" strokeOpacity="0.3" strokeWidth="0.4" />
+        <rect x="99.5" y="24.85" width="5.5" height="18.3" fill="none" stroke="#fff" strokeOpacity="0.3" strokeWidth="0.4" />
+        <line x1="105" y1="30.34" x2="105" y2="37.66" stroke="#fff" strokeOpacity="0.7" strokeWidth="1.2" />
+        {SHOTS.map(([x, y, g, o], i) => (
+          <g key={i}>
+            <circle cx={x} cy={y} r={1 + g * 6} fill={SHOT_OUT[o].color} fillOpacity={o === "goal" ? 0.85 : 0.5} stroke={SHOT_OUT[o].color} strokeWidth="0.4" />
+            {o === "goal" && <circle cx={x} cy={y} r={1 + g * 6 + 1} fill="none" stroke={SHOT_OUT[o].color} strokeWidth="0.4" strokeOpacity="0.6" />}
+          </g>
+        ))}
+      </svg>
+      <div className="flex flex-wrap gap-3 mt-2">
+        {Object.entries(SHOT_OUT).map(([k, v]) => (
+          <div key={k} className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: v.color }} /><span className="text-[9px] text-white/55">{v.label}</span></div>
+        ))}
+      </div>
+      <div className="grid grid-cols-4 gap-2 mt-3">
+        {[["Shots", total], ["On target", onT], ["xG", xg.toFixed(2)], ["Goals", goals]].map(([k, v]) => (
+          <div key={k} className="rounded bg-white/[0.04] p-2 text-center"><div className="text-base font-black font-mono" style={{ color: BHA.blueLight }}>{v}</div><div className="text-[9px] text-white/45">{k}</div></div>
+        ))}
+      </div>
+      <p className="text-[10px] text-white/40 mt-3 italic leading-relaxed">xG {xg.toFixed(2)} from {total} shots — {goals} scored. The map shows the wide-entry bias: plenty of lower-value chances from the half-spaces, fewer from the central cut-back zone where conversion is highest.</p>
+    </div>
+  );
+}
+
+
 function TacticalZones() {
   const [layer, setLayer] = useState("channelSuccess"); // channelSuccess | thirdOrigin | pressTraps
   const [animated, setAnimated] = useState(false);
@@ -3630,9 +3812,12 @@ function TacticalZones() {
         })}
       </div>
 
+      <LineHeightPanel />
+      <DefensiveActionsPanel />
+
       {/* Source footnote */}
       <p className="text-[9px] text-white/30 italic text-center font-mono">
-        Zonal model from StatsBomb event coordinates · season to date
+        Zonal model from StatsBomb event coordinates · season to date · new panels show demonstration data until tracking output is wired in
       </p>
     </div>
   );
@@ -5767,6 +5952,8 @@ export default function App() {
                   </AreaChart>
                 </ResponsiveContainer>
               </ChartCard>
+
+              <ShotMapCard />
 
               <ChartCard title="Us vs Premier League Average" subtitle="Performance profile by category" height={260} footnote="We're above average in build-up, mid-third control, wide creation and counter-press — and below average in finishing and set pieces. The profile of a side punching tactically above its finishing weight.">
                 <ResponsiveContainer>
