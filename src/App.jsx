@@ -1657,18 +1657,20 @@ const kpis = [
   { id: "SP-01", cat: "set_pieces", name: "Set Piece Goal Conversion", definition: "Goals from set pieces as % of set piece deliveries on target", formula: "(SP goals ÷ SP shots on target) × 100", benchmark: "Us 18% | PL avg 23%", target: "≥22%", success: "18%", why: "Set pieces are coachable. 5 more SP goals per season ≈ 8 more points for us.", training: "Set Piece Studio (SSG-07).", priority: "Critical" },
   { id: "SP-02", cat: "set_pieces", name: "Aerial Duels Won in Box", definition: "% of aerial duels we win inside the opposition box", formula: "(Aerial duels won in opp box ÷ total) × 100", benchmark: "Us 41% | PL avg 47%", target: "≥45%", success: "41%", why: "We're not a tall team. Smart movement and timing must compensate.", training: "Aerial timing reps with Dunk/Van Hecke as leaders.", priority: "Medium" },
   // ===== TACTICAL PRINCIPLES (Tactical Playbook Model · scored from StatsBomb 360 freeze-frames) =====
+  // byPhase = per-phase split (illustrative demo values); sensitivity360 = drift under partial 360 (real tiers).
+  // Both are overwritten at runtime from ./data/principles.json (principles_engine.py output) via useLivePrinciples().
   // OFFENSIVE core principles
-  { id: "TP-O1", cat: "principles", name: "Penetration Rate", principle: "Penetration (offensive)", source360: true, definition: "% of attacking possessions where a carry or dribble beats at least one opponent toward goal, leaving them behind the ball", formula: "(Possessions with ≥1 defender beaten by carry ÷ attacking possessions) × 100", benchmark: "Us 24.6% | PL avg 22.0% | 7th", target: "≥26%", success: "24.6%", rank: 7, why: "Tactical Playbook Model: penetration destabilises the defensive block. 360 confirms Mitoma & Minteh drive most of ours — we lack a central penetrator.", training: "Isolation 1v1 + carry-into-box patterns (T-03).", priority: "High" },
-  { id: "TP-O2", cat: "principles", name: "Offensive Coverage Index", principle: "Offensive coverage (offensive)", source360: true, definition: "Average number of teammates inside the 9.15m 'centre of play' radius around the ball when in possession", formula: "Mean(teammates within 9.15m of ball carrier)", benchmark: "Us 2.4 | PL avg 2.1 | 6th", target: "≥2.5", success: "2.4", rank: 6, why: "The Tactical Playbook Model's centre-of-play concept: more support options = safer progression and instant counter-press. 360 shows we isolate the ball-carrier in wide build-up.", training: "3-player triangle rondos, support-angle work (SSG-05).", priority: "High" },
-  { id: "TP-O3", cat: "principles", name: "Depth Mobility · In-Behind Runs", principle: "Depth mobility (offensive)", source360: true, definition: "Off-ball runs beyond the opponent's last defensive line per match (freeze-frame detects the line break)", formula: "Count of runs past the deepest defender ÷ matches", benchmark: "Us 12.8 | PL avg 15.4 | 16th", target: "≥16", success: "12.8", rank: 16, why: "Our clearest principle gap. 360 shows too few runners going beyond the last line — we build in front of the block, not behind it.", training: "Timed third-man runs in behind (SSG-06).", priority: "Critical" },
-  { id: "TP-O4", cat: "principles", name: "Width & Length · Pitch Occupation", principle: "Width and length (offensive)", source360: true, definition: "Average area of the outfield convex hull (% of pitch) during settled possession", formula: "Mean(convex-hull area of 10 outfielders ÷ pitch area) × 100", benchmark: "Us 41% | PL avg 38% | 8th", target: "Maintain ≥40%", success: "41%", rank: 8, why: "Tactical Playbook Model: stretching the pitch forces defenders to choose between space and man. 360 shows we occupy well in build but narrow too early in the final third.", training: "Width-holding wide players, switch-of-play games.", priority: "Medium" },
-  { id: "TP-O5", cat: "principles", name: "Offensive Unity · Rest-Attack", principle: "Offensive unity (offensive)", source360: true, definition: "% of attacks with ≥3 players positioned behind the ball as cover (the rearguard), and team length under control", formula: "(Attacks with ≥3 cover players behind ball ÷ attacks) × 100", benchmark: "Us 64% | PL avg 61% | 9th", target: "≥66%", success: "64%", rank: 9, why: "Tactical Playbook Model: the rearguard enables organised transition to defence. 360 shows our rest-attack is sound — a foundation our counter-press relies on.", training: "Rest-defence shape in possession games.", priority: "Medium" },
+  { id: "TP-O1", cat: "principles", name: "Penetration Rate", principle: "Penetration (offensive)", source360: true, definition: "% of attacking possessions where a carry or dribble beats at least one opponent toward goal, leaving them behind the ball", formula: "(Possessions with ≥1 defender beaten by carry ÷ attacking possessions) × 100", benchmark: "Us 24.6% | PL avg 22.0% | 7th", target: "≥26%", success: "24.6%", rank: 7, why: "Tactical Playbook Model: penetration destabilises the defensive block. 360 confirms Mitoma & Minteh drive most of ours — we lack a central penetrator.", training: "Isolation 1v1 + carry-into-box patterns (T-03).", priority: "High", sensitivity360: "moderate", byPhase: { buildup: null, progression: 26, finalthird: 19, counterattack: 51 } },
+  { id: "TP-O2", cat: "principles", name: "Offensive Coverage Index", principle: "Offensive coverage (offensive)", source360: true, definition: "Average number of teammates inside the 9.15m 'centre of play' radius around the ball when in possession", formula: "Mean(teammates within 9.15m of ball carrier)", benchmark: "Us 2.4 | PL avg 2.1 | 6th", target: "≥2.5", success: "2.4", rank: 6, why: "The Tactical Playbook Model's centre-of-play concept: more support options = safer progression and instant counter-press. 360 shows we isolate the ball-carrier in wide build-up.", training: "3-player triangle rondos, support-angle work (SSG-05).", priority: "High", sensitivity360: "high", byPhase: { buildup: 1.9, progression: 2.3, finalthird: 2.8, counterattack: 3.2 } },
+  { id: "TP-O3", cat: "principles", name: "Depth Mobility · In-Behind Runs", principle: "Depth mobility (offensive)", source360: true, definition: "Off-ball runs beyond the opponent's last defensive line per match (freeze-frame detects the line break)", formula: "Count of runs past the deepest defender ÷ matches", benchmark: "Us 12.8 | PL avg 15.4 | 16th", target: "≥16", success: "12.8", rank: 16, why: "Our clearest principle gap. 360 shows too few runners going beyond the last line — we build in front of the block, not behind it.", training: "Timed third-man runs in behind (SSG-06).", priority: "Critical", sensitivity360: "robust", byPhase: { buildup: 6, progression: 14, finalthird: 12, counterattack: 8 } },
+  { id: "TP-O4", cat: "principles", name: "Width & Length · Pitch Occupation", principle: "Width and length (offensive)", source360: true, definition: "Average area of the outfield convex hull (% of pitch) during settled possession", formula: "Mean(convex-hull area of 10 outfielders ÷ pitch area) × 100", benchmark: "Us 41% | PL avg 38% | 8th", target: "Maintain ≥40%", success: "41%", rank: 8, why: "Tactical Playbook Model: stretching the pitch forces defenders to choose between space and man. 360 shows we occupy well in build but narrow too early in the final third.", training: "Width-holding wide players, switch-of-play games.", priority: "Medium", sensitivity360: "high", byPhase: { buildup: 44, progression: 43, finalthird: 36, counterattack: 33 } },
+  { id: "TP-O5", cat: "principles", name: "Offensive Unity · Rest-Attack", principle: "Offensive unity (offensive)", source360: true, definition: "% of attacks with ≥3 players positioned behind the ball as cover (the rearguard), and team length under control", formula: "(Attacks with ≥3 cover players behind ball ÷ attacks) × 100", benchmark: "Us 64% | PL avg 61% | 9th", target: "≥66%", success: "64%", rank: 9, why: "Tactical Playbook Model: the rearguard enables organised transition to defence. 360 shows our rest-attack is sound — a foundation our counter-press relies on.", training: "Rest-defence shape in possession games.", priority: "Medium", sensitivity360: "high", byPhase: { buildup: 38, progression: 60, finalthird: 74, counterattack: 70 } },
   // DEFENSIVE core principles
-  { id: "TP-D1", cat: "principles", name: "Delay · Pressure Engagement", principle: "Delay (defensive)", source360: true, definition: "Average seconds to apply pressure on the ball-carrier, with a defender positioned between ball and goal", formula: "Mean(time-to-pressure) on opponent carries in our half", benchmark: "Us 2.6s | PL avg 2.9s | 8th", target: "≤2.5s", success: "2.6s", rank: 8, why: "Tactical Playbook Model: delay restricts passing options and buys time to organise. 360 shows we engage promptly and on the goal side — a strength.", training: "Pressing-trigger recognition (SSG-07).", priority: "Medium" },
-  { id: "TP-D2", cat: "principles", name: "Defensive Coverage Rate", principle: "Defensive coverage (defensive)", source360: true, definition: "% of pressing actions supported by a second defender covering behind the first", formula: "(Pressures with a cover defender behind ÷ pressures) × 100", benchmark: "Us 58% | PL avg 54% | 7th", target: "≥60%", success: "58%", rank: 7, why: "Tactical Playbook Model: coverage gives the first defender confidence to engage. 360 confirms our midfield screens the presser well.", training: "First-defender + cover pairs in shadow play.", priority: "Medium" },
-  { id: "TP-D3", cat: "principles", name: "Defensive Balance · Centre of Play", principle: "Balance (defensive)", source360: true, definition: "% of defensive moments with numerical equality or superiority inside the 9.15m centre of play", formula: "(Moments ≥ numerical parity around ball ÷ defensive moments) × 100", benchmark: "Us 72% | PL avg 68% | 6th", target: "≥73%", success: "72%", rank: 6, why: "The Tactical Playbook Model's exact superiority/equality/inferiority concept. 360 shows we rarely get outnumbered around the ball — core to conceding few central shots.", training: "Numerical-recovery defending (overload/underload).", priority: "Low" },
-  { id: "TP-D4", cat: "principles", name: "Concentration · Central Protection", principle: "Concentration (defensive)", source360: true, definition: "Team central compactness near our goal — inverse of horizontal spread in the defensive third", formula: "1 − (defensive-third lateral spread ÷ pitch width), indexed 0–100", benchmark: "Us 77 | PL avg 71 | 5th", target: "Maintain ≥75", success: "77", rank: 5, why: "Tactical Playbook Model: gather toward the high-risk central zone. 360 shows our block funnels play wide and protects the corridor — our standout defensive trait.", training: "Block-compaction shuttles, force-wide cues (SSG-07).", priority: "Low" },
-  { id: "TP-D5", cat: "principles", name: "Defensive Unity · Line & Compactness", principle: "Defensive unity (defensive)", source360: true, definition: "Vertical compactness (distance from last line to most-advanced presser) plus offside-line discipline", formula: "Composite of team length out of possession + back-line synchrony, indexed 0–100", benchmark: "Us 69 | PL avg 70 | 12th", target: "≥73", success: "69", rank: 12, why: "Tactical Playbook Model: the offside line is the defence's ally. 360 shows our block stretches vertically when pressing — the gap between lines is where United played through us.", training: "Connected line-stepping & offside-trap drills.", priority: "High" },
+  { id: "TP-D1", cat: "principles", name: "Delay · Pressure Engagement", principle: "Delay (defensive)", source360: true, definition: "Average seconds to apply pressure on the ball-carrier, with a defender positioned between ball and goal", formula: "Mean(time-to-pressure) on opponent carries in our half", benchmark: "Us 2.6s | PL avg 2.9s | 8th", target: "≤2.5s", success: "2.6s", rank: 8, why: "Tactical Playbook Model: delay restricts passing options and buys time to organise. 360 shows we engage promptly and on the goal side — a strength.", training: "Pressing-trigger recognition (SSG-07).", priority: "Medium", sensitivity360: "moderate", byPhase: { block: 2.7, counterpress: 1.9 } },
+  { id: "TP-D2", cat: "principles", name: "Defensive Coverage Rate", principle: "Defensive coverage (defensive)", source360: true, definition: "% of pressing actions supported by a second defender covering behind the first", formula: "(Pressures with a cover defender behind ÷ pressures) × 100", benchmark: "Us 58% | PL avg 54% | 7th", target: "≥60%", success: "58%", rank: 7, why: "Tactical Playbook Model: coverage gives the first defender confidence to engage. 360 confirms our midfield screens the presser well.", training: "First-defender + cover pairs in shadow play.", priority: "Medium", sensitivity360: "high", byPhase: { block: 60, counterpress: 52 } },
+  { id: "TP-D3", cat: "principles", name: "Defensive Balance · Centre of Play", principle: "Balance (defensive)", source360: true, definition: "% of defensive moments with numerical equality or superiority inside the 9.15m centre of play", formula: "(Moments ≥ numerical parity around ball ÷ defensive moments) × 100", benchmark: "Us 72% | PL avg 68% | 6th", target: "≥73%", success: "72%", rank: 6, why: "The Tactical Playbook Model's exact superiority/equality/inferiority concept. 360 shows we rarely get outnumbered around the ball — core to conceding few central shots.", training: "Numerical-recovery defending (overload/underload).", priority: "Low", sensitivity360: "moderate", byPhase: { block: 74, counterpress: 64 } },
+  { id: "TP-D4", cat: "principles", name: "Concentration · Central Protection", principle: "Concentration (defensive)", source360: true, definition: "Team central compactness near our goal — inverse of horizontal spread in the defensive third", formula: "1 − (defensive-third lateral spread ÷ pitch width), indexed 0–100", benchmark: "Us 77 | PL avg 71 | 5th", target: "Maintain ≥75", success: "77", rank: 5, why: "Tactical Playbook Model: gather toward the high-risk central zone. 360 shows our block funnels play wide and protects the corridor — our standout defensive trait.", training: "Block-compaction shuttles, force-wide cues (SSG-07).", priority: "Low", sensitivity360: "robust", byPhase: { block: 79, counterpress: 70 } },
+  { id: "TP-D5", cat: "principles", name: "Defensive Unity · Line & Compactness", principle: "Defensive unity (defensive)", source360: true, definition: "Vertical compactness (distance from last line to most-advanced presser) plus offside-line discipline", formula: "Composite of team length out of possession + back-line synchrony, indexed 0–100", benchmark: "Us 69 | PL avg 70 | 12th", target: "≥73", success: "69", rank: 12, why: "Tactical Playbook Model: the offside line is the defence's ally. 360 shows our block stretches vertically when pressing — the gap between lines is where United played through us.", training: "Connected line-stepping & offside-trap drills.", priority: "High", sensitivity360: "robust", byPhase: { block: 72, counterpress: 61 } },
   { id: "M-01", cat: "macro", name: "xG Outperformance", definition: "Goals scored minus expected goals (per match)", formula: "Goals/match − xG/match", benchmark: "Us −0.07 | PL avg 0", target: "Reach +0.05 (top 6 level)", success: "−0.07", why: "We create chances of top-6 quality but finish like an 8th-placed side.", training: "Finishing programme squad-wide.", priority: "Critical" },
   { id: "M-02", cat: "macro", name: "Possession Quality Index", definition: "% of possessions reaching the final third", formula: "(Possessions reaching final third ÷ total possessions) × 100", benchmark: "Us 36% | PL avg 31%", target: "Maintain ≥35%", success: "36%", why: "Our territorial dominance is real. The problem is what happens once we're there.", training: "Engine Room Conquest (SSG-05).", priority: "Medium" },
   { id: "M-03", cat: "macro", name: "Recovery-To-Shot Time", definition: "Average seconds from possession recovery to first shot attempt", formula: "Mean(seconds from recovery to shot)", benchmark: "Us 14.2s | PL top 6 avg 11.5s", target: "≤12s", success: "14.2s", why: "We're too patient post-recovery. Top 6 teams strike faster after winning the ball.", training: "Five-Second Strike (SSG-02).", priority: "High" }
@@ -1744,6 +1746,14 @@ const setPieceComparison = [
 ];
 
 const priorityColors = { "Critical": "#FF3D5A", "High": "#FF9D3D", "Medium": "#FFD700", "Diagnostic": "#A8C5FF" };
+
+// Phase + provenance display metadata (mirrors principles_engine.py byPhase + sensitivity360)
+const PHASE_LABELS = { buildup: "Build-up", progression: "Progression", finalthird: "Final third", counterattack: "Counter", block: "Block", counterpress: "Counter-press" };
+const SENS_META = {
+  high:     { c: "#FF3D5A", short: "High",     t: "High — count/area metrics are undercounted on partial 360; ranked against a same-coverage corpus" },
+  moderate: { c: "#FFD700", short: "Moderate", t: "Moderate — modest drift under partial 360" },
+  robust:   { c: SCOUTS.green, short: "Robust", t: "Robust — stable under partial 360" },
+};
 
 const severityStyles = {
   "decisive":    { bg: "#3D0F1A", border: "#FF3D5A", text: "#FF3D5A", label: "DECISIVE" },
@@ -3054,6 +3064,73 @@ function SSGCard({ ssg }) {
   );
 }
 
+// ============ PHASE BREAKDOWN BARS (per-principle byPhase) ============
+// Bars are scaled so "fuller = better" within the principle (inverted for lower-is-better
+// metrics like Delay). They show relative emphasis across phases, not an absolute scale —
+// the number beside each bar is the value in the principle's own unit.
+function PhaseBars({ byPhase, color, lowerIsBetter = false }) {
+  const entries = Object.entries(byPhase || {}).filter(([, v]) => v !== null && v !== undefined);
+  if (!entries.length) return null;
+  const vals = entries.map(([, v]) => v);
+  const max = Math.max(...vals), min = Math.min(...vals);
+  return (
+    <div className="space-y-1.5">
+      {entries.map(([k, v]) => {
+        const w = lowerIsBetter ? (min > 0 ? (min / v) * 100 : 100) : (max > 0 ? (v / max) * 100 : 0);
+        return (
+          <div key={k} className="flex items-center gap-2">
+            <span className="text-[9px] text-white/45 shrink-0" style={{ width: 64 }}>{PHASE_LABELS[k] || k}</span>
+            <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
+              <div className="h-full rounded-full" style={{ width: `${Math.max(8, w)}%`, background: color, boxShadow: `0 0 5px ${color}99` }} />
+            </div>
+            <span className="text-[10px] font-mono font-bold text-right shrink-0" style={{ color, width: 34 }}>{v}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ============ LIVE DATA SEAM ============
+// If ./data/principles.json (principles_engine.py output) is deployed, overlay its per-phase
+// values + sensitivity (and headline value) over the bundled demo principles, matched by id.
+// Falls back silently to the bundled values, so the site behaves exactly as before until the
+// JSON is added. Engine byPhase shape {phase:{value,samples}} is flattened to {phase:value}.
+function useLivePrinciples(fallback) {
+  const [principles, setPrinciples] = useState(fallback);
+  const [live, setLive] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    const url = (typeof document !== "undefined")
+      ? new URL("data/principles.json", document.baseURI).href
+      : "data/principles.json";
+    const fmt = (v, u) => v == null ? null : (u === "%" ? `${v}%` : u === "s" ? `${v}s` : `${v}`);
+    fetch(url, { cache: "no-store" })
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error("no data"))))
+      .then(bundle => {
+        if (cancelled || !bundle || !Array.isArray(bundle.principles)) return;
+        const byId = {};
+        bundle.principles.forEach(p => { byId[p.id] = p; });
+        const merged = fallback.map(k => {
+          const e = byId[k.id];
+          if (!e) return k;
+          const phases = {};
+          if (e.byPhase) Object.entries(e.byPhase).forEach(([ph, o]) => { phases[ph] = (o && typeof o === "object") ? o.value : o; });
+          return {
+            ...k, _live: true,
+            success: e.value != null ? fmt(e.value, e.unit) : k.success,
+            sensitivity360: e.sensitivity360 || k.sensitivity360,
+            byPhase: Object.keys(phases).length ? phases : k.byPhase,
+          };
+        });
+        if (!cancelled) { setPrinciples(merged); setLive(true); }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+  return { principles, live };
+}
+
 // ============ KPI CARD ============
 function KPICard({ kpi }) {
   const [expanded, setExpanded] = useState(false);
@@ -3069,6 +3146,9 @@ function KPICard({ kpi }) {
             <span className="text-[10px] font-mono text-white/30 shrink-0">{kpi.id}</span>
             {kpi.source360 && (
               <span className="text-[8px] font-mono font-black px-1 py-0.5 rounded shrink-0 tracking-wider" style={{ background: CYBER.cyan + "1F", color: CYBER.cyan, border: `1px solid ${CYBER.cyan}55` }}>360</span>
+            )}
+            {kpi.sensitivity360 && SENS_META[kpi.sensitivity360] && (
+              <span title={`360 sensitivity: ${SENS_META[kpi.sensitivity360].t}`} className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: SENS_META[kpi.sensitivity360].c, boxShadow: `0 0 5px ${SENS_META[kpi.sensitivity360].c}` }} />
             )}
             <h3 className="text-sm font-bold text-white leading-tight">{kpi.name}</h3>
           </div>
@@ -3095,10 +3175,22 @@ function KPICard({ kpi }) {
       {expanded && (
         <div className="border-t border-white/10 divide-y divide-white/10 text-xs">
           <div className="px-4 py-3 bg-black/30"><div className="text-[9px] uppercase tracking-widest text-white/40 mb-1">Formula</div><div className="font-mono text-white/80 text-[11px]">{kpi.formula}</div></div>
+          {kpi.byPhase && (
+            <div className="px-4 py-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-[9px] uppercase tracking-widest text-white/40">By phase{/Delay/.test(kpi.name) ? " · lower = faster" : ""}</div>
+                <span className="text-[8px] font-mono" style={{ color: kpi._live ? SCOUTS.green : "rgba(255,255,255,0.3)" }}>{kpi._live ? "● live" : "illustrative"}</span>
+              </div>
+              <PhaseBars byPhase={kpi.byPhase} color={cat.color} lowerIsBetter={/Delay/.test(kpi.name)} />
+            </div>
+          )}
           <div className="px-4 py-3"><div className="text-[9px] uppercase tracking-widest text-white/40 mb-1">Why it matters</div><div className="text-white/70 leading-relaxed">{kpi.why}</div></div>
           <div className="px-4 py-3 bg-white/[0.02]"><div className="text-[9px] uppercase tracking-widest text-white/40 mb-1">Benchmark</div><div className="text-white/70">{kpi.benchmark}</div></div>
           <div className="px-4 py-3"><div className="text-[9px] uppercase tracking-widest text-white/40 mb-1">Target</div><div className="text-white/70">{kpi.target}</div></div>
           <div className="px-4 py-3 bg-white/[0.02]"><div className="text-[9px] uppercase tracking-widest text-white/40 mb-1">Training</div><div className="text-white/70 leading-relaxed">{kpi.training}</div></div>
+          {kpi.sensitivity360 && SENS_META[kpi.sensitivity360] && (
+            <div className="px-4 py-2.5"><div className="text-[9px] uppercase tracking-widest text-white/40 mb-1">360 sensitivity</div><div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full shrink-0" style={{ background: SENS_META[kpi.sensitivity360].c }} /><span className="text-white/70 text-[11px] leading-snug">{SENS_META[kpi.sensitivity360].t}</span></div></div>
+          )}
           {kpi.source360 && (
             <div className="px-4 py-2.5 bg-black/30"><div className="text-[9px] font-mono" style={{ color: CYBER.cyan }}>◆ Derived from StatsBomb 360 freeze-frame player positions</div></div>
           )}
@@ -4378,9 +4470,240 @@ function GameModel() {
   );
 }
 
+// ============ VORONOI SPACE CONTROL (TP-O4 tracking-era upgrade · phase-conditioned) ============
+// Dependency-free Voronoi by iterated half-plane clipping — the same method as principles_engine.py
+// (team_space_control). Board is pitch-proportioned 105×68, we attack RIGHT. Every figure on this
+// tab is computed live from the positions shown. Space control is broken down by phase of play.
+// Frames are illustrative; replaced by real values when the 25 Hz tracking
+// feed is wired in.
+const SC_BOUNDS = [0, 0, 105, 68];
+function scClip(poly, A, B) {
+  const nx = 2 * (B[0] - A[0]), ny = 2 * (B[1] - A[1]);
+  const c = (B[0] * B[0] + B[1] * B[1]) - (A[0] * A[0] + A[1] * A[1]);
+  const inside = (P) => nx * P[0] + ny * P[1] <= c + 1e-9;
+  const cut = (P, Q) => {
+    const dp = nx * P[0] + ny * P[1] - c, dq = nx * Q[0] + ny * Q[1] - c;
+    const t = dp / (dp - dq);
+    return [P[0] + t * (Q[0] - P[0]), P[1] + t * (Q[1] - P[1])];
+  };
+  const out = [];
+  for (let i = 0; i < poly.length; i++) {
+    const cur = poly[i], prv = poly[(i - 1 + poly.length) % poly.length];
+    const ci = inside(cur), pi = inside(prv);
+    if (ci) { if (!pi) out.push(cut(prv, cur)); out.push(cur); }
+    else if (pi) out.push(cut(prv, cur));
+  }
+  return out;
+}
+function scCell(pts, idx) {
+  let cell = [[SC_BOUNDS[0], SC_BOUNDS[1]], [SC_BOUNDS[2], SC_BOUNDS[1]], [SC_BOUNDS[2], SC_BOUNDS[3]], [SC_BOUNDS[0], SC_BOUNDS[3]]];
+  for (let j = 0; j < pts.length; j++) {
+    if (j === idx) continue;
+    cell = scClip(cell, pts[idx], pts[j]);
+    if (!cell.length) break;
+  }
+  return cell;
+}
+function scArea(poly) {
+  if (poly.length < 3) return 0;
+  let s = 0;
+  for (let i = 0; i < poly.length; i++) {
+    const [x1, y1] = poly[i], [x2, y2] = poly[(i + 1) % poly.length];
+    s += x1 * y2 - x2 * y1;
+  }
+  return Math.abs(s) / 2;
+}
+// clip a polygon to a vertical band [a,b] (for per-third control)
+function scClipV(poly, x, keepRight) {
+  const out = [];
+  for (let i = 0; i < poly.length; i++) {
+    const c = poly[i], p = poly[(i - 1 + poly.length) % poly.length];
+    const ci = keepRight ? c[0] >= x : c[0] <= x;
+    const pi = keepRight ? p[0] >= x : p[0] <= x;
+    const cut = () => { const t = (x - p[0]) / (c[0] - p[0]); return [x, p[1] + t * (c[1] - p[1])]; };
+    if (ci) { if (!pi) out.push(cut()); out.push(c); }
+    else if (pi) out.push(cut());
+  }
+  return out;
+}
+function scBand(poly, a, b) { return scClipV(scClipV(poly, a, true), b, false); }
+
+const SC_ROLES = ["GK", "LB", "LCB", "RCB", "RB", "DM", "LCM", "RCM", "LW", "RW", "ST"];
+const PHASE_FRAMES = [
+  { id: "buildup", label: "Build-up", intent: "Invade opponent space",
+    insight: "We own the deep build space and force them to set — but with no final-third presence yet, this territory is low-value. Control here measures patience, not threat.",
+    ours: [[12,34],[34,9],[28,26],[28,42],[34,59],[46,34],[56,22],[56,46],[60,12],[60,56],[58,34]],
+    theirs: [[100,34],[80,12],[80,28],[80,40],[80,56],[66,20],[64,34],[66,48],[52,28],[52,40],[56,34]],
+    ball: [46,34] },
+  { id: "progression", label: "Progression", intent: "Invade opponent space",
+    insight: "Control pushes into midfield as we move the ball toward the next third — the phase where width and support angles open the block.",
+    ours: [[20,34],[42,9],[38,27],[38,41],[42,59],[55,34],[66,20],[66,48],[78,11],[78,57],[80,34]],
+    theirs: [[101,34],[84,12],[84,28],[84,40],[84,56],[70,20],[68,34],[70,48],[58,28],[58,40],[62,34]],
+    ball: [66,34] },
+  { id: "finalthird", label: "Final third", intent: "Scoring",
+    insight: "We camp them in: overall control peaks because the low block concedes everything behind the ball — yet the final third itself stays contested. The clearest case that high space control is not high threat.",
+    ours: [[44,34],[60,12],[56,28],[56,40],[60,56],[68,34],[78,22],[78,46],[90,13],[90,55],[92,34]],
+    theirs: [[103,34],[90,24],[90,44],[86,16],[86,52],[84,31],[84,37],[76,24],[76,44],[70,34],[72,40]],
+    ball: [88,34] },
+  { id: "counter", label: "Counter", intent: "Invade opponent space",
+    insight: "Their shape is broken after the turnover and players are caught upfield, so attacking-third control spikes into the space in behind — the signature of a clean transition.",
+    ours: [[25,34],[45,20],[45,48],[58,30],[58,44],[70,12],[70,56],[82,26],[82,42],[92,34],[88,18]],
+    theirs: [[100,34],[55,16],[55,34],[55,52],[40,24],[40,44],[68,30],[30,34],[72,40],[48,34],[60,48]],
+    ball: [82,42] },
+];
+
+function SpaceControlTab() {
+  const [pi, setPi] = useState(0);
+  const TOT = SC_BOUNDS[2] * SC_BOUNDS[3];
+  const phaseStats = PHASE_FRAMES.map(fr => {
+    const pts = [...fr.ours, ...fr.theirs];
+    const n = fr.ours.length;
+    const cells = pts.map((_, i) => scCell(pts, i));
+    const areas = cells.map(scArea);
+    const ourPct = Math.round(100 * areas.slice(0, n).reduce((a, b) => a + b, 0) / TOT);
+    const thirds = [[0, 35], [35, 70], [70, 105]].map(([a, b]) => {
+      const ob = cells.slice(0, n).reduce((s, c) => s + scArea(scBand(c, a, b)), 0);
+      return Math.round(100 * ob / ((b - a) * 68));
+    });
+    const top = areas.slice(1, n) // outfield only (drop GK)
+      .map((ar, i) => ({ role: SC_ROLES[i + 1], pct: +(100 * ar / TOT).toFixed(1) }))
+      .sort((x, y) => y.pct - x.pct).slice(0, 3);
+    return { ourPct, thirds, top, cells, n };
+  });
+  const fr = PHASE_FRAMES[pi];
+  const st = phaseStats[pi];
+  const OUR = BHA.blueLight, OPP = "#FF4D6A", VAL = CYBER.cyan;
+  const poly = (p) => p.map(c => `${c[0].toFixed(2)},${c[1].toFixed(2)}`).join(" ");
+  const thirdLabels = ["Def third", "Mid third", "Att third"];
+  const topMax = Math.max(...st.top.map(t => t.pct), 1);
+
+  return (
+    <div className="space-y-4">
+      {/* header / source banner */}
+      <div className="rounded-lg border p-4" style={{ borderColor: CYBER.amber + "33", background: CYBER.amber + "08" }}>
+        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+          <span className="text-[8px] font-mono font-black px-1.5 py-0.5 rounded tracking-wider" style={{ background: CYBER.amber + "1F", color: CYBER.amber, border: `1px dashed ${CYBER.amber}77` }}>TRACKING</span>
+          <h3 className="text-sm font-bold text-white">Space Control · Voronoi</h3>
+          <span className="text-[8px] font-mono text-white/30">preview · demo data</span>
+        </div>
+        <p className="text-[11px] text-white/60 leading-relaxed">
+          The pitch split into the area each player is closest to. Team space control measures how much of the pitch we dominate — a fuller read than team shape alone (TP-O4 Width &amp; Length) — broken down by phase of play, because the same territory means very different things in build-up, progression, the final third, and on the counter.
+        </p>
+      </div>
+
+      {/* phase selector */}
+      <div className="grid grid-cols-4 gap-1">
+        {PHASE_FRAMES.map((f, idx) => {
+          const on = idx === pi;
+          return (
+            <button key={f.id} onClick={() => setPi(idx)} className="py-2 px-1 rounded transition-all text-center" style={{ background: on ? OUR + "22" : "rgba(255,255,255,0.03)", border: `1px solid ${on ? OUR + "66" : "rgba(255,255,255,0.08)"}` }}>
+              <div className="text-[10px] font-bold leading-tight" style={{ color: on ? OUR : "rgba(255,255,255,0.6)" }}>{f.label}</div>
+              <div className="text-[8px] font-mono mt-0.5" style={{ color: on ? OUR + "cc" : "rgba(255,255,255,0.28)" }}>{phaseStats[idx].ourPct}%</div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* pitch + overall control */}
+      <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+        <svg viewBox="-2 -2 109 72" className="w-full h-auto" style={{ borderRadius: 6 }}>
+          <rect x="0" y="0" width="105" height="68" fill="#142E1E" stroke="#fff" strokeOpacity="0.45" strokeWidth="0.4" />
+          {st.cells.map((c, i) => (i >= st.n && c.length >= 3) ? <polygon key={`t${i}`} points={poly(c)} fill={OPP} fillOpacity="0.12" stroke={OPP} strokeOpacity="0.35" strokeWidth="0.25" /> : null)}
+          {st.cells.map((c, i) => (i < st.n && c.length >= 3) ? <polygon key={`o${i}`} points={poly(c)} fill={OUR} fillOpacity="0.17" stroke={OUR} strokeOpacity="0.5" strokeWidth="0.25" /> : null)}
+          <line x1="35" y1="0" x2="35" y2="68" stroke="#fff" strokeOpacity="0.13" strokeWidth="0.3" strokeDasharray="1.5 1.5" />
+          <line x1="70" y1="0" x2="70" y2="68" stroke="#fff" strokeOpacity="0.13" strokeWidth="0.3" strokeDasharray="1.5 1.5" />
+          <line x1="52.5" y1="0" x2="52.5" y2="68" stroke="#fff" strokeOpacity="0.28" strokeWidth="0.3" />
+          <circle cx="52.5" cy="34" r="9.15" fill="none" stroke="#fff" strokeOpacity="0.28" strokeWidth="0.3" />
+          <rect x="0" y="13.85" width="16.5" height="40.3" fill="none" stroke="#fff" strokeOpacity="0.28" strokeWidth="0.3" />
+          <rect x="88.5" y="13.85" width="16.5" height="40.3" fill="none" stroke="#fff" strokeOpacity="0.28" strokeWidth="0.3" />
+          {fr.theirs.map((p, i) => <circle key={`tp${i}`} cx={p[0]} cy={p[1]} r="1.5" fill="#181818" stroke={OPP} strokeWidth="0.5" />)}
+          {fr.ours.map((p, i) => <circle key={`op${i}`} cx={p[0]} cy={p[1]} r="1.6" fill={OUR} stroke="#fff" strokeWidth="0.4" />)}
+          <circle cx={fr.ball[0]} cy={fr.ball[1]} r="1" fill="#fff" stroke="#111" strokeWidth="0.3" />
+          <text x="103.5" y="4.4" fill={SCOUTS.green} fontSize="3.2" fontWeight="bold" textAnchor="end">ATTACK &#9654;</text>
+        </svg>
+        <div className="mt-3">
+          <div className="flex items-center justify-between text-[11px] font-mono font-bold mb-1">
+            <span style={{ color: OUR }}>BHA {st.ourPct}%</span>
+            <span className="text-white/35 text-[9px] uppercase tracking-widest">overall control</span>
+            <span style={{ color: OPP }}>{100 - st.ourPct}% OPP</span>
+          </div>
+          <div className="h-2 rounded-full overflow-hidden flex bg-white/10">
+            <div style={{ width: `${st.ourPct}%`, background: OUR, boxShadow: `0 0 6px ${OUR}` }} />
+            <div style={{ width: `${100 - st.ourPct}%`, background: OPP, boxShadow: `0 0 6px ${OPP}` }} />
+          </div>
+        </div>
+      </div>
+
+      {/* insight cards: by-third + top space */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
+          <div className="text-[9px] uppercase tracking-widest text-white/40 mb-2">Control by third</div>
+          <div className="space-y-2">
+            {st.thirds.map((pct, i) => {
+              const col = i === 2 ? VAL : OUR;
+              return (
+                <div key={i} className="flex items-center gap-2">
+                  <span className="text-[9px] text-white/50 shrink-0" style={{ width: 56 }}>{thirdLabels[i]}</span>
+                  <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${pct}%`, background: col, boxShadow: `0 0 5px ${col}99` }} /></div>
+                  <span className="text-[10px] font-mono font-bold shrink-0" style={{ color: col, width: 30, textAlign: "right" }}>{pct}%</span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-[8.5px] text-white/30 mt-2 leading-snug">The attacking third (cyan) is the value zone — overall control can be high while the final third stays contested.</p>
+        </div>
+        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
+          <div className="text-[9px] uppercase tracking-widest text-white/40 mb-2">Top space · outfield</div>
+          <div className="space-y-2">
+            {st.top.map((t, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="text-[9px] font-mono text-white/55 shrink-0" style={{ width: 30 }}>{t.role}</span>
+                <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${(t.pct / topMax) * 100}%`, background: OUR, boxShadow: `0 0 5px ${OUR}99` }} /></div>
+                <span className="text-[10px] font-mono font-bold shrink-0" style={{ color: OUR, width: 36, textAlign: "right" }}>{t.pct}%</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-[8.5px] text-white/30 mt-2 leading-snug">Wide and midfield players usually hold the most space — they set how far the pitch opens up.</p>
+        </div>
+      </div>
+
+      {/* phase insight */}
+      <div className="rounded-lg border-l-2 p-3" style={{ borderColor: OUR, background: OUR + "0A" }}>
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
+          <span className="text-[9px] font-mono font-bold uppercase tracking-wider" style={{ color: OUR }}>{fr.label}</span>
+          <span className="text-[8px] font-mono px-1.5 py-0.5 rounded" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}>{fr.intent}</span>
+        </div>
+        <p className="text-[11px] text-white/70 leading-relaxed">{fr.insight}</p>
+      </div>
+
+      {/* across-phase trend */}
+      <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
+        <div className="text-[9px] uppercase tracking-widest text-white/40 mb-2">Overall control across phases</div>
+        <div className="space-y-1.5">
+          {PHASE_FRAMES.map((f, idx) => {
+            const on = idx === pi;
+            return (
+              <button key={f.id} onClick={() => setPi(idx)} className="w-full flex items-center gap-2 text-left">
+                <span className="text-[9px] shrink-0" style={{ width: 72, color: on ? OUR : "rgba(255,255,255,0.45)", fontWeight: on ? 700 : 400 }}>{f.label}</span>
+                <div className="flex-1 h-2.5 rounded-full bg-white/10 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${phaseStats[idx].ourPct}%`, background: on ? OUR : OUR + "77", boxShadow: on ? `0 0 6px ${OUR}` : "none" }} /></div>
+                <span className="text-[10px] font-mono font-bold shrink-0" style={{ color: on ? OUR : "rgba(255,255,255,0.5)", width: 30, textAlign: "right" }}>{phaseStats[idx].ourPct}%</span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-[8.5px] text-white/30 mt-2 leading-snug">Territory peaks when the opponent sits deepest — high space control is not the same as high threat. Read it alongside the attacking-third share above.</p>
+      </div>
+
+      <p className="text-[9px] text-white/30 italic text-center font-mono">
+        Computed live from the positions shown · demonstration data until full match tracking is available
+      </p>
+    </div>
+  );
+}
+
 // ============ TACTICAL PRINCIPLES (10 core principles · 360-derived adherence) ============
 function TacticalPrinciples() {
-  const principleKpis = kpis.filter(k => k.cat === "principles");
+  const { principles: principleKpis, live } = useLivePrinciples(kpis.filter(k => k.cat === "principles"));
   const offensive = principleKpis.filter(k => k.principle && k.principle.includes("offensive"));
   const defensive = principleKpis.filter(k => k.principle && k.principle.includes("defensive"));
   const cat = kpiCategories.principles;
@@ -4407,8 +4730,11 @@ function TacticalPrinciples() {
           <h3 className="text-sm font-bold text-white">Tactical Playbook Model · 360 Freeze Frame</h3>
         </div>
         <p className="text-[11px] text-white/60 leading-relaxed">
-          Adherence to the 10 core tactical principles, scored from StatsBomb 360 player positions — not just outcomes, but how well we execute the model. Each is ranked against the 20 Premier League teams.
+          Adherence to the 10 core tactical principles, scored from StatsBomb 360 player positions — not just outcomes, but how well we execute the model. Each is ranked against the 20 Premier League teams and broken down by phase of play (expand a card).
         </p>
+        <div className="mt-2 text-[9px] font-mono" style={{ color: live ? SCOUTS.green : "rgba(255,255,255,0.35)" }}>
+          {live ? "● LIVE · per-phase values from principles_engine.py" : "Per-phase splits are illustrative — deploy ./data/principles.json to go live"}
+        </div>
       </div>
 
       <Group title="Offensive Principles" items={offensive} tint={"#FF6B35"} />
@@ -4428,7 +4754,8 @@ function TacticsTab() {
   const tabs = [
     { id: "model", label: "⚙ Game Model", color: BHA.blueLight },
     { id: "zones", label: "▦ Zone Data", color: SCOUTS.green },
-    { id: "principles", label: "◆ Tactical Principles", color: CYBER.cyan }
+    { id: "principles", label: "◆ Principles", color: CYBER.cyan },
+    { id: "space", label: "⬡ Space Control", color: CYBER.amber }
   ];
 
   return (
@@ -4457,6 +4784,7 @@ function TacticsTab() {
       {subTab === "model" && <GameModel />}
       {subTab === "zones" && <TacticalZones />}
       {subTab === "principles" && <TacticalPrinciples />}
+      {subTab === "space" && <SpaceControlTab />}
     </div>
   );
 }
