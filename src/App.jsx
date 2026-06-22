@@ -5687,6 +5687,104 @@ function TeamPerformance() {
 // MAIN APP
 // =================================================================
 
+function VisualsTab() {
+  const [sub, setSub] = useState("visuals");
+  return (
+    <Section id="08" title="Visual Analysis" sub="Our recent-game data, visualised — plus the interactive pitch.">
+      <div className="grid grid-cols-2 gap-1.5 p-1 rounded-lg bg-white/[0.04] border border-white/10 mb-5">
+        {[["visuals", "Visuals"], ["pitch", "Interactive Pitch"]].map(([k, label]) => {
+          const on = sub === k;
+          return (
+            <button key={k} onClick={() => setSub(k)} className="py-2 px-1 rounded text-[10px] font-bold transition-all uppercase tracking-wider" style={{
+              background: on ? BHA.blueLight + "22" : "transparent",
+              color: on ? BHA.blueLight : "rgba(255,255,255,0.45)",
+              border: `1px solid ${on ? BHA.blueLight + "55" : "transparent"}`,
+              textShadow: on ? `0 0 6px ${BHA.blueLight}55` : "none"
+            }}>{label}</button>
+          );
+        })}
+      </div>
+
+      {sub === "visuals" && (
+          <div className="space-y-4">
+            <ChartCard title="xG vs Actual Goals" subtitle="Final 9 matchweeks" footnote="We consistently underperform our xG. Across the season, we scored 0.07 goals less per match than expected — that's a finishing problem, not a chance creation problem.">
+              <ResponsiveContainer>
+                <AreaChart data={xgVsActual}>
+                  <CartesianGrid stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="mw" stroke="rgba(255,255,255,0.6)" fontSize={10} />
+                  <YAxis stroke="rgba(255,255,255,0.6)" fontSize={10} />
+                  <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid rgba(255,255,255,0.2)", fontSize: 11 }} />
+                  <Legend wrapperStyle={{ fontSize: 10 }} />
+                  <Area type="monotone" dataKey="xg" name="xG" stroke={BHA.blueLight} fill={BHA.blueLight} fillOpacity={0.2} strokeWidth={2} />
+                  <Line type="monotone" dataKey="goals" name="Goals" stroke={SCOUTS.green} strokeWidth={2.5} dot={{ r: 4 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </ChartCard>
+
+            <ShotMapCard />
+
+            <ChartCard title="Us vs Premier League Average" subtitle="Performance profile by category" height={260} footnote="We're above average in build-up, mid-third control, wide creation and counter-press — and below average in finishing and set pieces. The profile of a side punching tactically above its finishing weight.">
+              <ResponsiveContainer>
+                <RadarChart data={playerRadar}>
+                  <PolarGrid stroke="rgba(255,255,255,0.15)" />
+                  <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fill: "rgba(255,255,255,0.6)" }} />
+                  <PolarRadiusAxis stroke="rgba(255,255,255,0.2)" fontSize={8} angle={90} domain={[0, 100]} />
+                  <Radar name="Us" dataKey="bha" stroke={BHA.blueLight} fill={BHA.blueLight} fillOpacity={0.4} strokeWidth={2} />
+                  <Radar name="PL avg" dataKey="pl" stroke="rgba(255,255,255,0.4)" fill="rgba(255,255,255,0.1)" strokeWidth={1.5} />
+                  <Legend wrapperStyle={{ fontSize: 10 }} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+
+            <ChartCard title="Zone Success — Us vs PL Average" subtitle="Where we over- and under-perform" footnote="We out-perform the league across the first three zones. The drop comes in the attacking third, where we finish below average despite generating top-6 quality chances.">
+              <ResponsiveContainer>
+                <BarChart data={zoneGap} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                  <CartesianGrid stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="zone" stroke="rgba(255,255,255,0.6)" fontSize={9} />
+                  <YAxis stroke="rgba(255,255,255,0.6)" fontSize={10} unit="%" />
+                  <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid rgba(255,255,255,0.2)", fontSize: 11 }} />
+                  <Legend wrapperStyle={{ fontSize: 10 }} />
+                  <Bar name="Us" dataKey="bha" fill={BHA.blueLight} radius={[4, 4, 0, 0]} />
+                  <Bar name="PL avg" dataKey="pl" fill="rgba(255,255,255,0.3)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+
+            <ChartCard title="Set Piece Goals — League Comparison" subtitle="Where we sit in the table" footnote="We scored 11 set piece goals across the season, three below the PL average and 11 behind Arsenal. The largest single fixable gap in our profile.">
+              <ResponsiveContainer>
+                <BarChart data={setPieceComparison} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                  <CartesianGrid stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="team" stroke="rgba(255,255,255,0.6)" fontSize={8} angle={-15} textAnchor="end" height={40} />
+                  <YAxis stroke="rgba(255,255,255,0.6)" fontSize={10} />
+                  <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid rgba(255,255,255,0.2)", fontSize: 11 }} />
+                  <Bar dataKey="goals" radius={[4, 4, 0, 0]}>
+                    {setPieceComparison.map((e, i) => (
+                      <Cell key={i} fill={e.highlight ? BHA.blueLight : "rgba(255,255,255,0.3)"} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          </div>
+      )}
+
+      {sub === "pitch" && (
+        <>
+          <InteractivePitch />
+          <div className="mt-6 p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2 font-mono">Reading the pitch</div>
+            <ul className="space-y-2 text-xs text-white/65 leading-relaxed">
+              <li><span style={{ color: SCOUTS.green }}>●</span> <strong>Pre-offensive area (us at 37.4%)</strong> is our elite zone — well above the PL average of 34.8%. This is where Mitoma and Minteh isolate.</li>
+              <li><span style={{ color: "#FF3D5A" }}>●</span> <strong>Defensive area (us at 8.1% when moves end here)</strong> — the recovery from the Man Utd defeat sits in this number. Two of three conceded goals originated here.</li>
+              <li><span style={{ color: SCOUTS.green }}>●</span> <strong>Central corridor (us at 31.2%)</strong> is below the PL average of 34.3% — too many of our entries are wide, too few are central.</li>
+            </ul>
+          </div>
+        </>
+      )}
+    </Section>
+  );
+}
+
 export default function App() {
   const [view, setView] = useState("team");
   const [activeCat, setActiveCat] = useState("buildup");
@@ -5845,7 +5943,6 @@ export default function App() {
             { id: "visuals", label: "Visuals" },
             { id: "training", label: "Training" },
             { id: "ssgs", label: "SSGs" },
-            { id: "pitch", label: "Pitch" },
             { id: "insights", label: "Insights" },
             { id: "index", label: "Index" }
           ].map(v => (
@@ -5896,21 +5993,6 @@ export default function App() {
           </Section>
         )}
 
-        {/* ======== PITCH ======== */}
-        {view === "pitch" && (
-          <Section id="06" title="Interactive Pitch" sub="Toggle between build-up success, possession loss rate, and final-third corridor data — all derived from our recent matches.">
-            <InteractivePitch />
-            <div className="mt-6 p-4 rounded-lg border border-white/10 bg-white/[0.02]">
-              <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2 font-mono">Reading the pitch</div>
-              <ul className="space-y-2 text-xs text-white/65 leading-relaxed">
-                <li><span style={{ color: SCOUTS.green }}>●</span> <strong>Pre-offensive area (us at 37.4%)</strong> is our elite zone — well above the PL average of 34.8%. This is where Mitoma and Minteh isolate.</li>
-                <li><span style={{ color: "#FF3D5A" }}>●</span> <strong>Defensive area (us at 8.1% when moves end here)</strong> — the recovery from the Man Utd defeat sits in this number. Two of three conceded goals originated here.</li>
-                <li><span style={{ color: SCOUTS.green }}>●</span> <strong>Central corridor (us at 31.2%)</strong> is below the PL average of 34.3% — too many of our entries are wide, too few are central.</li>
-              </ul>
-            </div>
-          </Section>
-        )}
-
         {/* ======== KPIs ======== */}
         {view === "kpis" && (
           <Section id="07" title="KPI Library" sub="Sixteen performance indicators tailored to us. Tap any card to expand its definition, benchmark, target and training application.">
@@ -5935,71 +6017,8 @@ export default function App() {
           </Section>
         )}
 
-        {/* ======== VISUALS ======== */}
-        {view === "visuals" && (
-          <Section id="08" title="Visual Analysis" sub="Our recent-game data, visualised.">
-            <div className="space-y-4">
-              <ChartCard title="xG vs Actual Goals" subtitle="Final 9 matchweeks" footnote="We consistently underperform our xG. Across the season, we scored 0.07 goals less per match than expected — that's a finishing problem, not a chance creation problem.">
-                <ResponsiveContainer>
-                  <AreaChart data={xgVsActual}>
-                    <CartesianGrid stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="mw" stroke="rgba(255,255,255,0.6)" fontSize={10} />
-                    <YAxis stroke="rgba(255,255,255,0.6)" fontSize={10} />
-                    <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid rgba(255,255,255,0.2)", fontSize: 11 }} />
-                    <Legend wrapperStyle={{ fontSize: 10 }} />
-                    <Area type="monotone" dataKey="xg" name="xG" stroke={BHA.blueLight} fill={BHA.blueLight} fillOpacity={0.2} strokeWidth={2} />
-                    <Line type="monotone" dataKey="goals" name="Goals" stroke={SCOUTS.green} strokeWidth={2.5} dot={{ r: 4 }} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </ChartCard>
-
-              <ShotMapCard />
-
-              <ChartCard title="Us vs Premier League Average" subtitle="Performance profile by category" height={260} footnote="We're above average in build-up, mid-third control, wide creation and counter-press — and below average in finishing and set pieces. The profile of a side punching tactically above its finishing weight.">
-                <ResponsiveContainer>
-                  <RadarChart data={playerRadar}>
-                    <PolarGrid stroke="rgba(255,255,255,0.15)" />
-                    <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fill: "rgba(255,255,255,0.6)" }} />
-                    <PolarRadiusAxis stroke="rgba(255,255,255,0.2)" fontSize={8} angle={90} domain={[0, 100]} />
-                    <Radar name="Us" dataKey="bha" stroke={BHA.blueLight} fill={BHA.blueLight} fillOpacity={0.4} strokeWidth={2} />
-                    <Radar name="PL avg" dataKey="pl" stroke="rgba(255,255,255,0.4)" fill="rgba(255,255,255,0.1)" strokeWidth={1.5} />
-                    <Legend wrapperStyle={{ fontSize: 10 }} />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </ChartCard>
-
-              <ChartCard title="Zone Success — Us vs PL Average" subtitle="Where we over- and under-perform" footnote="We out-perform the league across the first three zones. The drop comes in the attacking third, where we finish below average despite generating top-6 quality chances.">
-                <ResponsiveContainer>
-                  <BarChart data={zoneGap} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-                    <CartesianGrid stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="zone" stroke="rgba(255,255,255,0.6)" fontSize={9} />
-                    <YAxis stroke="rgba(255,255,255,0.6)" fontSize={10} unit="%" />
-                    <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid rgba(255,255,255,0.2)", fontSize: 11 }} />
-                    <Legend wrapperStyle={{ fontSize: 10 }} />
-                    <Bar name="Us" dataKey="bha" fill={BHA.blueLight} radius={[4, 4, 0, 0]} />
-                    <Bar name="PL avg" dataKey="pl" fill="rgba(255,255,255,0.3)" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartCard>
-
-              <ChartCard title="Set Piece Goals — League Comparison" subtitle="Where we sit in the table" footnote="We scored 11 set piece goals across the season, three below the PL average and 11 behind Arsenal. The largest single fixable gap in our profile.">
-                <ResponsiveContainer>
-                  <BarChart data={setPieceComparison} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-                    <CartesianGrid stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="team" stroke="rgba(255,255,255,0.6)" fontSize={8} angle={-15} textAnchor="end" height={40} />
-                    <YAxis stroke="rgba(255,255,255,0.6)" fontSize={10} />
-                    <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid rgba(255,255,255,0.2)", fontSize: 11 }} />
-                    <Bar dataKey="goals" radius={[4, 4, 0, 0]}>
-                      {setPieceComparison.map((e, i) => (
-                        <Cell key={i} fill={e.highlight ? BHA.blueLight : "rgba(255,255,255,0.3)"} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartCard>
-            </div>
-          </Section>
-        )}
+        {/* ======== VISUALS (+ Interactive Pitch) ======== */}
+        {view === "visuals" && <VisualsTab />}
 
         {/* ======== INSIGHTS ======== */}
         {view === "insights" && (
