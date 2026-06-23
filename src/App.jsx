@@ -3585,6 +3585,170 @@ function DefensiveActionsPanel() {
   );
 }
 
+// ---- Chance Creation · passes into the CO (Centre-Offensive) zone (Zone Data) ----
+// Each pass ends inside the CO zone (central attacking third). Colour/size = xG of the
+// final location. Toggle origin zones (LPO/CPO/RPO/…) to isolate supply; tap a pass to
+// see passer → receiver. Five-match toggle. Demonstration data until fed from the engine.
+// Pass tuple: [x0, y0, x1, y1, xg, passer, receiver]. Board 105x68, attack right.
+// CO zone: x 70-105, y 22.67-45.33 (grid centre 83.3,50 on 100-scale).
+const CC_ZONE = { x0: 70, y0: 22.67, x1: 105, y1: 45.33 };
+const CC_ZONE_ORDER = ["LD","CD","RD","LPD","CPD","RPD","LPO","CPO","RPO","LO","CO","RO"];
+const CC_XBANDS = [["D", 0, 35], ["PD", 35, 52.5], ["PO", 52.5, 70], ["O", 70, 105]];
+const CC_YBANDS = [["L", 0, 22.67], ["C", 22.67, 45.33], ["R", 45.33, 68]];   // top third = L, bottom = R
+const CC_GRID = CC_YBANDS.flatMap(([yl, ya, yb]) => CC_XBANDS.map(([xl, xa, xb]) => ({ code: yl + xl, x: xa, y: ya, w: xb - xa, h: yb - ya })));
+const ccXB = (x) => x < 35 ? "D" : x < 52.5 ? "PD" : x < 70 ? "PO" : "O";
+const ccYB = (y) => y < 22.67 ? "L" : y > 45.33 ? "R" : "C";        // top third = Left, bottom = Right (per zone grid)
+const ccZone = (x, y) => ccYB(y) + ccXB(x);
+const ccXgCol = (g) => g >= 0.25 ? "#FF3D5A" : g >= 0.12 ? "#FF9D3D" : g >= 0.05 ? "#FFD700" : "#3DBEFF";
+const CHANCE_MATCHES = [
+  { opp: "NEW", ven: "H", res: "W 3-1", note: "Left-side overloads through Mitoma fed the middle — our highest-supply game, 1.67 xG created from the CO zone alone.",
+    passes: [[58,12,92,32,0.14,"Gilmour","Welbeck"],[64,8,95,30,0.22,"Estupiñán","Welbeck"],[72,16,90,34,0.09,"Mitoma","Rutter"],[55,20,88,38,0.07,"Gilmour","Welbeck"],[68,10,98,33,0.31,"Mitoma","Welbeck"],[62,55,94,36,0.12,"Minteh","Welbeck"],[78,52,96,31,0.18,"Veltman","Mitoma"],[60,50,90,40,0.06,"Wieffer","Welbeck"],[74,6,99,30,0.27,"Mitoma","Welbeck"],[66,58,92,37,0.05,"Minteh","Baleba"],[70,14,97,35,0.16,"Mitoma","Welbeck"]] },
+  { opp: "CHE", ven: "A", res: "D 2-2", note: "Balanced supply, moderate quality — plenty of entries but few high-value cut-backs.",
+    passes: [[60,30,90,33,0.08,"Baleba","Welbeck"],[66,55,93,36,0.11,"Veltman","Welbeck"],[72,12,95,32,0.13,"Mitoma","Welbeck"],[58,48,88,38,0.05,"Wieffer","Rutter"],[68,16,96,34,0.19,"Mitoma","Welbeck"],[63,52,91,30,0.07,"Minteh","Welbeck"],[75,58,98,35,0.09,"Veltman","Minteh"],[55,33,89,37,0.04,"Baleba","Welbeck"],[70,10,94,31,0.15,"Mitoma","Welbeck"],[64,50,92,39,0.06,"Gilmour","Welbeck"]] },
+  { opp: "TOT", ven: "H", res: "W 2-0", note: "Right-side overload (Veltman–Minteh) — the 0.28 chance is the textbook cut-back we want more of.",
+    passes: [[64,56,92,34,0.12,"Veltman","Welbeck"],[70,60,96,32,0.20,"Minteh","Welbeck"],[58,52,90,36,0.08,"Wieffer","Welbeck"],[74,58,99,31,0.28,"Veltman","Minteh"],[68,54,94,38,0.10,"Minteh","Welbeck"],[60,50,88,33,0.06,"Gilmour","Rutter"],[78,56,97,35,0.14,"Veltman","Welbeck"],[72,62,95,30,0.17,"Minteh","Welbeck"],[66,12,91,37,0.05,"Mitoma","Welbeck"],[62,8,93,33,0.09,"Estupiñán","Welbeck"]] },
+  { opp: "MUN", ven: "A", res: "L 1-2", note: "Starved of central supply — only six entries and 0.33 xG. The chance-creation drought behind the defeat.",
+    passes: [[58,28,86,36,0.04,"Baleba","Welbeck"],[64,14,90,33,0.06,"Mitoma","Welbeck"],[70,55,92,38,0.05,"Veltman","Rutter"],[60,50,88,32,0.03,"Wieffer","Welbeck"],[68,18,94,35,0.11,"Mitoma","Welbeck"],[55,30,87,37,0.04,"Gilmour","Welbeck"]] },
+  { opp: "LIV", ven: "H", res: "D 1-1", note: "Fewer entries but high quality — direct central feeds created two 0.24+ chances.",
+    passes: [[62,30,95,33,0.18,"Baleba","Welbeck"],[68,28,98,35,0.24,"Gilmour","Welbeck"],[58,34,90,32,0.07,"Baleba","Rutter"],[66,26,99,34,0.30,"Gilmour","Welbeck"],[64,38,93,30,0.12,"Baleba","Welbeck"],[66,55,92,37,0.09,"Minteh","Welbeck"],[70,12,96,36,0.14,"Mitoma","Welbeck"]] },
+];
+function ChanceCreationPanel() {
+  const [picked, setPicked] = useState([0]);   // selected match indices (multi-select)
+  const [hidden, setHidden] = useState({});      // { zone: true } = hidden
+  const [sel, setSel] = useState(null);          // "matchIdx-passIdx" or null
+  const order = [...picked].sort((a, b) => a - b);
+  const all = order.flatMap(mi => CHANCE_MATCHES[mi].passes.map((p, pi) => ({ mi, pi, p })));
+  const keyOf = (e) => `${e.mi}-${e.pi}`;
+  const zOf = (e) => ccZone(e.p[0], e.p[1]);
+  const zonesPresent = [...new Set(all.map(zOf))].sort((a, b) => CC_ZONE_ORDER.indexOf(a) - CC_ZONE_ORDER.indexOf(b));
+  const zoneCount = (z) => all.filter(e => zOf(e) === z).length;
+  const isShown = (e) => !hidden[zOf(e)];
+  const shown = all.filter(isShown);
+  const totXg = shown.reduce((a, e) => a + e.p[4], 0);
+  const avg = shown.length ? totXg / shown.length : 0;
+  const side = { Left: 0, Central: 0, Right: 0 };
+  shown.forEach(e => { side[e.p[1] < 22.67 ? "Left" : e.p[1] > 45.33 ? "Right" : "Central"]++; });
+  const topSupply = shown.length ? Object.entries(side).sort((a, b) => b[1] - a[1])[0][0] : "—";
+  const anyHidden = zonesPresent.some(z => hidden[z]);
+  const selE = sel != null ? all.find(e => keyOf(e) === sel) : null;
+  const selVisible = selE && isShown(selE);
+  const single = order.length === 1 ? CHANCE_MATCHES[order[0]] : null;
+  const toggleMatch = (i) => {
+    setSel(null);
+    setPicked(cur => cur.includes(i) ? (cur.length > 1 ? cur.filter(x => x !== i) : cur) : [...cur, i]);
+  };
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+      <div className="flex items-start justify-between mb-1 flex-wrap gap-2">
+        <div>
+          <h3 className="text-sm font-bold text-white">Chance Creation · into the CO zone</h3>
+          <p className="text-[10px] text-white/40 mt-0.5">Passes into the central attacking zone, weighted by final-location xG · pick one or more matches, toggle origin zones, tap a pass for passer → receiver</p>
+        </div>
+        <div className="flex gap-1 flex-wrap">
+          {CHANCE_MATCHES.map((mt, i) => {
+            const on = picked.includes(i);
+            return <button key={i} onClick={() => toggleMatch(i)} className="px-2 py-1 text-[9px] font-bold rounded uppercase tracking-wider" style={{ background: on ? BHA.blueLight + "22" : "transparent", color: on ? BHA.blueLight : "rgba(255,255,255,0.45)", border: `1px solid ${on ? BHA.blueLight + "55" : "rgba(255,255,255,0.1)"}` }}>{mt.opp} {mt.ven}</button>;
+          })}
+        </div>
+      </div>
+      <div className="text-[10px] text-white/55 mb-2">
+        {single
+          ? <>{single.opp} ({single.ven}) · <span className="font-mono" style={{ color: single.res[0] === "W" ? SCOUTS.green : single.res[0] === "L" ? "#FF3D5A" : "#FFD700" }}>{single.res}</span></>
+          : <>{order.length} matches combined · <span className="font-mono text-white/70">{order.map(i => CHANCE_MATCHES[i].opp).join(" · ")}</span></>}
+      </div>
+
+      {/* Origin-zone filter chips */}
+      <div className="flex flex-wrap items-center gap-1.5 mb-2">
+        <span className="text-[9px] uppercase tracking-widest text-white/40 mr-0.5">Origin zones</span>
+        {zonesPresent.map(z => {
+          const off = hidden[z];
+          return (
+            <button key={z} onClick={() => setHidden(h => ({ ...h, [z]: !h[z] }))} className="px-2 py-1 text-[9px] font-bold rounded font-mono" style={{
+              background: off ? "transparent" : SCOUTS.green + "22",
+              color: off ? "rgba(255,255,255,0.3)" : SCOUTS.green,
+              border: `1px solid ${off ? "rgba(255,255,255,0.12)" : SCOUTS.green + "55"}`,
+              textDecoration: off ? "line-through" : "none"
+            }}>{z} <span style={{ opacity: 0.55 }}>{zoneCount(z)}</span></button>
+          );
+        })}
+        {anyHidden && <button onClick={() => setHidden({})} className="px-2 py-1 text-[9px] rounded text-white/50 underline">show all</button>}
+      </div>
+
+      <svg viewBox="-2 -2 109 72" className="w-full h-auto" style={{ borderRadius: 6 }}>
+        <rect x="0" y="0" width="105" height="68" fill="#142E1E" stroke="#fff" strokeOpacity="0.45" strokeWidth="0.4" />
+        {CC_GRID.map(z => {
+          if (z.code === "CO") return (
+            <g key="CO">
+              <rect x={z.x} y={z.y} width={z.w} height={z.h} fill={BHA.blue} fillOpacity="0.08" stroke={BHA.blueLight} strokeOpacity="0.55" strokeWidth="0.4" strokeDasharray="1.5 1.2" />
+              <text x={z.x + 1.4} y={z.y + 3.6} fill={BHA.blueLight} fillOpacity="0.85" fontSize="2.8" fontWeight="bold" fontFamily="monospace">CO</text>
+            </g>
+          );
+          const present = zonesPresent.includes(z.code);
+          const lit = present && !hidden[z.code];
+          return (
+            <g key={z.code}>
+              <rect x={z.x} y={z.y} width={z.w} height={z.h} fill={lit ? SCOUTS.green : "transparent"} fillOpacity={lit ? 0.10 : 0} stroke={lit ? SCOUTS.green : "#fff"} strokeOpacity={lit ? 0.5 : 0.09} strokeWidth="0.3" />
+              <text x={z.x + 1.4} y={z.y + 3.6} fill={lit ? SCOUTS.green : "#fff"} fillOpacity={lit ? 0.9 : 0.22} fontSize="2.6" fontWeight={lit ? "bold" : "normal"} fontFamily="monospace">{z.code}</text>
+            </g>
+          );
+        })}
+        <line x1="52.5" y1="0" x2="52.5" y2="68" stroke="#fff" strokeOpacity="0.2" strokeWidth="0.3" />
+        <circle cx="52.5" cy="34" r="9.15" fill="none" stroke="#fff" strokeOpacity="0.2" strokeWidth="0.3" />
+        <rect x="0" y="13.85" width="16.5" height="40.3" fill="none" stroke="#fff" strokeOpacity="0.22" strokeWidth="0.3" />
+        <rect x="88.5" y="13.85" width="16.5" height="40.3" fill="none" stroke="#fff" strokeOpacity="0.28" strokeWidth="0.3" />
+        <rect x="99.5" y="24.85" width="5.5" height="18.3" fill="none" stroke="#fff" strokeOpacity="0.28" strokeWidth="0.3" />
+        {all.map((e) => {
+          if (!isShown(e)) return null;
+          const p = e.p; const c = ccXgCol(p[4]); const k = keyOf(e); const on = k === sel; const r = 1 + p[4] * 7;
+          return (
+            <g key={k} onClick={() => setSel(on ? null : k)} style={{ cursor: "pointer" }}>
+              <line x1={p[0]} y1={p[1]} x2={p[2]} y2={p[3]} stroke="#fff" strokeOpacity="0" strokeWidth="3.4" strokeLinecap="round" />
+              <line x1={p[0]} y1={p[1]} x2={p[2]} y2={p[3]} stroke={c} strokeOpacity={on ? 0.95 : 0.5} strokeWidth={on ? 1.1 : 0.5} strokeLinecap="round" />
+              <circle cx={p[0]} cy={p[1]} r="0.8" fill="none" stroke="#fff" strokeOpacity={on ? 0.85 : 0.35} strokeWidth="0.3" />
+              {on && <circle cx={p[2]} cy={p[3]} r={r + 1.4} fill="none" stroke="#fff" strokeWidth="0.6" />}
+              <circle cx={p[2]} cy={p[3]} r={r} fill={c} fillOpacity={on ? 1 : 0.85} stroke="#0b1410" strokeWidth="0.3" />
+            </g>
+          );
+        })}
+        <text x="103.5" y="4.4" fill={SCOUTS.green} fontSize="3.2" fontWeight="bold" textAnchor="end">ATTACK ▶</text>
+      </svg>
+
+      {/* Selected-pass detail */}
+      {selVisible ? (
+        <div className="mt-2 flex items-center justify-between rounded-lg border p-2" style={{ borderColor: ccXgCol(selE.p[4]) + "66", background: ccXgCol(selE.p[4]) + "14" }}>
+          <div className="flex items-center gap-2 text-[11px] min-w-0">
+            {!single && <span className="text-[9px] font-mono text-white/45 shrink-0">vs {CHANCE_MATCHES[selE.mi].opp}</span>}
+            <span className="font-mono font-bold shrink-0" style={{ color: ccXgCol(selE.p[4]) }}>{ccZone(selE.p[0], selE.p[1])}</span>
+            <span className="text-white/85 truncate">{selE.p[5]} <span className="text-white/40">→</span> {selE.p[6]}</span>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <span className="text-[10px] text-white/55">xG <span className="font-mono font-bold text-white">{selE.p[4].toFixed(2)}</span></span>
+            <button onClick={() => setSel(null)} className="text-white/40 hover:text-white/70 text-[13px] leading-none">✕</button>
+          </div>
+        </div>
+      ) : (
+        <p className="mt-2 text-[9px] text-white/30 italic text-center">Tap any pass to see who played it and who received it</p>
+      )}
+
+      {/* xG legend */}
+      <div className="flex flex-wrap items-center gap-3 mt-2">
+        <span className="text-[9px] uppercase tracking-widest text-white/40">xG of final location</span>
+        {[["<0.05", "#3DBEFF"], ["0.05+", "#FFD700"], ["0.12+", "#FF9D3D"], ["0.25+", "#FF3D5A"]].map(([t, c]) => (
+          <div key={t} className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ background: c }} /><span className="text-[9px] text-white/55">{t}</span></div>
+        ))}
+      </div>
+
+      {/* summary (reflects picked matches + active zone filter) */}
+      <div className="grid grid-cols-4 gap-2 mt-3">
+        {[["Passes", shown.length], ["xG created", totXg.toFixed(2)], ["Avg xG", avg.toFixed(2)], ["Top supply", topSupply]].map(([k, v]) => (
+          <div key={k} className="rounded bg-white/[0.04] p-2 text-center"><div className="text-sm font-black font-mono" style={{ color: BHA.blueLight }}>{v}</div><div className="text-[9px] text-white/45">{k}</div></div>
+        ))}
+      </div>
+      <p className="text-[10px] text-white/40 mt-3 italic leading-relaxed">{single ? single.note : `Combined view · ${order.length} matches · ${shown.length} passes into the CO zone for ${totXg.toFixed(2)} xG.`}</p>
+    </div>
+  );
+}
+
 // ---- Shot Map + xG (Visuals) ----
 const SHOT_OUT = {
   goal:    { label: "Goal",       color: SCOUTS.green },
@@ -3812,6 +3976,7 @@ function TacticalZones() {
         })}
       </div>
 
+      <ChanceCreationPanel />
       <LineHeightPanel />
       <DefensiveActionsPanel />
 
