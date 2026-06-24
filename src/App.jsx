@@ -5525,14 +5525,228 @@ function SpeedThreshold() {
 }
 
 // ============ TEAM PERFORMANCE COMPONENT ============
+// ============================================================================
+// PLAYER PLAY-STYLE MORPH + DETAIL (Team tab)
+// Tapping a player name collapses the squad table and opens a full detail view:
+// existing stats + a new Avg-rating stat + a tactical play-style morph.
+// Morph board is 100×64, attack RIGHT. Focal player is coloured by position and
+// glows; team-mates are green; opponents are black dummies. Offside-safe: the
+// focal carries the ball (carrier-exempt) and never goes beyond the opponent
+// back line (x≈91); all our base attackers sit ≤86. 11 v 11 every frame.
+// ============================================================================
+const PLAYER_POS_COL = (pos) =>
+  pos === "GK" ? "#FFD700"
+  : ["CB", "LB", "RB", "WB", "RWB", "LWB"].includes(pos) ? "#3D8EFF"
+  : ["DM", "CM", "CAM", "AM"].includes(pos) ? SCOUTS.green
+  : "#FF3D5A";
+const PS_BASE_US = { GK: [8, 50], LB: [34, 16], LCB: [26, 38], RCB: [26, 62], RB: [34, 84], DM: [48, 50], LCM: [60, 32], RCM: [60, 68], LW: [80, 16], ST: [86, 50], RW: [80, 84] };
+const PS_THEM = [[97, 50], [91, 58], [91, 42], [89, 80], [89, 20], [72, 82], [73, 58], [73, 42], [72, 18], [54, 58], [54, 42]];
+const PLAYER_RATING = {
+  1: 6.9, 23: 6.6, 38: 6.3,
+  5: 7.2, 6: 7.0, 21: 6.8, 4: 6.7, 34: 7.0, 24: 6.8, 29: 7.1,
+  17: 7.5, 27: 7.0, 13: 7.1, 30: 7.2, 26: 7.0, 33: 7.2, 20: 6.7, 25: 6.6, 10: 7.1,
+  22: 7.6, 11: 7.3, 7: 6.5, 18: 7.4, 9: 6.9, 19: 6.6,
+};
+const PLAYER_STYLE = {
+  1:  { label: "Sweeper-keeper",            slot: "GK",  path: [[8, 50], [16, 50], [11, 46], [9, 52]] },
+  23: { label: "Shot-stopper",              slot: "GK",  path: [[8, 50], [10, 46], [9, 54], [8, 50]] },
+  38: { label: "Goalkeeper",                slot: "GK",  path: [[8, 50], [10, 50], [9, 52], [8, 50]] },
+  5:  { label: "Ball-playing centre-back",  slot: "LCB", path: [[26, 38], [36, 40], [48, 44], [36, 40]] },
+  6:  { label: "Progressive defender",      slot: "RCB", path: [[26, 62], [36, 62], [48, 60], [36, 62]] },
+  21: { label: "Left-sided ball-player",    slot: "LCB", path: [[26, 36], [38, 34], [50, 40], [36, 36]] },
+  4:  { label: "Stopper",                   slot: "RCB", path: [[26, 62], [31, 66], [26, 60], [26, 62]] },
+  34: { label: "Inverted full-back",        slot: "RB",  path: [[34, 84], [48, 70], [58, 60], [46, 72]] },
+  24: { label: "Overlapping full-back",     slot: "RB",  path: [[34, 84], [54, 88], [72, 86], [54, 86]] },
+  29: { label: "Attacking full-back",       slot: "LB",  path: [[34, 16], [54, 12], [72, 14], [54, 14]] },
+  17: { label: "Deep-lying carrier",        slot: "DM",  path: [[48, 50], [40, 50], [58, 52], [70, 50]] },
+  27: { label: "Box-to-box anchor",         slot: "DM",  path: [[48, 50], [44, 54], [60, 48], [50, 50]] },
+  13: { label: "Pocket finder",             slot: "RCM", path: [[60, 68], [68, 64], [76, 60], [66, 66]] },
+  30: { label: "Deep-lying playmaker",      slot: "RCM", path: [[60, 68], [52, 70], [64, 64], [60, 68]] },
+  26: { label: "Box-to-box",                slot: "LCM", path: [[60, 32], [72, 34], [84, 40], [68, 34]] },
+  33: { label: "Arriving midfielder",       slot: "LCM", path: [[60, 32], [70, 34], [82, 38], [66, 33]] },
+  20: { label: "Tempo-setter",              slot: "RCM", path: [[60, 68], [56, 68], [64, 64], [60, 68]] },
+  25: { label: "Ball-winner",               slot: "LCM", path: [[60, 32], [64, 40], [58, 46], [60, 32]] },
+  10: { label: "Roaming ten",               slot: "RCM", path: [[60, 60], [70, 54], [80, 50], [66, 58]] },
+  22: { label: "Inverted winger",           slot: "LW",  path: [[80, 16], [85, 14], [78, 34], [72, 46]] },
+  11: { label: "Direct winger",             slot: "RW",  path: [[80, 84], [86, 88], [88, 74], [82, 84]] },
+  7:  { label: "Touchline winger",          slot: "RW",  path: [[80, 84], [86, 84], [84, 74], [80, 84]] },
+  18: { label: "Link-and-spin striker",     slot: "ST",  path: [[86, 50], [74, 50], [88, 46], [84, 52]] },
+  9:  { label: "Penalty-box striker",       slot: "ST",  path: [[86, 50], [88, 44], [86, 56], [88, 50]] },
+  19: { label: "Target forward",            slot: "ST",  path: [[86, 50], [82, 46], [88, 54], [86, 50]] },
+};
+
+function PlayerStyleMorph({ player }) {
+  const style = PLAYER_STYLE[player.num] || { label: player.pos, slot: "DM", path: [[50, 50]] };
+  const col = PLAYER_POS_COL(player.pos);
+  const px = (v) => 2 + (v / 100) * 96;
+  const py = (v) => 2 + (v / 100) * 60;
+  const lp = (v) => 2 + 0.96 * v;
+  const tp = (v) => (py(v) / 64) * 100;
+  const home = style.path[0];
+  const mates = Object.entries(PS_BASE_US).filter(([slot]) => slot !== style.slot).map(([, p]) => p);
+  const dot = (left, top, size, bg, extra = {}) => ({
+    position: "absolute", left: left + "%", top: top + "%", width: size, height: size,
+    transform: "translate(-50%,-50%)", borderRadius: "50%", background: bg, ...extra
+  });
+  // Static movement-tendency arrow (illustrates the play style without animating)
+  const showMove = style.path.length > 1;
+  const movePts = style.path.map(p => `${px(p[0]).toFixed(2)},${py(p[1]).toFixed(2)}`).join(" ");
+  let head = null;
+  if (showMove) {
+    const n = style.path.length, a = style.path[n - 2], b = style.path[n - 1];
+    const ang = Math.atan2(py(b[1]) - py(a[1]), px(b[0]) - px(a[0])), s = 2.3;
+    head = `${px(b[0]).toFixed(2)},${py(b[1]).toFixed(2)} ` +
+           `${(px(b[0]) - s * Math.cos(ang - 0.5)).toFixed(2)},${(py(b[1]) - s * Math.sin(ang - 0.5)).toFixed(2)} ` +
+           `${(px(b[0]) - s * Math.cos(ang + 0.5)).toFixed(2)},${(py(b[1]) - s * Math.sin(ang + 0.5)).toFixed(2)}`;
+  }
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-[10px] uppercase tracking-widest font-mono" style={{ color: col }}>Play style · <span className="font-bold">{style.label}</span></div>
+        <div className="text-[8px] font-mono uppercase tracking-wider text-white/35">Role map</div>
+      </div>
+      <div className="relative w-full rounded-lg overflow-hidden border border-white/10" style={{ aspectRatio: "100/64" }}>
+        <svg viewBox="0 0 100 64" className="absolute inset-0 w-full h-full">
+          <defs>
+            <linearGradient id="psPitch" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#0e2a20" /><stop offset="50%" stopColor="#143a26" /><stop offset="100%" stopColor="#0e2a20" />
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="100" height="64" fill="url(#psPitch)" />
+          <rect x={px(0)} y={py(0)} width={px(100) - px(0)} height={py(100) - py(0)} fill="none" stroke={col} strokeOpacity="0.18" strokeWidth="0.4" />
+          <line x1={px(50)} y1={py(0)} x2={px(50)} y2={py(100)} stroke="#fff" strokeOpacity="0.12" strokeWidth="0.3" />
+          <circle cx={px(50)} cy={py(50)} r="8" fill="none" stroke="#fff" strokeOpacity="0.12" strokeWidth="0.3" />
+          <rect x={px(0)} y={py(22)} width={px(16) - px(0)} height={py(78) - py(22)} fill="none" stroke="#fff" strokeOpacity="0.12" strokeWidth="0.3" />
+          <rect x={px(84)} y={py(22)} width={px(100) - px(84)} height={py(78) - py(22)} fill="none" stroke="#fff" strokeOpacity="0.16" strokeWidth="0.3" />
+          <rect x={px(94)} y={py(36)} width={px(100) - px(94)} height={py(64) - py(36)} fill="none" stroke="#fff" strokeOpacity="0.16" strokeWidth="0.3" />
+          {showMove && <polyline points={movePts} fill="none" stroke={col} strokeOpacity="0.55" strokeWidth="0.7" strokeDasharray="2 1.4" strokeLinecap="round" strokeLinejoin="round" />}
+          {head && <polygon points={head} fill={col} fillOpacity="0.7" />}
+          <text x={px(99)} y={py(7)} fill={SCOUTS.green} fontSize="3.4" fontWeight="bold" textAnchor="end">ATTACK ▶</text>
+        </svg>
+        {PS_THEM.map((t, i) => <div key={"t" + i} style={dot(lp(t[0]), tp(t[1]), 9, "#0a0a0a", { border: "1px solid rgba(255,255,255,0.28)", zIndex: 2 })} />)}
+        {mates.map((p, i) => <div key={"m" + i} style={dot(lp(p[0]), tp(p[1]), 10, SCOUTS.green, { border: "1px solid rgba(0,0,0,0.45)", opacity: 0.82, zIndex: 3 })} />)}
+        <div style={dot(lp(home[0]) + 2.4, tp(home[1]) - 1.5, 6, "#fff", { boxShadow: "0 0 5px #fff, 0 0 9px rgba(255,255,255,0.5)", zIndex: 5 })} />
+        <div style={dot(lp(home[0]), tp(home[1]), 17, col, { zIndex: 6, border: "1.5px solid rgba(255,255,255,0.9)", boxShadow: `0 0 8px ${col}, 0 0 17px ${col}cc, 0 0 28px ${col}66` })} />
+        <div style={{ position: "absolute", left: lp(home[0]) + "%", top: tp(home[1]) + "%", transform: "translate(-50%,-50%)", zIndex: 7, fontSize: 9, fontWeight: 900, color: "#fff", pointerEvents: "none" }}>{player.num}</div>
+      </div>
+      <div className="flex items-center justify-center gap-3 mt-2 text-[8px] font-mono text-white/45">
+        <span className="flex items-center gap-1"><span style={{ width: 7, height: 7, borderRadius: "50%", background: col, boxShadow: `0 0 5px ${col}` }} />{player.name.split(" ").pop()}</span>
+        <span className="flex items-center gap-1"><span style={{ width: 7, height: 7, borderRadius: "50%", background: SCOUTS.green }} />Team-mates</span>
+        <span className="flex items-center gap-1"><span style={{ width: 7, height: 7, borderRadius: "50%", background: "#0a0a0a", border: "1px solid rgba(255,255,255,0.4)" }} />Opponents</span>
+        {showMove && <span className="flex items-center gap-1"><span style={{ width: 10, height: 0, borderTop: `1.5px dashed ${col}` }} />Movement</span>}
+      </div>
+    </div>
+  );
+}
+
+function PlayerDetail({ player, onBack }) {
+  const isGK = player.pos === "GK";
+  const isDEF = ["CB", "LB", "RB"].includes(player.pos);
+  const isMID = ["DM", "CM", "CAM"].includes(player.pos);
+  const col = PLAYER_POS_COL(player.pos);
+  const ks = player.keyStats || {};
+  const rating = PLAYER_RATING[player.num];
+  const groupLabel = isGK ? "Goalkeeper" : isDEF ? "Defender" : isMID ? "Midfielder" : "Forward";
+  const fmt = (val, suffix = "") => (val === undefined || val === null) ? "—" : (val + suffix);
+  const detailGroups = isGK ? [
+    { title: "Shot Stopping", stats: [["Saves", fmt(ks.saves)], ["Save %", fmt(ks.savePct, "%")], ["Goals conceded", fmt(ks.goalsConc)], ["Shots faced", fmt(ks.shotsFaced)], ["Penalty saves", fmt(ks.penSaves)], ["Min/goal conceded", fmt(ks.minPerGoalConc, "'")]] },
+    { title: "Distribution", stats: [["Pass accuracy", fmt(ks.distPct, "%")], ["Sweeper actions", fmt(ks.sweeper, " /90")]] },
+    { title: "Aerial / Box", stats: [["High claims", fmt(ks.highClaims, " /90")], ["Crosses claimed", fmt(ks.crossesClaimed, " /90")]] }
+  ] : isDEF ? [
+    { title: "Defending", stats: [["Tackles", fmt(ks.tackles, " /90")], ["Tackle %", fmt(ks.tklWonPct, "%")], ["Interceptions", fmt(ks.ints, " /90")], ["Clearances", fmt(ks.clr, " /90")], ["Blocks", fmt(ks.blocks, " /90")], ["Recoveries", fmt(ks.recoveries, " /90")]] },
+    { title: "Duels & Aerial", stats: [["Aerial duels won", fmt(ks.aer, "%")], ["All duels won", fmt(ks.duelsPct, "%")]] },
+    { title: "Discipline", stats: [["Fouls", fmt(ks.fouls, " /90")], ["Yellow cards", fmt(ks.yellows)]] },
+    { title: "Build-up", stats: [["Pass accuracy", fmt(ks.passPct, "%")], ["Progressive carries", fmt(ks.progCarries, " /90")]] }
+  ] : isMID ? [
+    { title: "Distribution", stats: [["Pass accuracy", fmt(ks.passPct, "%")], ["Progressive passes", fmt(ks.progPass, " /90")], ["Ball carries", fmt(ks.ballCarries, " /90")]] },
+    { title: "Creating", stats: [["Key passes", fmt(ks.keyPasses, " /90")], ["Through balls", fmt(ks.throughBalls, " /90")], ["Chances created", fmt(ks.chCreated, " /90")]] },
+    { title: "Defending", stats: [["Tackles", fmt(ks.tackles, " /90")], ["Interceptions", fmt(ks.ints, " /90")], ["Recoveries", fmt(ks.recov, " /90")]] },
+    { title: "Workload", stats: [["Distance", fmt(ks.distKm, " km")], ["Yellow cards", fmt(ks.yellows)], ["Fouls", fmt(ks.fouls, " /90")]] }
+  ] : [
+    { title: "Goal Output", stats: [["Goals", fmt(ks.goals)], ["Assists", fmt(ks.assists)], ["Shots on target", fmt(ks.sot)], ["Shot accuracy", fmt(ks.shotAcc, "%")], ["Conversion", fmt(ks.convPct, "%")], ["Min/goal", fmt(ks.minPerGoal, "'")]] },
+    { title: "Expected", stats: [["xG", fmt(ks.xG)], ["xA", fmt(ks.xA)], ["Goals − xG", (typeof ks.xG === "number" ? (player.g - ks.xG).toFixed(1) : "—")]] },
+    { title: "Quality", stats: [["Big chances missed", fmt(ks.bigChMissed)], ["Successful dribbles", fmt(ks.drib, " /90")], ["Fouls won", fmt(ks.foulsWon, " /90")], ["Offsides", fmt(ks.offsides, " /90")]] }
+  ];
+  const quick = [["Apps", player.apps], ["Goals", player.g], ["Assists", player.a], isGK ? ["Clean sheets", player.cs ?? "—"] : ["G + A", player.g + player.a]];
+  return (
+    <div style={{ animation: "playerRise 540ms cubic-bezier(0.16,1,0.3,1)" }}>
+      <style>{`
+        @keyframes playerRise { 0% { opacity: 0; transform: translateY(32px) scale(0.985); } 100% { opacity: 1; transform: none; } }
+        @keyframes pStyleGlow { 0%,100% { box-shadow: 0 0 6px var(--gc), 0 0 11px var(--gc); } 50% { box-shadow: 0 0 13px var(--gc), 0 0 24px var(--gc), 0 0 34px var(--gc); } }
+      `}</style>
+
+      {/* Header */}
+      <div className="rounded-lg border p-4 mb-4 relative overflow-hidden" style={{ borderColor: col + "55", background: `linear-gradient(135deg, ${col}16 0%, rgba(0,0,0,0.55) 65%)` }}>
+        <button onClick={onBack} className="text-[10px] font-mono uppercase tracking-widest text-white/55 hover:text-white transition-colors mb-3 inline-flex items-center gap-1">← Squad</button>
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center justify-center font-mono font-black text-xl rounded-lg flex-shrink-0" style={{ width: 50, height: 50, color: "#000", background: col, boxShadow: `0 0 16px ${col}aa` }}>{player.num}</div>
+          <div className="min-w-0">
+            <div className="text-lg font-black text-white leading-tight" style={{ textShadow: `0 0 12px ${col}66` }}>{player.name}</div>
+            <div className="text-[11px] text-white/55 font-mono uppercase tracking-wider">{groupLabel} · {player.pos} · {player.nation}</div>
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {player.captain && <span className="text-[8px] font-mono px-1.5 py-0.5 rounded" style={{ background: BHA.blue, color: "#fff" }}>CAPTAIN</span>}
+              {player.starter && <span className="text-[8px] font-mono px-1.5 py-0.5 rounded" style={{ background: col + "22", color: col }}>STARTER</span>}
+              {player.topScorer && <span className="text-[8px] font-mono px-1.5 py-0.5 rounded" style={{ background: CYBER.amber + "22", color: CYBER.amber }}>TOP SCORER</span>}
+              {player.star && <span className="text-[8px] font-mono px-1.5 py-0.5 rounded" style={{ background: CYBER.magenta + "22", color: CYBER.magenta }}>★ KEY PLAYER</span>}
+            </div>
+          </div>
+          <div className="ml-auto text-center rounded-lg px-4 py-2 flex-shrink-0" style={{ background: col + "1A", border: `1px solid ${col}55`, boxShadow: `0 0 14px ${col}33` }}>
+            <div className="text-[8px] uppercase tracking-widest text-white/50 font-mono">Avg rating</div>
+            <div className="text-3xl font-black font-mono leading-none mt-0.5" style={{ color: col, textShadow: `0 0 12px ${col}99` }}>{rating ? rating.toFixed(1) : "—"}</div>
+          </div>
+        </div>
+        <div className="grid grid-cols-4 gap-2 mt-3">
+          {quick.map(([k, v]) => (
+            <div key={k} className="rounded p-1.5 bg-black/30 text-center">
+              <div className="text-[8px] uppercase tracking-widest text-white/40 font-mono">{k}</div>
+              <div className="font-mono font-black text-white text-lg leading-tight">{v}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Body: morph + stats */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+          <PlayerStyleMorph player={player} />
+          <p className="text-[9px] text-white/40 leading-relaxed mt-2 italic">Illustrative movement model — the focal player ({player.num}) on the ball, team-mates in green, opponents in black. Tactical sketch of how this player tends to operate, not tracked positions.</p>
+        </div>
+        <div className="space-y-3">
+          {detailGroups.map((group, idx) => (
+            <div key={idx} className="rounded-lg p-3" style={{ background: col + "0A", border: `1px solid ${col}22` }}>
+              <div className="text-[9px] uppercase tracking-widest font-mono font-bold mb-2 flex items-center gap-1.5" style={{ color: col }}>
+                <span className="inline-block w-1 h-1 rounded-full" style={{ background: col, boxShadow: `0 0 4px ${col}` }} />{group.title}
+              </div>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                {group.stats.map(([label, value], i) => (
+                  <div key={i} className="flex justify-between text-[10px] items-baseline">
+                    <span className="text-white/55">{label}</span>
+                    <span className="font-mono font-bold text-white" style={{ textShadow: `0 0 4px ${col}44` }}>{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TeamPerformance() {
   const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [falling, setFalling] = useState(null);
   const [statTab, setStatTab] = useState("summary");
 
   const activeCategory = teamStatCategories[statTab];
 
+  if (selectedPlayer) {
+    return <div className="space-y-5"><PlayerDetail player={selectedPlayer} onBack={() => setSelectedPlayer(null)} /></div>;
+  }
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" onAnimationEnd={(e) => { if (falling && e.target === e.currentTarget) { setSelectedPlayer(falling); setFalling(null); } }} style={{ animation: falling ? "teamFall 440ms cubic-bezier(0.55,0,0.85,0.2) forwards" : undefined }}>
+      <style>{`@keyframes teamFall { 0% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } 100% { opacity: 0; transform: translateY(46px) scale(0.955); filter: blur(2px); } }`}</style>
       {/* Recent form strip */}
       <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
         <div className="flex items-center justify-between mb-3">
@@ -5639,7 +5853,7 @@ function TeamPerformance() {
                       {group.players.map(p => (
                         <div
                           key={p.num}
-                          onClick={() => setSelectedPlayer(p)}
+                          onClick={() => setFalling(p)}
                           className="grid grid-cols-12 gap-1 px-2 py-1.5 text-[10px] cursor-pointer transition-colors hover:bg-white/[0.04]"
                           style={{
                             background: selectedPlayer && selectedPlayer.num === p.num ? group.color + "1A" : p.starter ? group.color + "08" : "transparent",
@@ -5647,6 +5861,7 @@ function TeamPerformance() {
                           }}
                         >
                           <div className="col-span-5 text-white/90 leading-tight flex items-center gap-1 min-w-0">
+                            <span className="flex-shrink-0" style={{ width: 6, height: 6, borderRadius: "50%", background: group.color, boxShadow: `0 0 5px ${group.color}, 0 0 9px ${group.color}66` }} />
                             <span className="text-[8px] font-mono text-white/40 flex-shrink-0">#{p.num}</span>
                             <span className="font-bold truncate">{p.name}</span>
                             {p.captain && <span className="text-[7px] font-mono px-1 rounded flex-shrink-0" style={{ background: BHA.blue, color: "#fff" }}>C</span>}
@@ -5672,115 +5887,6 @@ function TeamPerformance() {
               });
             })()}
           </div>
-          {selectedPlayer && (() => {
-            // Position-grouped detail panel — shows all keyStats organised into sections
-            const isGK = selectedPlayer.pos === "GK";
-            const isDEF = ["CB", "LB", "RB"].includes(selectedPlayer.pos);
-            const isMID = ["DM", "CM", "CAM"].includes(selectedPlayer.pos);
-            const isFWD = ["LW", "RW", "WG", "ST"].includes(selectedPlayer.pos);
-            const ks = selectedPlayer.keyStats || {};
-            const groupColor = isGK ? "#FFD700" : isDEF ? "#3D8EFF" : isMID ? SCOUTS.green : "#FF6B35";
-
-            // Defensive formatter — returns "—" for any undefined / null value
-            const fmt = (val, suffix = "") => (val === undefined || val === null) ? "—" : (val + suffix);
-
-            // Define groups of extended stats per position
-            const detailGroups = isGK ? [
-              { title: "Shot Stopping",  stats: [["Saves", fmt(ks.saves)], ["Save %", fmt(ks.savePct, "%")], ["Goals conceded", fmt(ks.goalsConc)], ["Shots faced", fmt(ks.shotsFaced)], ["Penalty saves", fmt(ks.penSaves)], ["Min/goal conceded", fmt(ks.minPerGoalConc, "'")]] },
-              { title: "Distribution",   stats: [["Pass accuracy", fmt(ks.distPct, "%")], ["Sweeper actions", fmt(ks.sweeper, " /90")]] },
-              { title: "Aerial / Box",   stats: [["High claims", fmt(ks.highClaims, " /90")], ["Crosses claimed", fmt(ks.crossesClaimed, " /90")]] }
-            ] : isDEF ? [
-              { title: "Defending",      stats: [["Tackles", fmt(ks.tackles, " /90")], ["Tackle %", fmt(ks.tklWonPct, "%")], ["Interceptions", fmt(ks.ints, " /90")], ["Clearances", fmt(ks.clr, " /90")], ["Blocks", fmt(ks.blocks, " /90")], ["Recoveries", fmt(ks.recoveries, " /90")]] },
-              { title: "Duels & Aerial", stats: [["Aerial duels won", fmt(ks.aer, "%")], ["All duels won", fmt(ks.duelsPct, "%")]] },
-              { title: "Discipline",     stats: [["Fouls", fmt(ks.fouls, " /90")], ["Yellow cards", fmt(ks.yellows)]] },
-              { title: "Build-up",       stats: [["Pass accuracy", fmt(ks.passPct, "%")], ["Progressive carries", fmt(ks.progCarries, " /90")]] }
-            ] : isMID ? [
-              { title: "Distribution",   stats: [["Pass accuracy", fmt(ks.passPct, "%")], ["Progressive passes", fmt(ks.progPass, " /90")], ["Ball carries", fmt(ks.ballCarries, " /90")]] },
-              { title: "Creating",       stats: [["Key passes", fmt(ks.keyPasses, " /90")], ["Through balls", fmt(ks.throughBalls, " /90")], ["Chances created", fmt(ks.chCreated, " /90")]] },
-              { title: "Defending",      stats: [["Tackles", fmt(ks.tackles, " /90")], ["Interceptions", fmt(ks.ints, " /90")], ["Recoveries", fmt(ks.recov, " /90")]] },
-              { title: "Workload",       stats: [["Distance", fmt(ks.distKm, " km")], ["Yellow cards", fmt(ks.yellows)], ["Fouls", fmt(ks.fouls, " /90")]] }
-            ] : isFWD ? [
-              { title: "Goal Output",    stats: [["Goals", fmt(ks.goals)], ["Assists", fmt(ks.assists)], ["Shots on target", fmt(ks.sot)], ["Shot accuracy", fmt(ks.shotAcc, "%")], ["Conversion", fmt(ks.convPct, "%")], ["Min/goal", fmt(ks.minPerGoal, "'")]] },
-              { title: "Expected",       stats: [["xG", fmt(ks.xG)], ["xA", fmt(ks.xA)], ["Goals − xG", (typeof ks.xG === "number" ? (selectedPlayer.g - ks.xG).toFixed(1) : "—")]] },
-              { title: "Quality",        stats: [["Big chances missed", fmt(ks.bigChMissed)], ["Successful dribbles", fmt(ks.drib, " /90")], ["Fouls won", fmt(ks.foulsWon, " /90")], ["Offsides", fmt(ks.offsides, " /90")]] }
-            ] : [];
-
-            return (
-              <div className="border-t border-white/10 bg-black/40 max-h-[60vh] overflow-y-auto">
-                {/* Header with cyberpunk-style glow */}
-                <div className="px-3 py-2.5 border-b border-white/10 flex items-center justify-between gap-2 sticky top-0 bg-black/85 backdrop-blur-sm z-10" style={{
-                  boxShadow: `inset 0 -1px 0 ${groupColor}33`
-                }}>
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded font-bold flex-shrink-0" style={{
-                      background: groupColor,
-                      color: "#000",
-                      boxShadow: `0 0 6px ${groupColor}88`
-                    }}>#{selectedPlayer.num}</span>
-                    <span className="text-sm font-bold text-white truncate" style={{
-                      textShadow: `0 0 8px ${groupColor}55`
-                    }}>{selectedPlayer.name}</span>
-                    {selectedPlayer.captain && <span className="text-[8px] font-mono px-1 rounded flex-shrink-0" style={{ background: BHA.blue, color: "#fff" }}>C</span>}
-                    {selectedPlayer.star && <span className="text-[10px] flex-shrink-0">⭐</span>}
-                  </div>
-                  <button onClick={() => setSelectedPlayer(null)} className="text-white/40 hover:text-white text-xs font-mono px-2 flex-shrink-0">✕</button>
-                </div>
-
-                <div className="px-3 py-3 space-y-3">
-                  {/* Top-line summary row */}
-                  <div className="grid grid-cols-4 gap-2 text-[10px]">
-                    <div className="rounded p-1.5 bg-white/[0.03]">
-                      <div className="text-white/40 uppercase tracking-widest text-[8px]">Pos</div>
-                      <div className="font-mono font-bold text-base" style={{ color: groupColor, textShadow: `0 0 4px ${groupColor}66` }}>{selectedPlayer.pos}</div>
-                    </div>
-                    <div className="rounded p-1.5 bg-white/[0.03]">
-                      <div className="text-white/40 uppercase tracking-widest text-[8px]">Apps</div>
-                      <div className="font-mono font-bold text-white text-base">{selectedPlayer.apps}</div>
-                    </div>
-                    <div className="rounded p-1.5 bg-white/[0.03]">
-                      <div className="text-white/40 uppercase tracking-widest text-[8px]">Goals</div>
-                      <div className="font-mono font-bold text-white text-base">{selectedPlayer.g}</div>
-                    </div>
-                    <div className="rounded p-1.5 bg-white/[0.03]">
-                      <div className="text-white/40 uppercase tracking-widest text-[8px]">Assists</div>
-                      <div className="font-mono font-bold text-white text-base">{selectedPlayer.a}</div>
-                    </div>
-                  </div>
-
-                  {/* Extended stat groups */}
-                  {detailGroups.map((group, idx) => (
-                    <div key={idx} className="rounded p-2.5" style={{
-                      background: groupColor + "08",
-                      border: `1px solid ${groupColor}22`
-                    }}>
-                      <div className="text-[9px] uppercase tracking-widest font-mono font-bold mb-2 flex items-center gap-1.5" style={{ color: groupColor }}>
-                        <span className="inline-block w-1 h-1 rounded-full" style={{ background: groupColor, boxShadow: `0 0 4px ${groupColor}` }} />
-                        {group.title}
-                      </div>
-                      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-                        {group.stats.map(([label, value], i) => (
-                          <div key={i} className="flex justify-between text-[10px] items-baseline">
-                            <span className="text-white/55">{label}</span>
-                            <span className="font-mono font-bold text-white" style={{
-                              textShadow: `0 0 4px ${groupColor}44`
-                            }}>{value !== undefined ? value : "—"}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* Footer tags */}
-                  <div className="flex flex-wrap gap-1 pt-1">
-                    <span className="text-[9px] font-mono text-white/40">{selectedPlayer.nation}</span>
-                    {selectedPlayer.starter && <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: groupColor + "22", color: groupColor }}>STARTER</span>}
-                    {selectedPlayer.topScorer && <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: CYBER.amber + "22", color: CYBER.amber }}>TOP SCORER</span>}
-                    {selectedPlayer.star && <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: CYBER.magenta + "22", color: CYBER.magenta, boxShadow: `0 0 6px ${CYBER.magentaGlow}` }}>★ KEY PLAYER</span>}
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
         </div>
 
         {/* Position pitch */}
