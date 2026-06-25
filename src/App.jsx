@@ -5575,6 +5575,36 @@ const PLAYER_STYLE = {
   19: { label: "Target forward",            slot: "ST",  path: [[86, 50], [82, 46], [88, 54], [86, 50]] },
 };
 
+// Per-player movement probability profile: weighted runs [targetX, targetY, weight] from the role base.
+// Weight = relative frequency of that run. Targets kept <=88 in x to stay the right side of the opposition line.
+const PLAYER_MOVES = {
+  1:  [[18, 50, 4], [16, 38, 3], [16, 62, 3]],
+  23: [[15, 50, 5], [13, 42, 2], [13, 58, 2]],
+  38: [[14, 50, 5], [13, 44, 2], [13, 56, 2]],
+  5:  [[46, 42, 4], [38, 20, 3], [58, 46, 2]],
+  6:  [[46, 60, 4], [40, 80, 3], [56, 58, 2]],
+  21: [[46, 40, 4], [38, 18, 3], [56, 44, 2]],
+  4:  [[36, 66, 4], [30, 80, 3], [42, 58, 2]],
+  34: [[54, 62, 5], [48, 54, 3], [60, 82, 2]],
+  24: [[56, 86, 5], [74, 86, 4], [50, 70, 2]],
+  29: [[56, 14, 5], [74, 14, 4], [50, 30, 2]],
+  17: [[64, 50, 4], [38, 50, 4], [58, 64, 2]],
+  27: [[44, 54, 4], [62, 48, 3], [40, 40, 2]],
+  13: [[74, 60, 5], [80, 72, 3], [64, 50, 2]],
+  30: [[52, 68, 4], [66, 56, 3], [60, 82, 2]],
+  26: [[80, 38, 5], [72, 20, 3], [64, 46, 2]],
+  33: [[82, 36, 5], [72, 22, 3], [66, 44, 2]],
+  20: [[56, 68, 4], [64, 58, 3], [60, 82, 2]],
+  25: [[64, 44, 4], [58, 48, 3], [68, 26, 2]],
+  10: [[72, 54, 4], [80, 50, 3], [66, 68, 2]],
+  22: [[72, 40, 5], [86, 14, 3], [80, 30, 3]],
+  11: [[88, 80, 5], [86, 68, 3], [82, 86, 2]],
+  7:  [[88, 84, 5], [86, 72, 3], [82, 84, 2]],
+  18: [[74, 50, 4], [88, 42, 4], [88, 58, 2]],
+  9:  [[88, 44, 5], [88, 58, 4], [82, 50, 2]],
+  19: [[80, 48, 4], [88, 56, 3], [88, 44, 3]],
+};
+
 function PlayerStyleMorph({ player }) {
   const style = PLAYER_STYLE[player.num] || { label: player.pos, slot: "DM", path: [[50, 50]] };
   const col = PLAYER_POS_COL(player.pos);
@@ -5584,26 +5614,19 @@ function PlayerStyleMorph({ player }) {
   const tp = (v) => (py(v) / 64) * 100;
   const home = style.path[0];
   const mates = Object.entries(PS_BASE_US).filter(([slot]) => slot !== style.slot).map(([, p]) => p);
+  const moves = PLAYER_MOVES[player.num] || style.path.slice(1).map(p => [p[0], p[1], 1]);
+  const maxW = Math.max(1, ...moves.map(m => m[2]));
+  const totalW = moves.reduce((s, m) => s + m[2], 0) || 1;
   const dot = (left, top, size, bg, extra = {}) => ({
     position: "absolute", left: left + "%", top: top + "%", width: size, height: size,
     transform: "translate(-50%,-50%)", borderRadius: "50%", background: bg, ...extra
   });
-  // Static movement-tendency arrow (illustrates the play style without animating)
-  const showMove = style.path.length > 1;
-  const movePts = style.path.map(p => `${px(p[0]).toFixed(2)},${py(p[1]).toFixed(2)}`).join(" ");
-  let head = null;
-  if (showMove) {
-    const n = style.path.length, a = style.path[n - 2], b = style.path[n - 1];
-    const ang = Math.atan2(py(b[1]) - py(a[1]), px(b[0]) - px(a[0])), s = 2.3;
-    head = `${px(b[0]).toFixed(2)},${py(b[1]).toFixed(2)} ` +
-           `${(px(b[0]) - s * Math.cos(ang - 0.5)).toFixed(2)},${(py(b[1]) - s * Math.sin(ang - 0.5)).toFixed(2)} ` +
-           `${(px(b[0]) - s * Math.cos(ang + 0.5)).toFixed(2)},${(py(b[1]) - s * Math.sin(ang + 0.5)).toFixed(2)}`;
-  }
   return (
     <div>
+      <style>{`@keyframes psGlow{0%,100%{box-shadow:0 0 6px var(--gc),0 0 11px var(--gc);}50%{box-shadow:0 0 12px var(--gc),0 0 22px var(--gc),0 0 32px var(--gc);}}@keyframes psFlow{to{stroke-dashoffset:-4;}}`}</style>
       <div className="flex items-center justify-between mb-2">
         <div className="text-[10px] uppercase tracking-widest font-mono" style={{ color: col }}>Play style · <span className="font-bold">{style.label}</span></div>
-        <div className="text-[8px] font-mono uppercase tracking-wider text-white/35">Role map</div>
+        <div className="text-[8px] font-mono uppercase tracking-wider text-white/35">Movement profile</div>
       </div>
       <div className="relative w-full rounded-lg overflow-hidden border border-white/10" style={{ aspectRatio: "100/64" }}>
         <svg viewBox="0 0 100 64" className="absolute inset-0 w-full h-full">
@@ -5619,22 +5642,41 @@ function PlayerStyleMorph({ player }) {
           <rect x={px(0)} y={py(22)} width={px(16) - px(0)} height={py(78) - py(22)} fill="none" stroke="#fff" strokeOpacity="0.12" strokeWidth="0.3" />
           <rect x={px(84)} y={py(22)} width={px(100) - px(84)} height={py(78) - py(22)} fill="none" stroke="#fff" strokeOpacity="0.16" strokeWidth="0.3" />
           <rect x={px(94)} y={py(36)} width={px(100) - px(94)} height={py(64) - py(36)} fill="none" stroke="#fff" strokeOpacity="0.16" strokeWidth="0.3" />
-          {showMove && <polyline points={movePts} fill="none" stroke={col} strokeOpacity="0.55" strokeWidth="0.7" strokeDasharray="2 1.4" strokeLinecap="round" strokeLinejoin="round" />}
-          {head && <polygon points={head} fill={col} fillOpacity="0.7" />}
+          {moves.map((m, i) => {
+            const wn = m[2] / maxW;
+            const x1 = px(home[0]), y1 = py(home[1]), x2 = px(m[0]), y2 = py(m[1]);
+            const ang = Math.atan2(y2 - y1, x2 - x1);
+            const hs = 1.7 + wn * 1.5;
+            const lineX = (x2 - Math.cos(ang) * hs * 0.7).toFixed(2);
+            const lineY = (y2 - Math.sin(ang) * hs * 0.7).toFixed(2);
+            const h2x = (x2 - hs * Math.cos(ang - 0.45)).toFixed(2), h2y = (y2 - hs * Math.sin(ang - 0.45)).toFixed(2);
+            const h3x = (x2 - hs * Math.cos(ang + 0.45)).toFixed(2), h3y = (y2 - hs * Math.sin(ang + 0.45)).toFixed(2);
+            const lx = (x2 + Math.cos(ang) * 2.8).toFixed(2), ly = (y2 + Math.sin(ang) * 2.8).toFixed(2);
+            const sw = (0.5 + wn * 1.5).toFixed(2);
+            const op = 0.34 + wn * 0.5;
+            const pct = Math.round(100 * m[2] / totalW);
+            return (
+              <g key={i}>
+                <line x1={x1.toFixed(2)} y1={y1.toFixed(2)} x2={lineX} y2={lineY} stroke={col} strokeOpacity={op} strokeWidth={sw} strokeLinecap="round" strokeDasharray="2.5 1.5" style={{ animation: "psFlow 0.8s linear infinite", animationDelay: `${(i * 0.16).toFixed(2)}s` }} />
+                <polygon points={`${x2.toFixed(2)},${y2.toFixed(2)} ${h2x},${h2y} ${h3x},${h3y}`} fill={col} fillOpacity={Math.min(0.92, op + 0.22)} />
+                <text x={lx} y={ly} fill={col} fontSize="3" fontWeight="bold" textAnchor="middle" dominantBaseline="middle" paintOrder="stroke" stroke="#0b1410" strokeWidth="0.6">{pct}%</text>
+              </g>
+            );
+          })}
           <text x={px(99)} y={py(7)} fill={SCOUTS.green} fontSize="3.4" fontWeight="bold" textAnchor="end">ATTACK ▶</text>
         </svg>
         {PS_THEM.map((t, i) => <div key={"t" + i} style={dot(lp(t[0]), tp(t[1]), 9, "#0a0a0a", { border: "1px solid rgba(255,255,255,0.28)", zIndex: 2 })} />)}
         {mates.map((p, i) => <div key={"m" + i} style={dot(lp(p[0]), tp(p[1]), 10, SCOUTS.green, { border: "1px solid rgba(0,0,0,0.45)", opacity: 0.82, zIndex: 3 })} />)}
         <div style={dot(lp(home[0]) + 2.4, tp(home[1]) - 1.5, 6, "#fff", { boxShadow: "0 0 5px #fff, 0 0 9px rgba(255,255,255,0.5)", zIndex: 5 })} />
-        <div style={dot(lp(home[0]), tp(home[1]), 17, col, { zIndex: 6, border: "1.5px solid rgba(255,255,255,0.9)", boxShadow: `0 0 8px ${col}, 0 0 17px ${col}cc, 0 0 28px ${col}66` })} />
+        <div style={{ ...dot(lp(home[0]), tp(home[1]), 17, col, { zIndex: 6, border: "1.5px solid rgba(255,255,255,0.9)" }), ["--gc"]: col, animation: "psGlow 2s ease-in-out infinite" }} />
         <div style={{ position: "absolute", left: lp(home[0]) + "%", top: tp(home[1]) + "%", transform: "translate(-50%,-50%)", zIndex: 7, fontSize: 9, fontWeight: 900, color: "#fff", pointerEvents: "none" }}>{player.num}</div>
       </div>
       <div className="flex items-center justify-center gap-3 mt-2 text-[8px] font-mono text-white/45">
         <span className="flex items-center gap-1"><span style={{ width: 7, height: 7, borderRadius: "50%", background: col, boxShadow: `0 0 5px ${col}` }} />{player.name.split(" ").pop()}</span>
         <span className="flex items-center gap-1"><span style={{ width: 7, height: 7, borderRadius: "50%", background: SCOUTS.green }} />Team-mates</span>
         <span className="flex items-center gap-1"><span style={{ width: 7, height: 7, borderRadius: "50%", background: "#0a0a0a", border: "1px solid rgba(255,255,255,0.4)" }} />Opponents</span>
-        {showMove && <span className="flex items-center gap-1"><span style={{ width: 10, height: 0, borderTop: `1.5px dashed ${col}` }} />Movement</span>}
       </div>
+      <div className="text-center text-[8px] text-white/35 mt-1.5 font-mono">Arrow thickness &amp; % — how often this player makes each run</div>
     </div>
   );
 }
