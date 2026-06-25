@@ -4283,39 +4283,223 @@ function ModelInteractionPitch({ phaseId, color, label }) {
 // the ball zips between players faster than they move, an amber path traces the ball's
 // route with event markers, players leave fading motion trails, and the loop restarts
 // with a hard cut (like a clip replay) instead of morphing backwards.
-function GameModel() {
-  const [phaseId, setPhaseId] = useState("buildup");
+// Faint 12-zone labels shared by the morph board + the landing mini-preview.
+const GM_ZONE_LABELS = [
+  { t: "LD",  x: 16.6, y: 16.6 }, { t: "CD",  x: 16.6, y: 50 }, { t: "RD",  x: 16.6, y: 83.3 },
+  { t: "LPD", x: 41.6, y: 16.6 }, { t: "CPD", x: 41.6, y: 50 }, { t: "RPD", x: 41.6, y: 83.3 },
+  { t: "LPO", x: 58.3, y: 16.6 }, { t: "CPO", x: 58.3, y: 50 }, { t: "RPO", x: 58.3, y: 83.3 },
+  { t: "LO",  x: 83.3, y: 16.6 }, { t: "CO",  x: 83.3, y: 50 }, { t: "RO",  x: 83.3, y: 83.3 }
+];
+
+// PHASE_MORPHS — for each game-model phase: a primary label/note (frames come from
+// gameModel[phase].frames) + two NEW tactical-scenario morphs (3 frames each).
+// Coords: us [shirt,x,y]x11, them [x,y]x11. x:0 our goal -> 100 theirs; we attack RIGHT. y:0 top(left) -> 100 bottom(right).
+// Offside-safe: no us outfielder beyond the opponent's deepest defender except the ball carrier (nearest us to ball).
+const PHASE_MORPHS = {
+  buildup: {
+    primaryLabel: "Play out through structure",
+    primaryNote: "GK starts; Wieffer drops, full-backs invert, third-man escape to Baleba.",
+    extra: [
+      { label: "Split the CBs · pivot drop", note: "GK steps in, centre-backs split wide, the pivot drops between them to progress through the middle.",
+        frames: [
+          { label: "GK splits the CBs",
+            us: [[1,9,50],[5,16,26],[6,16,74],[27,14,50],[34,28,20],[29,28,80],[17,36,46],[13,46,44],[22,52,12],[11,52,88],[18,56,50]],
+            them: [[22,40],[26,60],[40,30],[42,50],[40,70],[58,22],[58,50],[58,78],[78,40],[78,60],[92,50]], ball: [9,50] },
+          { label: "CB into the dropping pivot",
+            us: [[1,8,50],[5,18,28],[6,18,72],[27,22,50],[34,34,22],[29,32,78],[17,42,44],[13,52,42],[22,54,12],[11,54,88],[18,58,50]],
+            them: [[26,42],[30,58],[42,30],[44,50],[42,70],[58,22],[58,50],[58,78],[78,40],[78,60],[92,50]], ball: [22,50] },
+          { label: "Pivot releases the free CM",
+            us: [[1,8,50],[5,22,30],[6,22,70],[27,28,50],[34,42,24],[29,38,76],[17,48,46],[13,58,42],[22,58,12],[11,58,88],[18,62,50]],
+            them: [[30,44],[34,58],[46,32],[48,50],[46,68],[60,24],[60,50],[60,76],[78,40],[78,60],[92,50]], ball: [48,46] }
+        ] },
+      { label: "Bait the press · switch", note: "Invite pressure on the left, then switch the point to the free full-back overlapping on the right.",
+        frames: [
+          { label: "Invite the press left",
+            us: [[1,8,50],[5,18,32],[6,18,66],[27,24,52],[34,30,30],[29,30,74],[17,38,44],[13,46,40],[22,52,14],[11,48,90],[18,56,50]],
+            them: [[24,34],[28,52],[40,30],[42,46],[44,66],[58,24],[58,52],[60,76],[78,40],[78,62],[92,50]], ball: [18,32] },
+          { label: "Through the pivot",
+            us: [[1,8,50],[5,20,34],[6,20,64],[27,28,50],[34,36,28],[29,32,72],[17,42,46],[13,50,40],[22,54,14],[11,52,90],[18,58,50]],
+            them: [[30,40],[34,56],[44,32],[46,48],[46,66],[58,26],[60,52],[60,76],[78,40],[78,62],[92,50]], ball: [28,50] },
+          { label: "Switch to the free full-back",
+            us: [[1,8,50],[5,24,34],[6,24,62],[27,32,48],[34,42,28],[29,48,78],[17,46,52],[13,56,44],[22,58,16],[11,58,90],[18,60,52]],
+            them: [[34,42],[40,56],[48,34],[50,50],[50,66],[58,28],[62,52],[64,74],[78,42],[78,62],[92,50]], ball: [48,78] }
+        ] }
+    ]
+  },
+  progression: {
+    primaryLabel: "Enter, triangle, isolate",
+    primaryNote: "Pre-offensive entry, a triangle forms, switch the point to isolate Mitoma 1v1.",
+    extra: [
+      { label: "Third man through the lines", note: "Pivot sets, the CM bounces it first time, the CAM slips between the lines to receive away.",
+        frames: [
+          { label: "Pivot sets",
+            us: [[1,9,50],[5,24,34],[6,24,66],[27,28,50],[34,40,30],[29,38,70],[17,46,42],[13,56,52],[22,60,12],[11,60,88],[18,64,48]],
+            them: [[40,50],[48,30],[48,70],[56,40],[58,52],[56,64],[70,24],[70,44],[70,58],[72,78],[92,50]], ball: [28,50] },
+          { label: "Bounce to the CM",
+            us: [[1,9,50],[5,26,34],[6,26,66],[27,32,50],[34,44,30],[29,42,70],[17,50,44],[13,58,50],[22,62,12],[11,62,88],[18,64,48]],
+            them: [[44,50],[50,32],[50,68],[57,40],[58,52],[57,62],[70,24],[70,44],[70,58],[72,78],[92,50]], ball: [50,44] },
+          { label: "Third man between the lines",
+            us: [[1,9,50],[5,28,36],[6,28,64],[27,36,50],[34,48,30],[29,46,70],[17,52,44],[13,66,48],[22,64,12],[11,64,88],[18,68,46]],
+            them: [[48,50],[52,34],[52,66],[58,40],[60,52],[58,62],[70,26],[70,46],[70,58],[72,76],[92,50]], ball: [66,48] }
+        ] },
+      { label: "Carry & release the runner", note: "Baleba breaks the line on the carry, the striker drops to fix, the winger spins in behind on the overlap.",
+        frames: [
+          { label: "Baleba carries",
+            us: [[1,9,50],[5,24,34],[6,24,66],[27,40,48],[34,42,30],[29,40,70],[17,48,40],[13,56,54],[22,60,12],[11,60,88],[18,62,46]],
+            them: [[44,50],[50,30],[50,70],[56,42],[58,54],[56,66],[70,24],[70,44],[70,58],[72,78],[92,50]], ball: [40,48] },
+          { label: "Line broken on the dribble",
+            us: [[1,9,50],[5,26,34],[6,26,66],[27,50,48],[34,46,30],[29,44,70],[17,52,42],[13,60,52],[22,64,12],[11,64,88],[18,58,48]],
+            them: [[48,52],[54,32],[54,68],[60,42],[62,52],[60,64],[70,24],[70,46],[70,58],[72,76],[92,50]], ball: [50,48] },
+          { label: "Winger spins in behind",
+            us: [[1,9,50],[5,28,36],[6,28,64],[27,52,48],[34,52,30],[29,48,70],[17,56,44],[13,64,50],[22,66,14],[11,76,86],[18,64,48]],
+            them: [[52,52],[58,34],[58,66],[62,44],[64,54],[62,64],[70,26],[72,46],[70,58],[74,78],[92,50]], ball: [76,86] }
+        ] }
+    ]
+  },
+  finalthird: {
+    primaryLabel: "Wide, byline, cut-back",
+    primaryNote: "Entry, Mitoma to the byline, cut-back to a central arrival, first-time finish.",
+    extra: [
+      { label: "Right overload · Minteh cut-back", note: "Build the overload on the right, Minteh to the byline, cut it back to the central corridor.",
+        frames: [
+          { label: "Right entry",
+            us: [[1,10,50],[5,30,36],[6,30,64],[27,40,50],[34,52,32],[29,52,68],[17,58,50],[13,68,60],[22,74,12],[11,74,86],[18,78,50]],
+            them: [[58,50],[64,22],[64,78],[72,36],[74,50],[72,64],[82,26],[81,42],[81,58],[82,74],[94,50]], ball: [70,60] },
+          { label: "Minteh to the byline",
+            us: [[1,10,50],[5,32,36],[6,32,64],[27,42,50],[34,56,34],[29,56,66],[17,62,52],[13,76,62],[22,78,14],[11,84,86],[18,80,52]],
+            them: [[62,50],[70,24],[70,76],[78,34],[78,48],[76,62],[86,22],[84,40],[84,58],[85,78],[95,52]], ball: [84,84] },
+          { label: "Cut-back · first-time finish",
+            us: [[1,10,50],[5,32,36],[6,32,64],[27,44,50],[34,58,34],[29,58,66],[17,64,52],[13,80,54],[22,86,16],[11,86,84],[18,84,48]],
+            them: [[64,50],[72,26],[72,74],[77,32],[79,50],[78,60],[87,26],[88,42],[84,58],[86,74],[92,50]], ball: [83,48] }
+        ] },
+      { label: "Direct strike from the corridor", note: "Enter centrally under control, a quick one-two, an arriving runner strikes first time within three seconds.",
+        frames: [
+          { label: "Central entry under control",
+            us: [[1,10,50],[5,30,38],[6,30,62],[27,42,50],[34,54,30],[29,54,70],[17,60,46],[13,70,52],[22,76,16],[11,76,84],[18,80,50]],
+            them: [[60,50],[66,24],[66,76],[74,38],[76,50],[74,62],[83,28],[82,44],[82,56],[83,72],[94,50]], ball: [70,52] },
+          { label: "Quick one-two",
+            us: [[1,10,50],[5,30,38],[6,30,62],[27,44,50],[34,56,30],[29,56,70],[17,62,46],[13,74,50],[22,80,16],[11,80,84],[18,76,52]],
+            them: [[62,50],[68,26],[68,74],[76,38],[78,50],[76,62],[84,28],[84,44],[83,56],[84,72],[94,50]], ball: [76,50] },
+          { label: "First-time strike",
+            us: [[1,10,50],[5,30,38],[6,30,62],[27,46,50],[34,58,30],[29,58,70],[17,64,46],[13,84,50],[22,84,18],[11,84,82],[18,82,54]],
+            them: [[64,50],[70,26],[70,74],[78,36],[80,50],[78,62],[86,28],[88,44],[84,56],[86,72],[92,50]], ball: [86,50] }
+        ] }
+    ]
+  },
+  block: {
+    primaryLabel: "Compact 4-4-2 · force wide",
+    primaryNote: "Set the block, shift with circulation, trigger on the back-pass, jump to force them wide.",
+    extra: [
+      { label: "Force the switch · slide as a unit", note: "Hold the central corridor, slide together when they switch the point — never break the 4-4-2 lines.",
+        frames: [
+          { label: "Block set · ball right",
+            us: [[1,6,50],[5,14,40],[6,14,60],[27,28,58],[34,16,22],[29,16,78],[17,28,42],[13,40,56],[22,30,82],[11,30,18],[18,40,44]],
+            them: [[44,14],[46,34],[44,50],[46,66],[44,86],[62,28],[60,50],[62,72],[76,40],[77,60],[92,50]], ball: [76,40] },
+          { label: "They switch · block slides",
+            us: [[1,6,52],[5,14,42],[6,14,62],[27,28,60],[34,16,24],[29,16,80],[17,28,46],[13,40,60],[22,32,84],[11,30,20],[18,40,48]],
+            them: [[44,16],[46,36],[44,52],[46,68],[44,88],[62,30],[60,52],[62,74],[77,42],[77,62],[92,50]], ball: [77,62] },
+          { label: "Compact · forced wide again",
+            us: [[1,6,52],[5,14,44],[6,14,62],[27,30,60],[34,18,26],[29,16,80],[17,30,48],[13,42,60],[22,34,84],[11,32,22],[18,42,50]],
+            them: [[44,18],[46,38],[44,54],[46,68],[44,88],[64,32],[60,54],[64,76],[78,44],[78,64],[92,50]], ball: [78,64] }
+        ] },
+      { label: "Spring the trap · win it central", note: "Invite the central pass, the strikers screen and the midfielder jumps to win it in the middle third.",
+        frames: [
+          { label: "Invite central",
+            us: [[1,6,50],[5,14,40],[6,14,60],[27,30,52],[34,16,22],[29,16,78],[17,30,44],[13,42,56],[22,30,82],[11,30,18],[18,42,46]],
+            them: [[44,40],[46,28],[44,60],[48,50],[44,84],[60,30],[58,50],[60,70],[76,42],[76,58],[92,50]], ball: [58,50] },
+          { label: "Screen · midfielder jumps",
+            us: [[1,6,50],[5,14,40],[6,14,60],[27,40,50],[34,18,24],[29,18,76],[17,42,46],[13,46,54],[22,32,80],[11,32,20],[18,46,48]],
+            them: [[42,40],[44,28],[42,58],[46,50],[44,84],[58,32],[54,50],[58,68],[74,44],[74,58],[92,50]], ball: [46,50] },
+          { label: "Won it · spring",
+            us: [[1,6,50],[5,16,42],[6,16,60],[27,44,50],[34,20,26],[29,20,74],[17,46,48],[13,52,50],[22,36,78],[11,36,22],[18,50,48]],
+            them: [[40,40],[42,28],[40,56],[44,50],[44,84],[56,34],[52,52],[56,66],[72,44],[72,58],[92,50]], ball: [46,48] }
+        ] }
+    ]
+  },
+  counterpress: {
+    primaryLabel: "Five-second swarm",
+    primaryNote: "The nearest three collapse on the ball, trap toward the right pre-defensive channel, regain.",
+    extra: [
+      { label: "Swarm the half-space", note: "Lose it in the right half-space and the nearest three players collapse instantly to win it back.",
+        frames: [
+          { label: "Lost in the half-space",
+            us: [[1,8,50],[5,28,42],[6,28,62],[27,52,60],[34,48,72],[29,40,64],[17,54,66],[13,56,54],[22,58,22],[11,60,80],[18,62,46]],
+            them: [[55,62],[48,54],[60,72],[64,40],[68,58],[72,74],[78,40],[78,66],[84,52],[64,16],[92,50]], ball: [54,64] },
+          { label: "Five-second swarm",
+            us: [[1,8,50],[5,28,42],[6,28,62],[27,53,60],[34,50,70],[29,44,64],[17,55,66],[13,56,56],[22,57,26],[11,60,78],[18,60,48]],
+            them: [[56,62],[50,54],[62,70],[64,38],[68,58],[72,72],[78,40],[78,64],[84,52],[64,16],[92,50]], ball: [56,62] },
+          { label: "Trap shut · regain",
+            us: [[1,8,50],[5,28,42],[6,28,60],[27,50,58],[34,48,68],[29,44,62],[17,52,64],[13,54,54],[22,52,28],[11,58,74],[18,58,44]],
+            them: [[50,52],[50,46],[62,66],[62,36],[68,56],[72,70],[78,40],[78,62],[84,52],[64,14],[92,50]], ball: [50,58] }
+        ] },
+      { label: "Cut the central escape", note: "Screen the back-pass and shut the central lane first — force the square ball, then intercept it.",
+        frames: [
+          { label: "Lost centrally",
+            us: [[1,8,50],[5,28,44],[6,28,58],[27,50,48],[34,46,30],[29,44,66],[17,52,52],[13,56,46],[22,58,24],[11,60,78],[18,62,50]],
+            them: [[52,50],[48,44],[60,58],[64,34],[68,52],[72,66],[78,40],[78,62],[84,50],[64,16],[92,50]], ball: [52,50] },
+          { label: "Cut the central lane",
+            us: [[1,8,50],[5,28,44],[6,28,58],[27,51,48],[34,48,34],[29,46,62],[17,52,52],[13,55,48],[22,56,28],[11,60,76],[18,60,50]],
+            them: [[50,50],[50,44],[58,56],[62,36],[66,52],[70,66],[78,40],[78,62],[84,50],[64,16],[92,50]], ball: [50,50] },
+          { label: "Intercept · regain",
+            us: [[1,8,50],[5,28,44],[6,28,58],[27,48,50],[34,46,34],[29,46,62],[17,50,52],[13,53,48],[22,54,30],[11,58,74],[18,58,50]],
+            them: [[48,52],[50,44],[58,56],[62,36],[66,52],[70,66],[78,40],[78,62],[84,50],[64,16],[92,50]], ball: [49,50] }
+        ] }
+    ]
+  },
+  counterattack: {
+    primaryLabel: "Win it, go fast",
+    primaryNote: "Win it deep, first pass forward, the channels sprint, strike within three seconds.",
+    extra: [
+      { label: "Break the left channel", note: "First pass forward, Mitoma sprints the left channel while their block is still turned — cross or shot.",
+        frames: [
+          { label: "Won it · opponent upfield",
+            us: [[1,6,50],[5,14,40],[6,14,60],[27,26,50],[34,18,28],[29,20,72],[17,34,44],[13,42,40],[22,46,16],[11,46,84],[18,52,48]],
+            them: [[16,20],[20,48],[18,76],[26,36],[28,62],[30,52],[24,14],[24,86],[56,42],[58,58],[90,50]], ball: [34,44] },
+          { label: "First pass forward",
+            us: [[1,7,50],[5,18,40],[6,18,60],[27,30,50],[34,24,28],[29,26,72],[17,42,44],[13,52,42],[22,58,14],[11,56,84],[18,60,48]],
+            them: [[26,22],[30,48],[28,74],[36,38],[38,60],[40,52],[34,16],[34,84],[60,42],[62,58],[90,50]], ball: [52,42] },
+          { label: "Left channel · cross",
+            us: [[1,8,50],[5,22,40],[6,22,60],[27,36,50],[34,30,28],[29,32,72],[17,50,44],[13,66,40],[22,82,16],[11,72,84],[18,80,48]],
+            them: [[36,24],[42,48],[40,72],[48,38],[50,58],[52,50],[46,18],[46,82],[82,40],[84,58],[92,50]], ball: [82,16] }
+        ] },
+      { label: "Central spring · Welbeck pins", note: "Vertical first, Welbeck pins the centre-backs and holds, laying it to the arriving runner to strike.",
+        frames: [
+          { label: "Won it · opponent upfield",
+            us: [[1,6,50],[5,14,42],[6,14,58],[27,28,50],[34,20,30],[29,20,70],[17,36,46],[13,44,42],[22,48,16],[11,48,84],[18,54,50]],
+            them: [[18,22],[22,48],[20,74],[28,36],[30,62],[32,52],[26,16],[26,84],[58,44],[60,56],[90,50]], ball: [36,46] },
+          { label: "Vertical into Welbeck",
+            us: [[1,7,50],[5,18,42],[6,18,58],[27,32,50],[34,26,30],[29,26,70],[17,44,46],[13,54,44],[22,58,16],[11,58,84],[18,64,50]],
+            them: [[28,24],[32,48],[30,74],[38,38],[40,60],[42,52],[36,18],[36,82],[62,44],[64,56],[90,50]], ball: [64,50] },
+          { label: "Lay-off · arriving runner strikes",
+            us: [[1,8,50],[5,22,42],[6,22,58],[27,38,50],[34,32,30],[29,32,70],[17,50,46],[13,72,46],[22,66,16],[11,66,84],[18,70,52]],
+            them: [[38,26],[42,48],[40,72],[48,40],[50,58],[52,50],[46,20],[46,80],[76,44],[78,56],[92,50]], ball: [72,46] }
+        ] }
+    ]
+  }
+};
+
+// One self-contained animated morph board (no phase selector) — the rig lifted from the old
+// Game Model view, parameterised by `frames` + `color` so several can run side by side.
+function PhaseMorphPitch({ frames, color }) {
   const [frame, setFrame] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [animated, setAnimated] = useState(false);
-  const [snap, setSnap] = useState(false); // true = render without transitions (clip restart)
+  const [snap, setSnap] = useState(false);
+  const [gid] = useState(() => "gmgrad-" + Math.random().toString(36).slice(2, 8));
+  const n = frames.length;
+  const F = frames[frame];
 
-  const phase = gameModel.find(p => p.id === phaseId) || gameModel[0];
-  const F = phase.frames[frame];
-
-  // On phase switch: hard-cut to frame 0 and replay the text slide-ins
-  useEffect(() => {
-    setSnap(true);
-    setFrame(0);
-    setAnimated(false);
-    const t1 = setTimeout(() => setSnap(false), 50);
-    const t2 = setTimeout(() => setAnimated(true), 80);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [phaseId]);
-
-  // Near-continuous playback: frame advances every 2000ms while player motion runs 1850ms,
-  // so dots barely settle before the next leg begins — tracking-clip cadence.
+  // Near-continuous playback; on wrap, hard-cut (no reverse morph)
   useEffect(() => {
     if (paused) return;
     const timer = setInterval(() => {
       setFrame(f => {
-        const nf = (f + 1) % 4;
-        if (nf === 0) setSnap(true); // wrap = clip restart, no reverse morph
+        const nf = (f + 1) % n;
+        if (nf === 0) setSnap(true);
         return nf;
       });
     }, 2000);
     return () => clearInterval(timer);
-  }, [paused, phaseId]);
+  }, [paused, n]);
 
   // Release the snap one paint after a restart so transitions resume
   useEffect(() => {
@@ -4329,29 +4513,20 @@ function GameModel() {
   const py = (v) => 2 + (v / 100) * (H - 4);
   const lp = (v) => ((2 + (v / 100) * (W - 4)) / W) * 100;
   const tp = (v) => ((2 + (v / 100) * (H - 4)) / H) * 100;
-
-  // Players drift (slow, near-linear, like tracking dots); the ball zips (fast, slight delay = pass release)
   const PLAYER_MORPH = snap ? "none" : "left 1850ms cubic-bezier(0.35, 0, 0.65, 1), top 1850ms cubic-bezier(0.35, 0, 0.65, 1)";
   const BALL_MORPH = snap ? "none" : "left 600ms cubic-bezier(0.25, 0, 0.35, 1) 150ms, top 600ms cubic-bezier(0.25, 0, 0.35, 1) 150ms";
 
-  // Ball path so far in this sequence (drawn like a telestration trace)
-  const ballTrail = phase.frames.slice(0, frame + 1).map(fr => fr.ball);
-  const prevUs = frame > 0 ? phase.frames[frame - 1].us : null;
+  const ballTrail = frames.slice(0, frame + 1).map(fr => fr.ball);
+  const prevUs = frame > 0 ? frames[frame - 1].us : null;
 
-  // ===== FINAL-ACTION GLOW =====
-  // The glow fires on the LAST action of the sequence (the final frame) for every phase —
-  // celebrating the decisive moment (the through-ball, the regain, the strike, the block).
+  // Final-action glow on the last frame — attacking final glows the unit ahead + the zone;
+  // defensive final glows the players nearest the ball (the regain/block).
   const thirdOf = (x) => (x < 33.3 ? 0 : x < 66.6 ? 1 : 2);
-  const isLastFrame = frame === phase.frames.length - 1;
-  const advanced = isLastFrame && !snap;
+  const isLast = frame === n - 1;
+  const advanced = isLast && !snap;
   const curThird = thirdOf(F.ball[0]);
-  // Are any of our outfield players in/ahead of the ball's third? (attacking final action)
   const ourForward = F.us.filter(u => u[0] !== 1 && u[1] >= curThird * 33.3 - 4);
   const attackingFinal = ourForward.length >= 2;
-  // Attacking final action → glow the unit from the ball's third forward + glow that zone.
-  // Defensive final action (we're behind the ball, e.g. Defensive Block) → glow the players
-  // nearest the ball (the defenders making the stop) and the zone around the ball.
-  const ballNum = null; // ball isn't a player; proximity computed below
   const nearestToBall = [...F.us]
     .filter(u => u[0] !== 1)
     .map(u => ({ num: u[0], d: Math.hypot(u[1] - F.ball[0], u[2] - F.ball[1]) }))
@@ -4362,96 +4537,58 @@ function GameModel() {
   const isInvolved = (num, x) => {
     if (num === 1) return false;
     if (attackingFinal) return x >= involvedFrontEdge - 4;
-    return nearestToBall.includes(num); // defensive: the players around the ball
+    return nearestToBall.includes(num);
   };
   const enteredBand = { x0: curThird * 33.3, x1: (curThird + 1) * 33.3 };
 
-  const zoneLabels = [
-    { t: "LD",  x: 16.6, y: 16.6 }, { t: "CD",  x: 16.6, y: 50 }, { t: "RD",  x: 16.6, y: 83.3 },
-    { t: "LPD", x: 41.6, y: 16.6 }, { t: "CPD", x: 41.6, y: 50 }, { t: "RPD", x: 41.6, y: 83.3 },
-    { t: "LPO", x: 58.3, y: 16.6 }, { t: "CPO", x: 58.3, y: 50 }, { t: "RPO", x: 58.3, y: 83.3 },
-    { t: "LO",  x: 83.3, y: 16.6 }, { t: "CO",  x: 83.3, y: 50 }, { t: "RO",  x: 83.3, y: 83.3 }
-  ];
-  const zh = phase.zoneHighlight;
-
   return (
-    <div className="space-y-4">
-      {/* Scoped keyframes for the motion-trail ghosts */}
+    <div>
       <style>{`
-        @keyframes gmGhostFade {
-          0% { opacity: 0.22; }
-          100% { opacity: 0; }
-        }
+        @keyframes gmGhostFade { 0% { opacity: 0.22; } 100% { opacity: 0; } }
         @keyframes gmPlayerGlow {
           0%   { box-shadow: 0 1px 3px rgba(0,0,0,0.6); }
           30%  { box-shadow: 0 0 10px var(--glowc), 0 0 18px var(--glowc), 0 1px 3px rgba(0,0,0,0.6); }
           100% { box-shadow: 0 1px 3px rgba(0,0,0,0.6); }
         }
-        @keyframes gmZoneGlow {
-          0%   { opacity: 0; }
-          35%  { opacity: 0.16; }
-          100% { opacity: 0; }
-        }
+        @keyframes gmZoneGlow { 0% { opacity: 0; } 35% { opacity: 0.16; } 100% { opacity: 0; } }
       `}</style>
 
-      {/* Phase selector — 2 rows × 3 */}
-      <div className="grid grid-cols-3 gap-1.5 p-1 rounded-lg bg-white/[0.04] border border-white/10">
-        {gameModel.map(p => (
-          <button key={p.id} onClick={() => setPhaseId(p.id)} className="py-2 px-1 rounded text-[9px] font-bold transition-all uppercase tracking-wider leading-tight" style={{
-            background: phaseId === p.id ? p.color + "22" : "transparent",
-            color: phaseId === p.id ? p.color : "rgba(255,255,255,0.45)",
-            border: `1px solid ${phaseId === p.id ? p.color + "55" : "transparent"}`,
-            textShadow: phaseId === p.id ? `0 0 6px ${p.color}55` : "none"
-          }}>
-            {p.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Phase header + frame indicator */}
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <span className="text-[9px] font-mono font-black uppercase tracking-widest px-2 py-0.5 rounded" style={{
-          color: phase.color, background: phase.color + "1A", border: `1px solid ${phase.color}44`,
-          boxShadow: `0 0 8px ${phase.color}33`
-        }}>{phase.moment}</span>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5">
-            {phase.frames.map((fr, idx) => (
-              <div key={idx} className="flex items-center gap-1">
-                <span className="inline-block rounded-full" style={{
-                  width: frame === idx ? 6 : 4,
-                  height: frame === idx ? 6 : 4,
-                  background: frame === idx ? phase.color : "#444",
-                  boxShadow: frame === idx ? `0 0 6px ${phase.color}, 0 0 12px ${phase.color}55` : "none",
-                  animation: (frame === idx && !paused) ? "morphPulse 1.2s ease-in-out infinite" : "none",
-                  transition: "all 300ms ease"
-                }} />
-                {frame === idx && (
-                  <span className="text-[8px] font-mono font-bold uppercase tracking-wider" style={{
-                    color: phase.color, textShadow: `0 0 4px ${phase.color}88`
-                  }}>{fr.label}</span>
-                )}
-              </div>
-            ))}
-          </div>
-          <button onClick={() => setPaused(!paused)} className="text-[8px] font-mono uppercase tracking-wider text-white/40 hover:text-white transition-colors">
-            {paused ? "▶ Play" : "❚❚ Pause"}
-          </button>
+      {/* Compact frame indicator + pause */}
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          {frames.map((fr, idx) => (
+            <div key={idx} className="flex items-center gap-1">
+              <span className="inline-block rounded-full" style={{
+                width: frame === idx ? 6 : 4,
+                height: frame === idx ? 6 : 4,
+                background: frame === idx ? color : "#444",
+                boxShadow: frame === idx ? `0 0 6px ${color}, 0 0 12px ${color}55` : "none",
+                animation: (frame === idx && !paused) ? "morphPulse 1.2s ease-in-out infinite" : "none",
+                transition: "all 300ms ease"
+              }} />
+              {frame === idx && (
+                <span className="text-[8px] font-mono font-bold uppercase tracking-wider truncate" style={{ color, textShadow: `0 0 4px ${color}88` }}>{fr.label}</span>
+              )}
+            </div>
+          ))}
         </div>
+        <button onClick={() => setPaused(!paused)} className="text-[8px] font-mono uppercase tracking-wider text-white/40 hover:text-white transition-colors flex-shrink-0">
+          {paused ? "▶ Play" : "❚❚ Pause"}
+        </button>
       </div>
 
-      {/* The phase board — SVG pitch + trace, HTML overlay of moving players & ball */}
+      {/* Board — SVG pitch + trace, HTML overlay of moving players & ball */}
       <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3 relative overflow-hidden">
         <div className="relative w-full" style={{ aspectRatio: `${W}/${H}` }}>
           <svg viewBox={`0 0 ${W} ${H}`} className="absolute inset-0 w-full h-full" style={{ borderRadius: 4 }}>
             <defs>
-              <linearGradient id="gmPitchGrad" x1="0" y1="0" x2="1" y2="0">
+              <linearGradient id={gid} x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor="#16302a" />
                 <stop offset="50%" stopColor="#1a3a26" />
                 <stop offset="100%" stopColor="#16302a" />
               </linearGradient>
             </defs>
-            <rect x="2" y="2" width={W - 4} height={H - 4} fill="url(#gmPitchGrad)" stroke="#fff" strokeOpacity="0.35" strokeWidth="0.5" rx="1.5" />
+            <rect x="2" y="2" width={W - 4} height={H - 4} fill={`url(#${gid})`} stroke="#fff" strokeOpacity="0.35" strokeWidth="0.5" rx="1.5" />
             <line x1={px(33.3)} y1="2" x2={px(33.3)} y2={H - 2} stroke="#fff" strokeOpacity="0.3" strokeWidth="0.4" strokeDasharray="1.5 1.5" />
             <line x1={px(66.6)} y1="2" x2={px(66.6)} y2={H - 2} stroke="#fff" strokeOpacity="0.3" strokeWidth="0.4" strokeDasharray="1.5 1.5" />
             <line x1={px(50)} y1="2" x2={px(50)} y2={H - 2} stroke="#fff" strokeOpacity="0.18" strokeWidth="0.3" strokeDasharray="2 1 0.5 1" />
@@ -4460,26 +4597,14 @@ function GameModel() {
             <circle cx={W / 2} cy={H / 2} r="6" fill="none" stroke="#fff" strokeOpacity="0.2" strokeWidth="0.3" />
             <rect x="2" y={H / 2 - 11} width="9" height="22" fill="none" stroke="#fff" strokeOpacity="0.25" strokeWidth="0.3" />
             <rect x={W - 11} y={H / 2 - 11} width="9" height="22" fill="none" stroke="#fff" strokeOpacity="0.25" strokeWidth="0.3" />
-            <text x={px(16.6)} y="6.5" fill="#fff" fillOpacity="0.4" fontSize="2.4" fontStyle="italic" textAnchor="middle">Defensive 1/3</text>
-            <text x={W / 2} y="6.5" fill="#fff" fillOpacity="0.4" fontSize="2.4" fontStyle="italic" textAnchor="middle">Midfield 1/3</text>
-            <text x={px(83.3)} y="6.5" fill="#fff" fillOpacity="0.4" fontSize="2.4" fontStyle="italic" textAnchor="middle">Attacking 1/3</text>
-            {zoneLabels.map(z => (
+            {GM_ZONE_LABELS.map(z => (
               <text key={z.t} x={px(z.x)} y={py(z.y)} fill="#fff" fillOpacity="0.13" fontSize="2.8" fontStyle="italic" fontWeight="bold" textAnchor="middle">{z.t}</text>
             ))}
-            {/* Active-phase zone highlight */}
-            <rect
-              x={px(zh.x0)} y={py(zh.y0)}
-              width={px(zh.x1) - px(zh.x0)} height={py(zh.y1) - py(zh.y0)}
-              fill={phase.color} fillOpacity="0.07"
-              stroke={phase.color} strokeOpacity="0.55" strokeWidth="0.45" rx="1"
-            >
-              <animate attributeName="stroke-opacity" values="0.55;0.25;0.55" dur="2.8s" repeatCount="indefinite" />
-            </rect>
 
             {/* Final-action glow on the zone the ball ends in */}
-            {advanced && (
+            {advanced && attackingFinal && (
               <rect
-                key={`zoneglow-${phaseId}-${frame}`}
+                key={`zoneglow-${frame}`}
                 x={px(enteredBand.x0)} y="2"
                 width={px(enteredBand.x1) - px(enteredBand.x0)} height={H - 4}
                 fill={CYBER.neonGreen} rx="1"
@@ -4487,7 +4612,7 @@ function GameModel() {
               />
             )}
 
-            {/* Ball path trace — telestration-style amber route with event markers at each visited point */}
+            {/* Ball path trace */}
             {ballTrail.length > 1 && (
               <polyline
                 points={ballTrail.map(b => `${px(b[0])},${py(b[1])}`).join(" ")}
@@ -4505,41 +4630,33 @@ function GameModel() {
             <text x={W - 4} y={H - 4} fill={SCOUTS.green} fillOpacity="0.6" fontSize="3" fontWeight="bold" textAnchor="end">▶</text>
           </svg>
 
-          {/* Motion-trail ghosts — previous-frame positions fading out (our XI only, declutters) */}
+          {/* Motion-trail ghosts — previous-frame positions fading out (our XI only) */}
           {!snap && prevUs && prevUs.map(u => {
             const [num, x, y] = u;
             return (
-              <div key={`g-${phaseId}-${frame}-${num}`} className="absolute" style={{
+              <div key={`g-${frame}-${num}`} className="absolute" style={{
                 left: `${lp(x)}%`, top: `${tp(y)}%`,
                 transform: "translate(-50%, -50%)",
                 pointerEvents: "none", zIndex: 1,
                 animation: "gmGhostFade 1.7s ease-out forwards"
               }}>
-                <div className="rounded-full" style={{
-                  width: 11, height: 11,
-                  background: num === 1 ? "#FFD700" : SCOUTS.green
-                }} />
+                <div className="rounded-full" style={{ width: 11, height: 11, background: num === 1 ? "#FFD700" : SCOUTS.green }} />
               </div>
             );
           })}
 
-          {/* Opposition — 11 black dummies, drifting */}
+          {/* Opposition — 11 black dummies */}
           {F.them.map((t, i) => (
             <div key={`t-${i}`} className="absolute" style={{
               left: `${lp(t[0])}%`, top: `${tp(t[1])}%`,
               transform: "translate(-50%, -50%)",
               transition: PLAYER_MORPH, pointerEvents: "none", zIndex: 2
             }}>
-              <div className="rounded-full" style={{
-                width: 10, height: 10,
-                background: "#0a0a0a",
-                border: "1.1px solid rgba(255,255,255,0.55)",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.7)"
-              }} />
+              <div className="rounded-full" style={{ width: 10, height: 10, background: "#0a0a0a", border: "1.1px solid rgba(255,255,255,0.55)", boxShadow: "0 1px 2px rgba(0,0,0,0.7)" }} />
             </div>
           ))}
 
-          {/* Our XI — flat tracking-style dots with shirt numbers (GK gold), drifting */}
+          {/* Our XI — flat dots with shirt numbers (GK gold) */}
           {F.us.map(u => {
             const [num, x, y] = u;
             const isGK = num === 1;
@@ -4566,27 +4683,108 @@ function GameModel() {
             );
           })}
 
-          {/* The ball — zips ahead of the players, small amber glow */}
+          {/* The ball */}
           <div className="absolute" style={{
             left: `${lp(F.ball[0])}%`, top: `${tp(F.ball[1])}%`,
             transform: "translate(-50%, -50%)",
-            transition: BALL_MORPH,
-            pointerEvents: "none", zIndex: 5
+            transition: BALL_MORPH, pointerEvents: "none", zIndex: 5
           }}>
             <div className="absolute rounded-full" style={{
-              width: 14, height: 14,
-              left: "50%", top: "50%",
-              transform: "translate(-50%, -50%)",
+              width: 14, height: 14, left: "50%", top: "50%", transform: "translate(-50%, -50%)",
               background: `radial-gradient(circle, ${CYBER.amber}88 0%, transparent 70%)`
             }} />
             <div className="relative rounded-full" style={{
               width: 7, height: 7,
               background: "radial-gradient(circle at 35% 35%, #fff 0%, #ddd 70%, #999 100%)",
-              border: "1px solid #000",
-              boxShadow: `0 0 5px ${CYBER.amber}, 0 1px 2px rgba(0,0,0,0.9)`
+              border: "1px solid #000", boxShadow: `0 0 5px ${CYBER.amber}, 0 1px 2px rgba(0,0,0,0.9)`
             }} />
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Small static formation thumbnail for the landing cards (no animation).
+function MiniPitchPreview({ frame, color }) {
+  const W = 100, H = 64;
+  const px = (v) => 2 + (v / 100) * (W - 4);
+  const py = (v) => 2 + (v / 100) * (H - 4);
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full block">
+      <rect x="2" y="2" width={W - 4} height={H - 4} fill="#15281f" stroke="#fff" strokeOpacity="0.25" strokeWidth="0.5" rx="1.5" />
+      <line x1={px(33.3)} y1="2" x2={px(33.3)} y2={H - 2} stroke="#fff" strokeOpacity="0.18" strokeWidth="0.35" strokeDasharray="1.5 1.5" />
+      <line x1={px(66.6)} y1="2" x2={px(66.6)} y2={H - 2} stroke="#fff" strokeOpacity="0.18" strokeWidth="0.35" strokeDasharray="1.5 1.5" />
+      <circle cx={W / 2} cy={H / 2} r="6" fill="none" stroke="#fff" strokeOpacity="0.14" strokeWidth="0.3" />
+      <rect x="2" y={H / 2 - 11} width="9" height="22" fill="none" stroke="#fff" strokeOpacity="0.2" strokeWidth="0.3" />
+      <rect x={W - 11} y={H / 2 - 11} width="9" height="22" fill="none" stroke="#fff" strokeOpacity="0.2" strokeWidth="0.3" />
+      {frame.them.map((t, i) => (
+        <circle key={`mt-${i}`} cx={px(t[0])} cy={py(t[1])} r="1.5" fill="#0a0a0a" stroke="rgba(255,255,255,0.45)" strokeWidth="0.3" />
+      ))}
+      {frame.us.map((u, i) => (
+        <circle key={`mu-${i}`} cx={px(u[1])} cy={py(u[2])} r="1.7" fill={u[0] === 1 ? "#FFD700" : SCOUTS.green} stroke="rgba(255,255,255,0.85)" strokeWidth="0.3" />
+      ))}
+      <circle cx={px(frame.ball[0])} cy={py(frame.ball[1])} r="1" fill="#fff" stroke="#000" strokeWidth="0.3" />
+      <text x={W - 3.5} y={H - 3.5} fill={color} fillOpacity="0.7" fontSize="3" fontWeight="bold" textAnchor="end">▶</text>
+    </svg>
+  );
+}
+
+// Phase detail — the 3 tactical morphs for one phase, then that phase's principles, evidence,
+// coded match-interaction, Sportscode coding and StatsBomb season data (reused verbatim).
+function PhaseDetail({ phase, onBack }) {
+  const [animated, setAnimated] = useState(false);
+  useEffect(() => {
+    setAnimated(false);
+    const t = setTimeout(() => setAnimated(true), 60);
+    return () => clearTimeout(t);
+  }, [phase.id]);
+
+  const phaseId = phase.id;
+  const pm = PHASE_MORPHS[phase.id] || { primaryLabel: phase.label, primaryNote: "", extra: [] };
+  const morphs = [
+    { label: pm.primaryLabel, note: pm.primaryNote, frames: phase.frames, primary: true },
+    ...pm.extra
+  ];
+
+  return (
+    <div className="space-y-4">
+      {/* Back + phase header */}
+      <button onClick={onBack} className="text-[10px] font-mono uppercase tracking-widest text-white/55 hover:text-white transition-colors inline-flex items-center gap-1">← Game Model</button>
+
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: phase.color, boxShadow: `0 0 6px ${phase.color}` }} />
+          <h2 className="text-base font-black uppercase tracking-wide truncate" style={{ color: phase.color, textShadow: `0 0 10px ${phase.color}44` }}>{phase.label}</h2>
+        </div>
+        <span className="text-[9px] font-mono font-black uppercase tracking-widest px-2 py-0.5 rounded flex-shrink-0" style={{
+          color: phase.color, background: phase.color + "1A", border: `1px solid ${phase.color}44`, boxShadow: `0 0 8px ${phase.color}33`
+        }}>{phase.moment}</span>
+      </div>
+
+      <div className="text-[9px] uppercase tracking-widest font-mono text-white/40">
+        {morphs.length} tactical morphs · tap ❚❚ to freeze any board
+      </div>
+
+      {/* The morphs — stacked full-width so the dots read at the same scale as before */}
+      <div className="space-y-4">
+        {morphs.map((m, i) => (
+          <div key={i} className="rounded-lg border p-3" style={{ borderColor: phase.color + "33", background: phase.color + "08" }}>
+            <div className="flex items-start justify-between gap-2 mb-1.5">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-[10px] font-mono font-black flex-shrink-0" style={{ color: phase.color }}>{String(i + 1).padStart(2, "0")}</span>
+                <span className="text-[12px] font-bold text-white leading-tight">{m.label}</span>
+              </div>
+              {m.primary && (
+                <span className="text-[7px] font-mono font-black uppercase tracking-widest px-1.5 py-0.5 rounded flex-shrink-0" style={{
+                  color: phase.color, background: phase.color + "1A", border: `1px solid ${phase.color}44`
+                }}>★ Model</span>
+              )}
+            </div>
+            {m.note && <p className="text-[10px] text-white/55 leading-relaxed italic mb-2.5" style={{ fontFamily: "'Georgia', serif" }}>{m.note}</p>}
+            <PhaseMorphPitch frames={m.frames} color={phase.color} />
+          </div>
+        ))}
       </div>
 
       {/* Principles — styled like the reference board's dashed list */}
@@ -4816,6 +5014,70 @@ function GameModel() {
           </div>
         );
       })()}
+    </div>
+  );
+}
+
+// Game Model — landing grid of phases. Tap a phase to fade away and open its morphs.
+function GameModel() {
+  const [selectedPhase, setSelectedPhase] = useState(null);
+  const [falling, setFalling] = useState(null);
+
+  if (selectedPhase) {
+    const phase = gameModel.find(p => p.id === selectedPhase) || gameModel[0];
+    return <PhaseDetail phase={phase} onBack={() => setSelectedPhase(null)} />;
+  }
+
+  return (
+    <div className="space-y-4" onAnimationEnd={(e) => { if (falling && e.target === e.currentTarget) { setSelectedPhase(falling); setFalling(null); } }} style={{ animation: falling ? "gmFall 440ms cubic-bezier(0.55,0,0.85,0.2) forwards" : undefined }}>
+      <style>{`@keyframes gmFall { 0% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } 100% { opacity: 0; transform: translateY(46px) scale(0.955); filter: blur(2px); } }`}</style>
+
+      <div className="text-[10px] uppercase tracking-widest font-mono text-white/45">
+        Our game model · 6 phases — tap a phase for its tactical morphs
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {gameModel.map(p => {
+          const pm = PHASE_MORPHS[p.id];
+          const count = 1 + (pm && pm.extra ? pm.extra.length : 0);
+          return (
+            <button
+              key={p.id}
+              onClick={() => setFalling(p.id)}
+              className="group text-left rounded-lg border overflow-hidden transition-all hover:-translate-y-0.5"
+              style={{ borderColor: p.color + "33", background: p.color + "0A" }}
+            >
+              {/* Header */}
+              <div className="px-3 py-2.5 flex items-center justify-between gap-2 border-b" style={{ borderColor: p.color + "22" }}>
+                <div className="min-w-0">
+                  <div className="text-[13px] font-black uppercase tracking-wide truncate" style={{ color: p.color }}>{p.label}</div>
+                  <div className="text-[8px] font-mono uppercase tracking-wider text-white/40 truncate">{p.moment}</div>
+                </div>
+                <span className="text-[8px] font-mono font-black uppercase tracking-widest px-1.5 py-0.5 rounded flex-shrink-0" style={{
+                  color: p.color, background: p.color + "1A", border: `1px solid ${p.color}44`
+                }}>{count} morphs</span>
+              </div>
+
+              {/* Static formation preview */}
+              <div className="p-2.5">
+                <div className="relative w-full rounded overflow-hidden" style={{ aspectRatio: "100/64" }}>
+                  <MiniPitchPreview frame={p.frames[0]} color={p.color} />
+                </div>
+              </div>
+
+              {/* First principle + affordance */}
+              <div className="px-3 pb-3 -mt-0.5">
+                <p className="text-[10px] text-white/55 leading-relaxed italic line-clamp-2" style={{ fontFamily: "'Georgia', serif" }}>
+                  {p.principles[0]}
+                </p>
+                <div className="mt-2 text-[9px] font-mono font-bold uppercase tracking-widest inline-flex items-center gap-1 transition-colors" style={{ color: p.color }}>
+                  View morphs <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
