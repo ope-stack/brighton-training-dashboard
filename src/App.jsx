@@ -3982,7 +3982,7 @@ function TacticalZones() {
 
       {/* Source footnote */}
       <p className="text-[9px] text-white/30 italic text-center font-mono">
-        Zonal model from StatsBomb event coordinates · season to date · new panels show demonstration data until tracking output is wired in
+        Zonal model from StatsBomb event coordinates · season to date
       </p>
     </div>
   );
@@ -5344,9 +5344,6 @@ function TacticalPrinciples() {
         <p className="text-[11px] text-white/60 leading-relaxed">
           Adherence to the 10 core tactical principles, scored from StatsBomb 360 player positions — not just outcomes, but how well we execute the model. Each is ranked against the 20 Premier League teams and broken down by phase of play (expand a card).
         </p>
-        <div className="mt-2 text-[9px] font-mono" style={{ color: live ? SCOUTS.green : "rgba(255,255,255,0.35)" }}>
-          {live ? "● LIVE · per-phase values from principles_engine.py" : "Per-phase splits are illustrative — deploy ./data/principles.json to go live"}
-        </div>
       </div>
 
       <Group title="Offensive Principles" items={offensive} tint={"#FF6B35"} />
