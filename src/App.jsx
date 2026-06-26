@@ -4763,7 +4763,7 @@ function PhaseDetail({ phase, onBack }) {
       </div>
 
       <div className="text-[9px] uppercase tracking-widest font-mono text-white/40">
-        {morphs.length} tactical morphs · tap ❚❚ to freeze any board
+        {morphs.length} tactical visuals · tap ❚❚ to freeze any board
       </div>
 
       {/* The morphs — stacked full-width so the dots read at the same scale as before */}
@@ -5033,7 +5033,7 @@ function GameModel() {
       <style>{`@keyframes gmFall { 0% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } 100% { opacity: 0; transform: translateY(46px) scale(0.955); filter: blur(2px); } }`}</style>
 
       <div className="text-[10px] uppercase tracking-widest font-mono text-white/45">
-        Our game model · 6 phases — tap a phase for its tactical morphs
+        Our game model · 6 phases — tap a phase for its tactical visuals
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -5055,7 +5055,7 @@ function GameModel() {
                 </div>
                 <span className="text-[8px] font-mono font-black uppercase tracking-widest px-1.5 py-0.5 rounded flex-shrink-0" style={{
                   color: p.color, background: p.color + "1A", border: `1px solid ${p.color}44`
-                }}>{count} morphs</span>
+                }}>{count} visuals</span>
               </div>
 
               {/* Static formation preview */}
@@ -5071,7 +5071,7 @@ function GameModel() {
                   {p.principles[0]}
                 </p>
                 <div className="mt-2 text-[9px] font-mono font-bold uppercase tracking-widest inline-flex items-center gap-1 transition-colors" style={{ color: p.color }}>
-                  View morphs <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                  View visuals <span className="transition-transform group-hover:translate-x-0.5">→</span>
                 </div>
               </div>
             </button>
