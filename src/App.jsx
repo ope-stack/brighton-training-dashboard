@@ -1745,6 +1745,28 @@ const setPieceComparison = [
   { team: "Us", goals: 11, highlight: true }, { team: "Bot 6 avg", goals: 10 }
 ];
 
+// Defensive xGA (mirror of the attacking xG view) + set-piece deep-dive
+const xgaVsConceded = [
+  { mw: 30, xga: 1.1, conceded: 1 }, { mw: 31, xga: 0.9, conceded: 0 }, { mw: 32, xga: 1.6, conceded: 2 },
+  { mw: 33, xga: 1.3, conceded: 1 }, { mw: 34, xga: 1.0, conceded: 1 }, { mw: 35, xga: 1.4, conceded: 2 },
+  { mw: 36, xga: 0.8, conceded: 0 }, { mw: 37, xga: 1.2, conceded: 1 }, { mw: 38, xga: 1.5, conceded: 2 }
+];
+const xgaBySource = [
+  { source: "Open play", xga: 5.2 },
+  { source: "Set pieces", xga: 3.8, highlight: true },
+  { source: "Transitions", xga: 1.2 },
+  { source: "Penalties", xga: 0.6 }
+];
+const setPieceByType = [
+  { type: "Corners", scored: 6, conceded: 7 },
+  { type: "Free-kicks", scored: 3, conceded: 4 },
+  { type: "Penalties", scored: 2, conceded: 1 }
+];
+const setPieceStats = [
+  ["Corners taken", 142], ["Corner conv.", "4.2%"], ["SP xG for", "9.4"],
+  ["SP xG against", "11.8"], ["First-contact won", "38%"], ["SP goal diff", "−1"]
+];
+
 const priorityColors = { "Critical": "#FF3D5A", "High": "#FF9D3D", "Medium": "#FFD700", "Diagnostic": "#A8C5FF" };
 
 // Phase + provenance display metadata (mirrors principles_engine.py byPhase + sensitivity360)
@@ -6541,6 +6563,80 @@ function TeamPerformance() {
 // MAIN APP
 // =================================================================
 
+function SetPieceDeepDive() {
+  return (
+    <>
+      <ChartCard title="Set Pieces — Scored vs Conceded" subtitle="By type · season" footnote="Net-negative from set pieces (11 scored, 12 conceded), and corners are the problem at both ends — we lose first contact too often defending, and convert too rarely attacking. The biggest two-way fix in the profile.">
+        <ResponsiveContainer>
+          <BarChart data={setPieceByType} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+            <CartesianGrid stroke="rgba(255,255,255,0.05)" />
+            <XAxis dataKey="type" stroke="rgba(255,255,255,0.6)" fontSize={10} />
+            <YAxis stroke="rgba(255,255,255,0.6)" fontSize={10} />
+            <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid rgba(255,255,255,0.2)", fontSize: 11 }} />
+            <Legend wrapperStyle={{ fontSize: 10 }} />
+            <Bar name="Scored" dataKey="scored" fill={SCOUTS.green} radius={[4, 4, 0, 0]} />
+            <Bar name="Conceded" dataKey="conceded" fill="#FF3D5A" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartCard>
+
+      <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
+        <div className="mb-3">
+          <h3 className="text-sm font-bold text-white">Set-Piece Efficiency</h3>
+          <p className="text-[10px] text-white/40 mt-0.5">Season · attacking &amp; defending</p>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {setPieceStats.map(([k, v], i) => (
+            <div key={i} className="rounded bg-white/[0.04] p-2 text-center">
+              <div className="text-base font-black font-mono" style={{ color: BHA.blueLight }}>{v}</div>
+              <div className="text-[9px] text-white/45 leading-tight mt-0.5">{k}</div>
+            </div>
+          ))}
+        </div>
+        <p className="text-[10px] text-white/40 mt-3 italic leading-relaxed">SP xG against (11.8) outstrips SP xG for (9.4) — a structural set-piece deficit. First-contact win rate (38%) is the actionable number defensively; corner conversion (4.2%) the attacking one.</p>
+      </div>
+    </>
+  );
+}
+
+function DefensiveXGAMirror() {
+  const totXga = xgaVsConceded.reduce((a, d) => a + d.xga, 0);
+  const totGA = xgaVsConceded.reduce((a, d) => a + d.conceded, 0);
+  const spSrc = xgaBySource.find((s) => s.highlight);
+  const spPct = Math.round((100 * (spSrc ? spSrc.xga : 0)) / totXga);
+  return (
+    <>
+      <ChartCard title="xGA vs Goals Conceded" subtitle="Final 9 matchweeks" footnote={`Low expected goals against — our structure limits open-play chances. We conceded ${totGA} from ${totXga.toFixed(1)} xGA, broadly in line (Verbruggen at a 71% save rate). The leak isn't the volume of chances faced — it's their source.`}>
+        <ResponsiveContainer>
+          <AreaChart data={xgaVsConceded}>
+            <CartesianGrid stroke="rgba(255,255,255,0.05)" />
+            <XAxis dataKey="mw" stroke="rgba(255,255,255,0.6)" fontSize={10} />
+            <YAxis stroke="rgba(255,255,255,0.6)" fontSize={10} />
+            <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid rgba(255,255,255,0.2)", fontSize: 11 }} />
+            <Legend wrapperStyle={{ fontSize: 10 }} />
+            <Area type="monotone" dataKey="xga" name="xGA" stroke="#FF9D3D" fill="#FF9D3D" fillOpacity={0.18} strokeWidth={2} />
+            <Line type="monotone" dataKey="conceded" name="Conceded" stroke="#FF3D5A" strokeWidth={2.5} dot={{ r: 4 }} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </ChartCard>
+
+      <ChartCard title="Where Our xGA Comes From" subtitle="Expected goals against by source · final 9" footnote={`Open play is well-contained for the volume we face. Set pieces generate ${spPct}% of our xGA from a fraction of the situations — the disproportionate leak, and the clearest defensive fix.`}>
+        <ResponsiveContainer>
+          <BarChart data={xgaBySource} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+            <CartesianGrid stroke="rgba(255,255,255,0.05)" />
+            <XAxis dataKey="source" stroke="rgba(255,255,255,0.6)" fontSize={9} />
+            <YAxis stroke="rgba(255,255,255,0.6)" fontSize={10} />
+            <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid rgba(255,255,255,0.2)", fontSize: 11 }} />
+            <Bar dataKey="xga" radius={[4, 4, 0, 0]}>
+              {xgaBySource.map((e, i) => <Cell key={i} fill={e.highlight ? "#FF3D5A" : "rgba(255,255,255,0.3)"} />)}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartCard>
+    </>
+  );
+}
+
 function VisualsTab() {
   const [sub, setSub] = useState("visuals");
   return (
@@ -6619,6 +6715,10 @@ function VisualsTab() {
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
+
+            <SetPieceDeepDive />
+
+            <DefensiveXGAMirror />
           </div>
       )}
 
