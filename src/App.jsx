@@ -4732,6 +4732,120 @@ function MiniPitchPreview({ frame, color }) {
 
 // Phase detail — the 3 tactical morphs for one phase, then that phase's principles, evidence,
 // coded match-interaction, Sportscode coding and StatsBomb season data (reused verbatim).
+// Simple per-phase metrics. Spatial values are computed live from the phase's morph x/y
+// (the same coordinate space tracking data uses); rate metrics are the model's targets.
+function phaseMetrics(phase) {
+  const F = phase.frames;
+  const OUT = (f) => f.us.filter((u) => u[0] !== 1);
+  const avg = (a) => a.reduce((s, v) => s + v, 0) / (a.length || 1);
+  const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+  const XL = 1.05, YL = 0.68; // pitch ≈ 105 × 68 m
+  const W = [], D = [], CX = [], LH = [], GAP = [];
+  F.forEach((f) => {
+    const o = OUT(f), xs = o.map((u) => u[1]), ys = o.map((u) => u[2]);
+    W.push(Math.max(...ys) - Math.min(...ys));
+    D.push(Math.max(...xs) - Math.min(...xs));
+    CX.push(avg(xs));
+    const sorted = [...o].sort((a, b) => a[1] - b[1]);
+    LH.push(avg(sorted.slice(0, 4).map((u) => u[1])));
+    GAP.push(avg(sorted.slice(4, 8).map((u) => u[1])) - avg(sorted.slice(0, 4).map((u) => u[1])));
+  });
+  const widthM = avg(W) * YL, depthM = avg(D) * XL, lineM = avg(LH) * XL, gapM = avg(GAP) * XL;
+  const first = F[0], last = F[F.length - 1];
+  const r = (n) => Math.round(n);
+  const id = phase.id;
+
+  if (id === "buildup") {
+    return [
+      { v: r(widthM), unit: "m", label: "Build-up width", sub: "stretch the first line" },
+      { v: OUT(first).filter((u) => u[1] < 50).length, label: "Numbers behind halfway", sub: "support deep" },
+      { v: r(lineM), unit: "m", label: "First-line height", sub: "from own goal" },
+      { v: 78, unit: "%", label: "Retain & exit 1/3", sub: "target ≥ 75%" },
+      { v: "8.4", unit: "s", label: "Time to exit 1/3", sub: "patient" },
+    ];
+  }
+  if (id === "progression") {
+    return [
+      { v: r((last.ball[0] - first.ball[0]) * XL), unit: "m", label: "Ball progression", sub: "metres upfield" },
+      { v: OUT(last).filter((u) => u[1] > 50).length, label: "Men in attacking half", sub: "support ahead" },
+      { v: r(widthM), unit: "m", label: "Width at entry", sub: "isolate the winger" },
+      { v: 71, unit: "%", label: "Reach final third", sub: "target ≥ 65%" },
+      { v: "6.1", unit: "s", label: "Build → final third", sub: "tempo" },
+    ];
+  }
+  if (id === "finalthird") {
+    return [
+      { v: OUT(last).filter((u) => u[1] > 83).length, label: "Bodies in the box", sub: "at the key moment" },
+      { v: r(widthM), unit: "m", label: "Final-third width", sub: "pin the back line" },
+      { v: OUT(last).filter((u) => u[2] >= 33 && u[2] <= 67).length, label: "Central occupation", sub: "cut-back targets" },
+      { v: 32, unit: "%", label: "Entries → shot", sub: "target ≥ 30%" },
+      { v: "0.12", label: "xG per entry", sub: "chance quality" },
+    ];
+  }
+  if (id === "block") {
+    return [
+      { v: r(lineM), unit: "m", label: "Block height", sub: "line from own goal" },
+      { v: r(depthM), unit: "m", label: "Compactness", sub: "front-to-back" },
+      { v: r(gapM), unit: "m", label: "Gap between lines", sub: "stay connected" },
+      { v: "6.2", label: "Recoveries in block", sub: "per match" },
+      { v: 9, label: "Box entries allowed", sub: "target ≤ 10" },
+    ];
+  }
+  if (id === "counterpress") {
+    let best = { swarm: 0, edge: 0, near3: 0 };
+    F.forEach((f) => {
+      const usN = OUT(f).filter((u) => dist([u[1], u[2]], f.ball) <= 14).length;
+      const thN = f.them.filter((t) => dist(t, f.ball) <= 14).length;
+      const d3 = avg(OUT(f).map((u) => dist([u[1], u[2]], f.ball)).sort((a, b) => a - b).slice(0, 3)) * XL;
+      if (usN > best.swarm) best = { swarm: usN, edge: usN - thN, near3: d3 };
+    });
+    return [
+      { v: best.swarm, label: "Swarm size", sub: "within 14 m of ball" },
+      { v: (best.edge >= 0 ? "+" : "") + best.edge, label: "Numerical edge", sub: "around the ball" },
+      { v: r(best.near3), unit: "m", label: "Press distance", sub: "nearest 3 to ball" },
+      { v: 64, unit: "%", label: "Regain ≤ 5s", sub: "target ≥ 60%" },
+      { v: "5.1", label: "High regains", sub: "per match" },
+    ];
+  }
+  // counterattack
+  return [
+    { v: first.them.filter((t) => t[0] < first.ball[0]).length, label: "Opponents upfield", sub: "behind the ball" },
+    { v: OUT(last).filter((u) => u[1] > 50).length, label: "Runners committed", sub: "beyond halfway" },
+    { v: r((last.ball[0] - first.ball[0]) * XL), unit: "m", label: "Ground gained", sub: "ball upfield" },
+    { v: 38, unit: "%", label: "Counter → shot", sub: "target ≥ 35%" },
+    { v: "4.2", unit: "s", label: "To final third", sub: "speed" },
+  ];
+}
+
+function PhaseMetricsPanel({ phase }) {
+  const tiles = phaseMetrics(phase);
+  const c = phase.color;
+  return (
+    <div className="rounded-lg border p-3" style={{ borderColor: c + "22", background: c + "08" }}>
+      <div className="flex items-center justify-between gap-2 mb-2.5">
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block w-1 h-1 rounded-full" style={{ background: c, boxShadow: `0 0 4px ${c}` }} />
+          <span className="text-[9px] uppercase tracking-widest font-mono font-bold" style={{ color: c }}>Phase metrics</span>
+        </div>
+        <span className="text-[8px] font-mono uppercase tracking-wider text-white/30">from the model x/y</span>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {tiles.map((t, i) => (
+          <div key={i} className="rounded-md p-2 bg-black/25 border border-white/5">
+            <div className="flex items-baseline gap-0.5">
+              <span className="font-mono font-black text-lg leading-none" style={{ color: c, textShadow: `0 0 8px ${c}55` }}>{t.v}</span>
+              {t.unit && <span className="text-[9px] font-mono text-white/45">{t.unit}</span>}
+            </div>
+            <div className="text-[9px] text-white/65 font-semibold mt-1 leading-tight">{t.label}</div>
+            <div className="text-[8px] text-white/35 font-mono mt-0.5 leading-tight">{t.sub}</div>
+          </div>
+        ))}
+      </div>
+      <div className="text-[8px] text-white/30 font-mono mt-2 italic">Spatial values computed from the model shape · rates are model targets</div>
+    </div>
+  );
+}
+
 function PhaseDetail({ phase, onBack }) {
   const [animated, setAnimated] = useState(false);
   useEffect(() => {
@@ -4786,6 +4900,9 @@ function PhaseDetail({ phase, onBack }) {
           </div>
         ))}
       </div>
+
+      {/* Phase metrics — spatial values computed from the morph x/y + model targets */}
+      <PhaseMetricsPanel phase={phase} />
 
       {/* Principles — styled like the reference board's dashed list */}
       <div className="rounded-lg border p-4" style={{ borderColor: phase.color + "33", background: phase.color + "08" }}>
