@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, CartesianGrid, Tooltip,
   LineChart, Line, Cell, ReferenceLine, Legend, AreaChart, Area, RadarChart,
@@ -5940,6 +5940,172 @@ function PlayerStyleMorph({ player }) {
   );
 }
 
+// ── Last-match touch map: a deterministic, seeded touch cloud per player (stable across
+// renders), anchored on the player's home + typical runs. Same fixture for the whole squad. ──
+const LAST_MATCH = { opp: "Chelsea", venue: "H", gf: 2, ga: 1 };
+
+function ptcRand(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function genPlayerTouches(player) {
+  const style = PLAYER_STYLE[player.num] || { slot: "DM", path: [[50, 50]] };
+  const home = style.path[0];
+  const moves = PLAYER_MOVES[player.num] || [];
+  const rnd = ptcRand((player.num * 1973) ^ 0x9e3779b9);
+  const g = (m, s) => m + (((rnd() + rnd() + rnd()) / 3) - 0.5) * 2 * s; // approx-normal jitter
+  const pos = player.pos;
+  const base = pos === "GK" ? 32
+    : pos === "CB" ? 66
+    : ["LB", "RB", "WB", "LWB", "RWB"].includes(pos) ? 58
+    : pos === "DM" ? 74
+    : pos === "CM" ? 60
+    : pos === "CAM" ? 52
+    : ["LW", "RW", "WG"].includes(pos) ? 48
+    : 40; // ST
+  const nMain = Math.max(18, Math.round(base + (rnd() - 0.5) * 12));
+  const totalW = moves.reduce((s, m) => s + m[2], 0) || 1;
+  const pickMove = () => { let r = rnd() * totalW; for (const m of moves) { r -= m[2]; if (r <= 0) return m; } return moves[moves.length - 1] || home; };
+  const pts = [];
+
+  // Off-role touches in the two penalty areas — set pieces (corners, free-kicks), deep defending,
+  // late arrivals. Small, position-weighted [ownBox, oppBox]; the keeper stays home.
+  const BOX = {
+    GK: [0, 0], CB: [4, 3], LB: [2, 2], RB: [2, 2], WB: [2, 2], LWB: [2, 2], RWB: [2, 2],
+    DM: [3, 1.5], CM: [2, 2], CAM: [1, 3], LW: [1, 2], RW: [1, 2], WG: [1, 2], ST: [2, 0]
+  };
+  const [ownExp, oppExp] = BOX[pos] || [1.5, 1.5];
+  const cnt = (m) => m <= 0 ? 0 : Math.max(0, Math.round(m + (rnd() - 0.5) * Math.max(1, m)));
+  const pushBox = (x0, x1, k) => {
+    for (let i = 0; i < k; i++) {
+      const x = x0 + rnd() * (x1 - x0);
+      const y = Math.max(22, Math.min(78, g(50, 16)));
+      pts.push([+x.toFixed(1), +y.toFixed(1)]);
+    }
+  };
+  pushBox(4, 15, cnt(ownExp));    // own penalty area
+  pushBox(85, 96, cnt(oppExp));   // opposition penalty area
+
+  // Main cluster — home, typical runs, and a wider tail.
+  for (let i = 0; i < nMain; i++) {
+    const r = rnd();
+    let cx, cy, sp;
+    if (r < 0.5 || moves.length === 0) { cx = home[0]; cy = home[1]; sp = pos === "GK" ? 4.5 : 9; }        // around home
+    else if (r < 0.85) { const m = pickMove(); cx = m[0]; cy = m[1]; sp = 8; }                              // around a typical run
+    else { cx = (home[0] + (pos === "GK" ? 22 : 55)) / 2 + (rnd() - 0.5) * 26; cy = home[1] + (rnd() - 0.5) * 38; sp = 11; } // wider spread
+    let x = g(cx, sp), y = g(cy, sp);
+    x = Math.max(3, Math.min(pos === "GK" ? 42 : 97, x));
+    y = Math.max(4, Math.min(96, y));
+    pts.push([+x.toFixed(1), +y.toFixed(1)]);
+  }
+  return pts;
+}
+
+function PlayerTouchMap({ player, col }) {
+  const touches = genPlayerTouches(player);
+  const n = touches.length;
+  const mx = touches.reduce((s, p) => s + p[0], 0) / n;
+  const my = touches.reduce((s, p) => s + p[1], 0) / n;
+  const ft = Math.round(100 * touches.filter(p => p[0] > 66.6).length / n);
+  const ah = Math.round(100 * touches.filter(p => p[0] > 50).length / n);
+  const px = (v) => 2 + (v / 100) * 96;
+  const py = (v) => 2 + (v / 100) * 60;
+  const res = (LAST_MATCH.gf > LAST_MATCH.ga ? "W" : LAST_MATCH.gf < LAST_MATCH.ga ? "L" : "D") + " " + LAST_MATCH.gf + "–" + LAST_MATCH.ga;
+  const lastName = player.name.split(" ").pop();
+  const stats = [["Touches", n], ["Final third", ft + "%"], ["Att. half", ah + "%"]];
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-[10px] uppercase tracking-widest font-mono" style={{ color: col }}>Touch map · <span className="font-bold">last match</span></div>
+        <div className="text-[8px] font-mono uppercase tracking-wider text-white/35">vs {LAST_MATCH.opp} ({LAST_MATCH.venue}) · {res}</div>
+      </div>
+      <div className="relative w-full rounded-lg overflow-hidden border border-white/10" style={{ aspectRatio: "100/64" }}>
+        <svg viewBox="0 0 100 64" className="absolute inset-0 w-full h-full">
+          <defs>
+            <linearGradient id="ptcPitch" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#0e2a20" /><stop offset="50%" stopColor="#143a26" /><stop offset="100%" stopColor="#0e2a20" />
+            </linearGradient>
+            <radialGradient id="ptcHeat" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor={col} stopOpacity="0.55" />
+              <stop offset="60%" stopColor={col} stopOpacity="0.14" />
+              <stop offset="100%" stopColor={col} stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <rect x="0" y="0" width="100" height="64" fill="url(#ptcPitch)" />
+          <rect x={px(0)} y={py(0)} width={px(100) - px(0)} height={py(100) - py(0)} fill="none" stroke={col} strokeOpacity="0.18" strokeWidth="0.4" />
+          <line x1={px(50)} y1={py(0)} x2={px(50)} y2={py(100)} stroke="#fff" strokeOpacity="0.12" strokeWidth="0.3" />
+          <circle cx={px(50)} cy={py(50)} r="8" fill="none" stroke="#fff" strokeOpacity="0.12" strokeWidth="0.3" />
+          <rect x={px(0)} y={py(22)} width={px(16) - px(0)} height={py(78) - py(22)} fill="none" stroke="#fff" strokeOpacity="0.12" strokeWidth="0.3" />
+          <rect x={px(84)} y={py(22)} width={px(100) - px(84)} height={py(78) - py(22)} fill="none" stroke="#fff" strokeOpacity="0.16" strokeWidth="0.3" />
+          <rect x={px(94)} y={py(36)} width={px(100) - px(94)} height={py(64) - py(36)} fill="none" stroke="#fff" strokeOpacity="0.16" strokeWidth="0.3" />
+          {touches.map((p, i) => <circle key={"h" + i} cx={px(p[0])} cy={py(p[1])} r="6.2" fill="url(#ptcHeat)" />)}
+          {touches.map((p, i) => <circle key={"d" + i} cx={px(p[0])} cy={py(p[1])} r="0.85" fill={col} fillOpacity="0.9" stroke="#0b1410" strokeWidth="0.18" />)}
+          <circle cx={px(mx)} cy={py(my)} r="3.4" fill="none" stroke="#fff" strokeOpacity="0.9" strokeWidth="0.5" strokeDasharray="1.4 1" />
+          <circle cx={px(mx)} cy={py(my)} r="1.2" fill="#fff" />
+          <text x={px(99)} y={py(7)} fill={SCOUTS.green} fontSize="3.4" fontWeight="bold" textAnchor="end">ATTACK ▶</text>
+        </svg>
+      </div>
+      <div className="flex items-center justify-center gap-3 mt-2 text-[8px] font-mono text-white/45">
+        <span className="flex items-center gap-1"><span style={{ width: 7, height: 7, borderRadius: "50%", background: col, boxShadow: `0 0 5px ${col}` }} />Touch</span>
+        <span className="flex items-center gap-1"><span style={{ width: 8, height: 8, borderRadius: "50%", border: "1.4px dashed rgba(255,255,255,0.85)" }} />Avg position</span>
+      </div>
+      <div className="grid grid-cols-3 gap-2 mt-2">
+        {stats.map(([k, v]) => (
+          <div key={k} className="rounded p-1.5 bg-black/30 text-center">
+            <div className="text-[8px] uppercase tracking-widest text-white/40 font-mono">{k}</div>
+            <div className="font-mono font-black text-white text-base leading-tight" style={{ textShadow: `0 0 6px ${col}55` }}>{v}</div>
+          </div>
+        ))}
+      </div>
+      <div className="text-center text-[8px] text-white/35 mt-1.5 font-mono">Ball touches by {lastName} · last match</div>
+    </div>
+  );
+}
+
+// Swipeable two-pitch carousel for a player: Play Style ↔ Touch Map.
+function PlayerPitchCarousel({ player, col }) {
+  const scrollerRef = useRef(null);
+  const [active, setActive] = useState(0);
+  const slides = [{ key: "style", label: "Play Style" }, { key: "touch", label: "Touch Map" }];
+  const goTo = (i) => { const el = scrollerRef.current; if (el) el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" }); };
+  const onScroll = () => { const el = scrollerRef.current; if (!el) return; const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth)); if (i !== active) setActive(i); };
+  return (
+    <div>
+      <style>{`.ptc-scroll::-webkit-scrollbar{display:none;}`}</style>
+      <div className="flex items-center justify-between mb-2.5 gap-2">
+        <div className="flex gap-1 rounded-md p-0.5 bg-black/30 border border-white/10">
+          {slides.map((s, i) => (
+            <button key={s.key} onClick={() => goTo(i)} className="text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-1 rounded transition-all" style={active === i ? { background: col + "22", color: col, boxShadow: `0 0 8px ${col}33` } : { color: "rgba(255,255,255,0.42)" }}>{s.label}</button>
+          ))}
+        </div>
+        <div className="text-[8px] font-mono uppercase tracking-wider text-white/30 flex items-center gap-1 flex-shrink-0">
+          {active === 0 ? <>swipe <span className="text-white/55">→</span></> : <><span className="text-white/55">←</span> swipe</>}
+        </div>
+      </div>
+      <div ref={scrollerRef} onScroll={onScroll} className="ptc-scroll flex overflow-x-auto snap-x snap-mandatory items-start" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+        <div className="snap-center shrink-0 w-full">
+          <PlayerStyleMorph player={player} />
+          <p className="text-[9px] text-white/40 leading-relaxed mt-2 italic">Illustrative movement model — the focal player ({player.num}) on the ball, team-mates in green, opponents in black. Tactical sketch of how this player tends to operate, not tracked positions.</p>
+        </div>
+        <div className="snap-center shrink-0 w-full">
+          <PlayerTouchMap player={player} col={col} />
+        </div>
+      </div>
+      <div className="flex items-center justify-center gap-1.5 mt-2">
+        {slides.map((s, i) => (
+          <button key={s.key} onClick={() => goTo(i)} aria-label={s.label} className="rounded-full transition-all" style={{ width: active === i ? 16 : 6, height: 6, background: active === i ? col : "rgba(255,255,255,0.25)", boxShadow: active === i ? `0 0 6px ${col}` : "none" }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function PlayerDetail({ player, onBack }) {
   const isGK = player.pos === "GK";
   const isDEF = ["CB", "LB", "RB"].includes(player.pos);
@@ -6009,8 +6175,7 @@ function PlayerDetail({ player, onBack }) {
       {/* Body: morph + stats */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
-          <PlayerStyleMorph player={player} />
-          <p className="text-[9px] text-white/40 leading-relaxed mt-2 italic">Illustrative movement model — the focal player ({player.num}) on the ball, team-mates in green, opponents in black. Tactical sketch of how this player tends to operate, not tracked positions.</p>
+          <PlayerPitchCarousel player={player} col={col} />
         </div>
         <div className="space-y-3">
           {detailGroups.map((group, idx) => (
