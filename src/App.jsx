@@ -1745,6 +1745,27 @@ const zoneData = {
           { player: "Minteh", num: 11, metric: "Cut-back conversion", value: "26%", target: "≥ 35%", good: false },
         ] }
       }
+    },
+    recovery_success: {
+      label: "Transition success by zone of recovery · season",
+      bands: {
+        offensive: { success: 38.0, count: 142, color: SCOUTS.green, stats: [
+          { player: "Minteh", num: 11, metric: "Regain → shot %", value: "31%", target: "≥ 25%", good: true },
+          { player: "Welbeck", num: 18, metric: "High regains / 90", value: "1.8", target: "≥ 1.5", good: true },
+        ] },
+        preOffensive: { success: 30.5, count: 388, color: SCOUTS.green, stats: [
+          { player: "Hinshelwood", num: 13, metric: "Counter-press regains / 90", value: "2.4", target: "≥ 2.0", good: true },
+          { player: "Mitoma", num: 22, metric: "Regain → box entry %", value: "22%", target: "≥ 28%", good: false },
+        ] },
+        preDefensive: { success: 21.2, count: 612, color: "#FF9D3D", stats: [
+          { player: "Baleba", num: 17, metric: "Recoveries / 90", value: "8.4", target: "≥ 7.0", good: true },
+          { player: "Wieffer", num: 27, metric: "Regain → progress %", value: "44%", target: "≥ 50%", good: false },
+        ] },
+        defensive: { success: 13.8, count: 421, color: "#FF6B35", stats: [
+          { player: "Dunk", num: 5, metric: "Recoveries / 90", value: "5.8", target: "≥ 5.0", good: true },
+          { player: "Verbruggen", num: 1, metric: "Claim → retain %", value: "71%", target: "≥ 80%", good: false },
+        ] }
+      }
     }
   },
   lastMatch: {
@@ -1792,6 +1813,23 @@ const zoneData = {
         ] },
         right: { success: 22.0, count: 9, color: "#FFD700", stats: [
           { player: "Minteh", num: 11, metric: "Crosses completed", value: "1/6", target: "—", good: false },
+        ] }
+      }
+    },
+    recovery_success: {
+      label: "Transition success by zone of recovery · last match",
+      bands: {
+        offensive: { success: 33.0, count: 4, color: SCOUTS.green, stats: [
+          { player: "Minteh", num: 11, metric: "Regain → shot", value: "1/3", target: "—", good: true },
+        ] },
+        preOffensive: { success: 29.0, count: 11, color: SCOUTS.green, stats: [
+          { player: "Hinshelwood", num: 13, metric: "Counter-press regains", value: "3", target: "≥ 2", good: true },
+        ] },
+        preDefensive: { success: 23.0, count: 16, color: "#FF9D3D", stats: [
+          { player: "Baleba", num: 17, metric: "Recoveries", value: "9", target: "≥ 7", good: true },
+        ] },
+        defensive: { success: 12.0, count: 14, color: "#FF6B35", stats: [
+          { player: "Dunk", num: 5, metric: "Recoveries", value: "6", target: "≥ 5", good: true },
         ] }
       }
     }
@@ -2412,11 +2450,12 @@ function InteractivePitch() {
   };
 
   const periodLabel = period === "season" ? "Season" : `vs ${LAST_MATCH.opp} ${LAST_MATCH.gf}–${LAST_MATCH.ga}`;
+  const successWord = mode === "loss_rate" ? "of losses" : mode === "recovery_success" ? "→ positive" : "success";
 
   return (
-    <div className="rounded-lg border p-4" style={{ borderColor: CYBER.cyan + "33", background: "linear-gradient(160deg, rgba(0,245,255,0.05), rgba(5,8,16,0.55))", boxShadow: `inset 0 0 30px ${CYBER.cyan}12` }}>
+    <div className="rounded-lg border p-4" style={{ borderColor: CYBER.cyan + "2e", background: "linear-gradient(160deg, rgba(0,245,255,0.04), rgba(5,8,16,0.5))", boxShadow: `inset 0 0 30px ${CYBER.cyan}0d` }}>
       <div className="mb-3">
-        <h3 className="text-sm font-black text-white uppercase tracking-wide" style={{ textShadow: `0 0 12px ${CYBER.cyan}88` }}>Our Pitch Zone Performance</h3>
+        <h3 className="text-sm font-black text-white uppercase tracking-wide" style={{ textShadow: `0 0 10px ${CYBER.cyan}66` }}>Our Pitch Zone Performance</h3>
         <p className="text-[10px] text-white/45 mt-0.5">Tap a zone for its stats and the players over/under target. Refreshed from StatsBomb event data after every match.</p>
       </div>
 
@@ -2426,31 +2465,32 @@ function InteractivePitch() {
           const on = period === k;
           return (
             <button key={k} onClick={() => { setPeriod(k); setSelected(null); }} className="flex-1 py-1.5 text-[10px] font-bold rounded transition-all uppercase tracking-wider" style={{
-              background: on ? CYBER.amber + "26" : "transparent",
+              background: on ? CYBER.amber + "22" : "transparent",
               color: on ? CYBER.amber : "rgba(255,255,255,0.5)",
-              border: `1px solid ${on ? CYBER.amber + "77" : "transparent"}`,
-              boxShadow: on ? `0 0 12px ${CYBER.amber}44` : "none",
-              textShadow: on ? `0 0 8px ${CYBER.amber}88` : "none"
+              border: `1px solid ${on ? CYBER.amber + "66" : "transparent"}`,
+              boxShadow: on ? `0 0 10px ${CYBER.amber}38` : "none",
+              textShadow: on ? `0 0 7px ${CYBER.amber}70` : "none"
             }}>{label}</button>
           );
         })}
       </div>
 
-      {/* Mode toggle */}
-      <div className="flex gap-1 mb-3 p-1 rounded-md bg-black/40 border border-white/5">
+      {/* Mode toggle (4 modes) */}
+      <div className="grid grid-cols-4 gap-1 mb-3 p-1 rounded-md bg-black/40 border border-white/5">
         {[
-          { id: "build_success", label: "Build-Up" },
-          { id: "loss_rate", label: "Loss Rate" },
-          { id: "foa_corridor", label: "Final 3rd" }
+          { id: "build_success", label: "Build" },
+          { id: "loss_rate", label: "Loss" },
+          { id: "foa_corridor", label: "Final 3rd" },
+          { id: "recovery_success", label: "Recovery" }
         ].map(m => {
           const on = mode === m.id;
           return (
-            <button key={m.id} onClick={() => { setMode(m.id); setSelected(null); }} className="flex-1 py-1.5 text-[10px] font-bold rounded transition-all uppercase tracking-wider" style={{
-              background: on ? CYBER.cyan + "22" : "transparent",
+            <button key={m.id} onClick={() => { setMode(m.id); setSelected(null); }} className="py-1.5 text-[9px] font-bold rounded transition-all uppercase tracking-wide" style={{
+              background: on ? CYBER.cyan + "1e" : "transparent",
               color: on ? CYBER.cyan : "rgba(255,255,255,0.5)",
-              border: `1px solid ${on ? CYBER.cyan + "77" : "transparent"}`,
-              boxShadow: on ? `0 0 12px ${CYBER.cyan}44` : "none",
-              textShadow: on ? `0 0 8px ${CYBER.cyan}88` : "none"
+              border: `1px solid ${on ? CYBER.cyan + "66" : "transparent"}`,
+              boxShadow: on ? `0 0 10px ${CYBER.cyan}38` : "none",
+              textShadow: on ? `0 0 7px ${CYBER.cyan}70` : "none"
             }}>{m.label}</button>
           );
         })}
@@ -2459,17 +2499,17 @@ function InteractivePitch() {
       {/* OUTPUT BOX — above the pitch */}
       <div className="mb-3">
         {selected ? (
-          <div className="rounded-md border p-3 space-y-2" style={{ borderColor: CYBER.cyan + "55", background: "rgba(0,245,255,0.05)", boxShadow: `0 0 18px ${CYBER.cyan}22` }}>
+          <div className="rounded-md border p-3 space-y-2" style={{ borderColor: CYBER.cyan + "48", background: "rgba(0,245,255,0.042)", boxShadow: `0 0 15px ${CYBER.cyan}1b` }}>
             <div className="flex items-center justify-between">
-              <div className="text-[9px] uppercase tracking-widest font-mono font-bold" style={{ color: CYBER.amber, textShadow: `0 0 8px ${CYBER.amber}88` }}>{periodLabel}</div>
+              <div className="text-[9px] uppercase tracking-widest font-mono font-bold" style={{ color: CYBER.amber, textShadow: `0 0 7px ${CYBER.amber}70` }}>{periodLabel}</div>
               {selected.success !== null && <div className="text-[9px] font-mono text-white/45">n={selected.count}</div>}
             </div>
             <div className="flex items-baseline justify-between gap-2">
               <div className="text-sm font-bold text-white">{selected.label}</div>
               {selected.success !== null && (
                 <div className="flex items-baseline gap-1 flex-shrink-0">
-                  <span className="text-2xl font-black" style={{ color: CYBER.cyan, textShadow: `0 0 16px ${CYBER.cyan}cc` }}>{selected.success}%</span>
-                  <span className="text-[9px] text-white/40">{mode === "loss_rate" ? "of losses" : "success"}</span>
+                  <span className="text-2xl font-black" style={{ color: CYBER.cyan, textShadow: `0 0 13px ${CYBER.cyan}a0` }}>{selected.success}%</span>
+                  <span className="text-[9px] text-white/40">{successWord}</span>
                 </div>
               )}
             </div>
@@ -2480,14 +2520,14 @@ function InteractivePitch() {
                   {selected.stats.map((s, i) => {
                     const sc = s.good ? CYBER.neonGreen : CYBER.amber;
                     return (
-                      <div key={i} className="rounded p-2 border" style={{ background: sc + "12", borderColor: sc + "44" }}>
+                      <div key={i} className="rounded p-2 border" style={{ background: sc + "10", borderColor: sc + "3a" }}>
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="font-mono font-bold text-[11px] flex-shrink-0" style={{ color: sc, textShadow: `0 0 8px ${sc}aa` }}>{s.good ? "▲" : "▼"}</span>
+                            <span className="font-mono font-bold text-[11px] flex-shrink-0" style={{ color: sc, textShadow: `0 0 7px ${sc}88` }}>{s.good ? "▲" : "▼"}</span>
                             <span className="text-[11px] font-bold text-white truncate">{s.player}</span>
                             <span className="text-[8px] font-mono text-white/30 flex-shrink-0">#{s.num}</span>
                           </div>
-                          <span className="font-mono font-black text-[13px] flex-shrink-0" style={{ color: sc, textShadow: `0 0 8px ${sc}88` }}>{s.value}</span>
+                          <span className="font-mono font-black text-[13px] flex-shrink-0" style={{ color: sc, textShadow: `0 0 7px ${sc}6e` }}>{s.value}</span>
                         </div>
                         <div className="flex items-center justify-between mt-0.5 gap-2">
                           <span className="text-[9px] text-white/55 truncate">{s.metric}</span>
@@ -2503,54 +2543,54 @@ function InteractivePitch() {
             ) : null}
           </div>
         ) : (
-          <div className="rounded-md border border-dashed p-3 text-center" style={{ borderColor: CYBER.cyan + "44", background: "rgba(0,245,255,0.03)" }}>
-            <div className="text-[10px] italic" style={{ color: CYBER.cyan, textShadow: `0 0 8px ${CYBER.cyan}66` }}>▼ Tap any zone on the pitch below to inspect it</div>
+          <div className="rounded-md border border-dashed p-3 text-center" style={{ borderColor: CYBER.cyan + "3a", background: "rgba(0,245,255,0.028)" }}>
+            <div className="text-[10px] italic" style={{ color: CYBER.cyan, textShadow: `0 0 7px ${CYBER.cyan}55` }}>▼ Tap any zone on the pitch below to inspect it</div>
           </div>
         )}
       </div>
 
       <p className="text-[10px] text-white/50 mb-2 italic">{data.label}</p>
 
-      {/* PITCH — full width, centered, neon */}
+      {/* PITCH — full width, centered, neon (medium) */}
       <div className="max-w-[320px] mx-auto">
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" style={{ borderRadius: 8, filter: `drop-shadow(0 0 18px ${CYBER.cyan}33)` }}>
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" style={{ borderRadius: 8, filter: `drop-shadow(0 0 14px ${CYBER.cyan}2e)` }}>
           <defs>
             <radialGradient id="ipField" cx="50%" cy="42%" r="75%">
-              <stop offset="0%" stopColor="#0d2433" />
+              <stop offset="0%" stopColor="#0d2230" />
               <stop offset="100%" stopColor="#060c16" />
             </radialGradient>
             <filter id="ipGlow" x="-60%" y="-60%" width="220%" height="220%">
-              <feGaussianBlur stdDeviation="2.2" result="b" />
+              <feGaussianBlur stdDeviation="1.9" result="b" />
               <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
             </filter>
           </defs>
-          <rect x={PX} y={PY} width={fieldW} height={fieldH} fill="url(#ipField)" stroke={CYBER.cyan} strokeOpacity="0.55" strokeWidth="1.5" rx="3" filter="url(#ipGlow)" />
+          <rect x={PX} y={PY} width={fieldW} height={fieldH} fill="url(#ipField)" stroke={CYBER.cyan} strokeOpacity="0.52" strokeWidth="1.4" rx="3" filter="url(#ipGlow)" />
           {[0, 1, 2, 3].map(row =>
             [0, 1, 2].map(col => {
               const zd = getZoneData(col, row);
               const fill = zd && zd.color ? zd.color : "#555";
               const hasData = zd && zd.success !== null;
-              const opacity = hasData ? 0.62 : 0.08;
+              const opacity = hasData ? 0.57 : 0.07;
               const isSelected = selected && selected.col === col && selected.row === row;
               return (
                 <g key={`${row}-${col}`} onClick={() => zd && setSelected({ ...zd, col, row })} style={{ cursor: "pointer" }}>
-                  <rect x={PX + col * colW} y={PY + row * rowH} width={colW} height={rowH} fill={fill} opacity={isSelected ? 0.9 : opacity} stroke={isSelected ? CYBER.cyan : (hasData ? fill : "transparent")} strokeOpacity={isSelected ? 1 : 0.7} strokeWidth={isSelected ? 2.2 : 0.75} />
+                  <rect x={PX + col * colW} y={PY + row * rowH} width={colW} height={rowH} fill={fill} opacity={isSelected ? 0.8 : opacity} stroke={isSelected ? CYBER.cyan : (hasData ? fill : "transparent")} strokeOpacity={isSelected ? 0.9 : 0.58} strokeWidth={isSelected ? 2 : 0.6} />
                   {hasData && (
                     <>
                       <text x={PX + col * colW + colW / 2} y={PY + row * rowH + rowH / 2 - 3} fill="#fff" fontSize="14" fontWeight="900" textAnchor="middle" filter="url(#ipGlow)">{zd.success}%</text>
-                      <text x={PX + col * colW + colW / 2} y={PY + row * rowH + rowH / 2 + 10} fill={CYBER.cyan} opacity="0.85" fontSize="8" fontWeight="bold" textAnchor="middle">n={zd.count}</text>
+                      <text x={PX + col * colW + colW / 2} y={PY + row * rowH + rowH / 2 + 10} fill={CYBER.cyan} opacity="0.78" fontSize="8" fontWeight="bold" textAnchor="middle">n={zd.count}</text>
                     </>
                   )}
                 </g>
               );
             })
           )}
-          {[1, 2].map(c => <line key={"v" + c} x1={PX + c * colW} y1={PY} x2={PX + c * colW} y2={PY + fieldH} stroke={CYBER.cyan} strokeOpacity="0.22" strokeWidth="0.6" />)}
-          {[1, 3].map(r => <line key={"h" + r} x1={PX} y1={PY + r * rowH} x2={PX + fieldW} y2={PY + r * rowH} stroke={CYBER.cyan} strokeOpacity="0.18" strokeWidth="0.6" />)}
-          <line x1={PX} y1={PY + fieldH / 2} x2={PX + fieldW} y2={PY + fieldH / 2} stroke={CYBER.cyan} strokeOpacity="0.7" strokeWidth="1.2" filter="url(#ipGlow)" />
-          <circle cx={PX + fieldW / 2} cy={PY + fieldH / 2} r={Math.min(colW, rowH) * 0.32} fill="none" stroke={CYBER.cyan} strokeOpacity="0.7" strokeWidth="1.2" filter="url(#ipGlow)" />
-          <rect x={PX + fieldW * 0.22} y={PY} width={fieldW * 0.56} height={fieldH * 0.12} fill="none" stroke={CYBER.cyan} strokeOpacity="0.45" strokeWidth="1" />
-          <rect x={PX + fieldW * 0.22} y={PY + fieldH * 0.88} width={fieldW * 0.56} height={fieldH * 0.12} fill="none" stroke={CYBER.cyan} strokeOpacity="0.45" strokeWidth="1" />
+          {[1, 2].map(c => <line key={"v" + c} x1={PX + c * colW} y1={PY} x2={PX + c * colW} y2={PY + fieldH} stroke={CYBER.cyan} strokeOpacity="0.2" strokeWidth="0.6" />)}
+          {[1, 3].map(r => <line key={"h" + r} x1={PX} y1={PY + r * rowH} x2={PX + fieldW} y2={PY + r * rowH} stroke={CYBER.cyan} strokeOpacity="0.16" strokeWidth="0.6" />)}
+          <line x1={PX} y1={PY + fieldH / 2} x2={PX + fieldW} y2={PY + fieldH / 2} stroke={CYBER.cyan} strokeOpacity="0.66" strokeWidth="1.15" filter="url(#ipGlow)" />
+          <circle cx={PX + fieldW / 2} cy={PY + fieldH / 2} r={Math.min(colW, rowH) * 0.32} fill="none" stroke={CYBER.cyan} strokeOpacity="0.66" strokeWidth="1.15" filter="url(#ipGlow)" />
+          <rect x={PX + fieldW * 0.22} y={PY} width={fieldW * 0.56} height={fieldH * 0.12} fill="none" stroke={CYBER.cyan} strokeOpacity="0.42" strokeWidth="0.95" />
+          <rect x={PX + fieldW * 0.22} y={PY + fieldH * 0.88} width={fieldW * 0.56} height={fieldH * 0.12} fill="none" stroke={CYBER.cyan} strokeOpacity="0.42" strokeWidth="0.95" />
           <text x={W / 2} y={11} fill={CYBER.cyan} fontSize="9" fontWeight="bold" textAnchor="middle" filter="url(#ipGlow)">▲ ATTACK</text>
         </svg>
       </div>
@@ -7375,6 +7415,72 @@ function DefensiveXGAMirror() {
   );
 }
 
+// ============ TRANSITION ANALYTICS (Visuals tab) ============
+// Transition Outcome Rate — positive vs non-positive (Turner & Sayers; Maneiro).
+const transitionOutcome = {
+  positive: 41,
+  nonPositive: 59,
+  positiveBreakdown: [
+    { label: "Shot / on-target", pct: 23 },
+    { label: "Set-piece won (att. third)", pct: 11 },
+    { label: "Retained in box", pct: 7 },
+  ],
+  negativeBreakdown: [
+    { label: "Possession lost", pct: 38 },
+    { label: "Cleared / blocked", pct: 15 },
+    { label: "Offside", pct: 6 },
+  ],
+};
+
+function TransitionOutcomeRate() {
+  const o = transitionOutcome;
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+      <div className="text-sm font-bold text-white">Transition Outcome Rate</div>
+      <div className="text-[11px] text-white/45 mb-3 leading-relaxed">Positive = the move ends in a shot, penalty, free-kick, corner or throw-in won in the attacking third. Non-positive = lost, cleared or offside (Turner &amp; Sayers, 2017).</div>
+      <div className="flex items-baseline gap-2 mb-2">
+        <span className="font-mono font-black text-3xl" style={{ color: SCOUTS.green }}>{o.positive}%</span>
+        <span className="text-[11px] text-white/50">of our transitions are positive</span>
+      </div>
+      <div className="flex h-2.5 rounded-full overflow-hidden mb-1">
+        <div style={{ width: `${o.positive}%`, background: SCOUTS.green }} />
+        <div style={{ width: `${o.nonPositive}%`, background: "rgba(255,255,255,0.12)" }} />
+      </div>
+      <div className="flex justify-between text-[8px] font-mono text-white/35 mb-3">
+        <span style={{ color: SCOUTS.green }}>positive {o.positive}%</span>
+        <span>non-positive {o.nonPositive}%</span>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <div className="text-[8px] uppercase tracking-widest font-mono mb-1.5" style={{ color: SCOUTS.green }}>Positive</div>
+          <div className="space-y-1">
+            {o.positiveBreakdown.map((b, i) => (
+              <div key={i} className="flex items-center justify-between text-[10px]">
+                <span className="text-white/60 truncate pr-1">{b.label}</span>
+                <span className="font-mono text-white/80 flex-shrink-0">{b.pct}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="text-[8px] uppercase tracking-widest font-mono mb-1.5 text-white/40">Non-positive</div>
+          <div className="space-y-1">
+            {o.negativeBreakdown.map((b, i) => (
+              <div key={i} className="flex items-center justify-between text-[10px]">
+                <span className="text-white/60 truncate pr-1">{b.label}</span>
+                <span className="font-mono text-white/80 flex-shrink-0">{b.pct}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="mt-3 pt-3 border-t border-white/10 text-[11px] text-white/55 leading-relaxed italic">
+        At 41% we sit on the elite benchmark Maneiro recorded at Euro 2016 (41.4%). The lever is the non-positive 38% lost in possession — quicker, more direct first actions after the regain (see the Coded tab's attacking-transition block).
+      </div>
+    </div>
+  );
+}
+
 function VisualsTab() {
   const [sub, setSub] = useState("visuals");
   return (
@@ -7457,6 +7563,8 @@ function VisualsTab() {
             <SetPieceDeepDive />
 
             <DefensiveXGAMirror />
+
+            <TransitionOutcomeRate />
           </div>
       )}
 
