@@ -1688,30 +1688,112 @@ const insights = [
 
 // ============ INTERACTIVE PITCH DATA (Brighton-specific) ============
 const zoneData = {
-  build_success: {
-    label: "Build-up success by starting zone",
-    bands: {
-      offensive:    { success: 22.4, count: 198, color: "#FF9D3D" },
-      preOffensive: { success: 37.4, count: 842, color: SCOUTS.green },
-      preDefensive: { success: 24.7, count: 1182, color: "#FF9D3D" },
-      defensive:    { success: 21.3, count: 487, color: "#FF9D3D" }
+  season: {
+    build_success: {
+      label: "Build-up success by starting zone · season",
+      bands: {
+        offensive: { success: 22.4, count: 198, color: "#FF9D3D", stats: [
+          { player: "Rutter", num: 10, metric: "Chances created from zone / 90", value: "2.6", target: "≥ 2.5", good: true },
+          { player: "Welbeck", num: 18, metric: "Hold-up success", value: "61%", target: "≥ 70%", good: false },
+        ] },
+        preOffensive: { success: 37.4, count: 842, color: SCOUTS.green, stats: [
+          { player: "Groß", num: 30, metric: "Chances created / 90", value: "2.6", target: "≥ 2.4", good: true },
+          { player: "Hinshelwood", num: 13, metric: "Progressive passes / 90", value: "2.5", target: "≥ 3.0", good: false },
+        ] },
+        preDefensive: { success: 24.7, count: 1182, color: "#FF9D3D", stats: [
+          { player: "Baleba", num: 17, metric: "Progressive passes / 90", value: "5.3", target: "≥ 5.0", good: true },
+          { player: "Wieffer", num: 27, metric: "Pass accuracy under press", value: "85%", target: "≥ 88%", good: false },
+        ] },
+        defensive: { success: 21.3, count: 487, color: "#FF9D3D", stats: [
+          { player: "Dunk", num: 5, metric: "Pass accuracy", value: "89%", target: "≥ 87%", good: true },
+          { player: "van Hecke", num: 6, metric: "Progressive carries / 90", value: "2.2", target: "≥ 2.5", good: false },
+          { player: "Baleba", num: 17, metric: "Turnovers in build-up / 90", value: "2.8", target: "≤ 2.0", good: false },
+        ] }
+      }
+    },
+    loss_rate: {
+      label: "Possession loss rate by zone of loss · season",
+      bands: {
+        offensive: { success: null, count: null, color: "#555", note: "Final third — switch to the Final 3rd Corridor view for this band." },
+        preOffensive: { success: 38.6, count: 1402, color: SCOUTS.green, stats: [
+          { player: "Mitoma", num: 22, metric: "Dribble success", value: "61%", target: "≥ 55%", good: true },
+          { player: "Minteh", num: 11, metric: "Final-3rd losses / 90", value: "4.2", target: "≤ 3.0", good: false },
+        ] },
+        preDefensive: { success: 15.2, count: 728, color: "#FF6B35", stats: [
+          { player: "Wieffer", num: 27, metric: "Losses under press / 90", value: "1.8", target: "≤ 2.0", good: true },
+          { player: "Baleba", num: 17, metric: "Turnovers / 90", value: "2.8", target: "≤ 2.0", good: false },
+        ] },
+        defensive: { success: 8.1, count: 142, color: "#FF3D5A", stats: [
+          { player: "Dunk", num: 5, metric: "Recoveries / 90", value: "5.8", target: "≥ 5.0", good: true },
+          { player: "Verbruggen", num: 1, metric: "Distribution accuracy", value: "78%", target: "≥ 80%", good: false },
+        ] }
+      }
+    },
+    foa_corridor: {
+      label: "Final third success by corridor · season",
+      corridors: {
+        left: { success: 21.4, count: 412, color: "#FFD700", stats: [
+          { player: "Mitoma", num: 22, metric: "Successful crosses / 90", value: "1.8", target: "≥ 1.5", good: true },
+          { player: "Mitoma", num: 22, metric: "Cut-back conversion", value: "28%", target: "≥ 35%", good: false },
+        ] },
+        central: { success: 31.2, count: 224, color: SCOUTS.green, stats: [
+          { player: "Rutter", num: 10, metric: "Cut-backs received / 90", value: "2.3", target: "≥ 2.0", good: true },
+          { player: "Welbeck", num: 18, metric: "Box touches / 90", value: "4.6", target: "≥ 6.0", good: false },
+        ] },
+        right: { success: 24.6, count: 396, color: "#FFD700", stats: [
+          { player: "Minteh", num: 11, metric: "Crosses completed / 90", value: "1.4", target: "≥ 1.5", good: false },
+          { player: "Minteh", num: 11, metric: "Cut-back conversion", value: "26%", target: "≥ 35%", good: false },
+        ] }
+      }
     }
   },
-  loss_rate: {
-    label: "Possession loss rate by zone of loss",
-    bands: {
-      offensive:    { success: null, count: null, color: "#555", note: "Final third — see FOA view" },
-      preOffensive: { success: 38.6, count: 1402, color: SCOUTS.green },
-      preDefensive: { success: 15.2, count: 728, color: "#FF6B35" },
-      defensive:    { success: 8.1, count: 142, color: "#FF3D5A" }
-    }
-  },
-  foa_corridor: {
-    label: "Final third success by corridor",
-    corridors: {
-      left:    { success: 21.4, count: 412, color: "#FFD700" },
-      central: { success: 31.2, count: 224, color: SCOUTS.green },
-      right:   { success: 24.6, count: 396, color: "#FFD700" }
+  lastMatch: {
+    build_success: {
+      label: "Build-up success by starting zone · last match",
+      bands: {
+        offensive: { success: 25.0, count: 12, color: "#FF9D3D", stats: [
+          { player: "Welbeck", num: 18, metric: "Link-ups completed", value: "4/7", target: "—", good: true },
+        ] },
+        preOffensive: { success: 41.2, count: 38, color: SCOUTS.green, stats: [
+          { player: "Groß", num: 30, metric: "Chances created", value: "3", target: "≥ 2", good: true },
+        ] },
+        preDefensive: { success: 28.4, count: 44, color: "#FF9D3D", stats: [
+          { player: "Baleba", num: 17, metric: "Progressive passes", value: "6", target: "≥ 5", good: true },
+        ] },
+        defensive: { success: 22.6, count: 31, color: "#FF9D3D", stats: [
+          { player: "Dunk", num: 5, metric: "Pass accuracy", value: "92%", target: "≥ 87%", good: true },
+          { player: "Baleba", num: 17, metric: "Turnovers in build-up", value: "3", target: "≤ 2", good: false },
+        ] }
+      }
+    },
+    loss_rate: {
+      label: "Possession loss rate by zone of loss · last match",
+      bands: {
+        offensive: { success: null, count: null, color: "#555", note: "Final third — switch to the Final 3rd Corridor view for this band." },
+        preOffensive: { success: 42.0, count: 21, color: SCOUTS.green, stats: [
+          { player: "Minteh", num: 11, metric: "Final-3rd losses", value: "5", target: "≤ 3", good: false },
+        ] },
+        preDefensive: { success: 13.0, count: 9, color: "#FF6B35", stats: [
+          { player: "Wieffer", num: 27, metric: "Losses under press", value: "1", target: "≤ 2", good: true },
+        ] },
+        defensive: { success: 6.0, count: 3, color: "#FF3D5A", stats: [
+          { player: "Verbruggen", num: 1, metric: "Distribution accuracy", value: "74%", target: "≥ 80%", good: false },
+        ] }
+      }
+    },
+    foa_corridor: {
+      label: "Final third success by corridor · last match",
+      corridors: {
+        left: { success: 26.0, count: 11, color: "#FFD700", stats: [
+          { player: "Mitoma", num: 22, metric: "Cut-backs (on target)", value: "2 (1)", target: "—", good: true },
+        ] },
+        central: { success: 33.0, count: 7, color: SCOUTS.green, stats: [
+          { player: "Welbeck", num: 18, metric: "Box touches", value: "3", target: "≥ 4", good: false },
+        ] },
+        right: { success: 22.0, count: 9, color: "#FFD700", stats: [
+          { player: "Minteh", num: 11, metric: "Crosses completed", value: "1/6", target: "—", good: false },
+        ] }
+      }
     }
   }
 };
@@ -2307,6 +2389,7 @@ function MorphingFormationPitch() {
 // ============ INTERACTIVE PITCH ============
 function InteractivePitch() {
   const [mode, setMode] = useState("build_success");
+  const [period, setPeriod] = useState("season");
   const [selected, setSelected] = useState(null);
 
   const W = 280, H = 360, PX = 16, PY = 16;
@@ -2314,7 +2397,7 @@ function InteractivePitch() {
   const colW = fieldW / 3;
   const rowH = fieldH / 4;
 
-  const data = zoneData[mode];
+  const data = zoneData[period][mode];
 
   const getZoneData = (col, row) => {
     if (mode === "foa_corridor") {
@@ -2328,88 +2411,148 @@ function InteractivePitch() {
     return { ...band, label: bandLabels[row] };
   };
 
+  const periodLabel = period === "season" ? "Season" : `vs ${LAST_MATCH.opp} ${LAST_MATCH.gf}–${LAST_MATCH.ga}`;
+
   return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
+    <div className="rounded-lg border p-4" style={{ borderColor: CYBER.cyan + "33", background: "linear-gradient(160deg, rgba(0,245,255,0.05), rgba(5,8,16,0.55))", boxShadow: `inset 0 0 30px ${CYBER.cyan}12` }}>
       <div className="mb-3">
-        <h3 className="text-sm font-bold text-white">Our Pitch Zone Performance</h3>
-        <p className="text-[10px] text-white/40 mt-0.5">Tap a zone to inspect the data from our recent matches.</p>
+        <h3 className="text-sm font-black text-white uppercase tracking-wide" style={{ textShadow: `0 0 12px ${CYBER.cyan}88` }}>Our Pitch Zone Performance</h3>
+        <p className="text-[10px] text-white/45 mt-0.5">Tap a zone for its stats and the players over/under target. Refreshed from StatsBomb event data after every match.</p>
       </div>
 
-      <div className="flex gap-1 mb-4 p-1 rounded-md bg-black/30">
+      {/* Season / Last Match — two pitches' worth of data */}
+      <div className="flex gap-1 mb-2 p-1 rounded-md bg-black/40 border border-white/5">
+        {[["season", "Season"], ["lastMatch", `Last Match · ${LAST_MATCH.opp}`]].map(([k, label]) => {
+          const on = period === k;
+          return (
+            <button key={k} onClick={() => { setPeriod(k); setSelected(null); }} className="flex-1 py-1.5 text-[10px] font-bold rounded transition-all uppercase tracking-wider" style={{
+              background: on ? CYBER.amber + "26" : "transparent",
+              color: on ? CYBER.amber : "rgba(255,255,255,0.5)",
+              border: `1px solid ${on ? CYBER.amber + "77" : "transparent"}`,
+              boxShadow: on ? `0 0 12px ${CYBER.amber}44` : "none",
+              textShadow: on ? `0 0 8px ${CYBER.amber}88` : "none"
+            }}>{label}</button>
+          );
+        })}
+      </div>
+
+      {/* Mode toggle */}
+      <div className="flex gap-1 mb-3 p-1 rounded-md bg-black/40 border border-white/5">
         {[
-          { id: "build_success", label: "Build-Up Success" },
+          { id: "build_success", label: "Build-Up" },
           { id: "loss_rate", label: "Loss Rate" },
-          { id: "foa_corridor", label: "Final 3rd Corridor" }
-        ].map(m => (
-          <button key={m.id} onClick={() => { setMode(m.id); setSelected(null); }} className="flex-1 py-1.5 text-[10px] font-bold rounded transition-all" style={{
-            background: mode === m.id ? BHA.blueLight + "22" : "transparent",
-            color: mode === m.id ? BHA.blueLight : "rgba(255,255,255,0.5)",
-            border: `1px solid ${mode === m.id ? BHA.blueLight + "55" : "transparent"}`
-          }}>
-            {m.label}
-          </button>
-        ))}
+          { id: "foa_corridor", label: "Final 3rd" }
+        ].map(m => {
+          const on = mode === m.id;
+          return (
+            <button key={m.id} onClick={() => { setMode(m.id); setSelected(null); }} className="flex-1 py-1.5 text-[10px] font-bold rounded transition-all uppercase tracking-wider" style={{
+              background: on ? CYBER.cyan + "22" : "transparent",
+              color: on ? CYBER.cyan : "rgba(255,255,255,0.5)",
+              border: `1px solid ${on ? CYBER.cyan + "77" : "transparent"}`,
+              boxShadow: on ? `0 0 12px ${CYBER.cyan}44` : "none",
+              textShadow: on ? `0 0 8px ${CYBER.cyan}88` : "none"
+            }}>{m.label}</button>
+          );
+        })}
       </div>
 
-      <p className="text-[10px] text-white/50 mb-3 italic">{data.label}</p>
-
-      <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 items-start">
-        <div className="sm:col-span-3">
-          <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" style={{ borderRadius: 6 }}>
-            <rect x={PX} y={PY} width={fieldW} height={fieldH} fill="#0F3520" stroke="#fff" strokeWidth="1.5" rx="2" />
-            {[0, 1, 2, 3].map(row =>
-              [0, 1, 2].map(col => {
-                const zd = getZoneData(col, row);
-                const fill = zd && zd.color ? zd.color : "#555";
-                const opacity = zd && zd.success !== null ? 0.5 : 0.1;
-                const isSelected = selected && selected.col === col && selected.row === row;
-                return (
-                  <g key={`${row}-${col}`} onClick={() => setSelected({ ...zd, col, row })} style={{ cursor: "pointer" }}>
-                    <rect x={PX + col * colW} y={PY + row * rowH} width={colW} height={rowH} fill={fill} opacity={isSelected ? 0.8 : opacity} stroke={isSelected ? BHA.blueLight : "transparent"} strokeWidth="2" />
-                    {zd && zd.success !== null && (
-                      <>
-                        <text x={PX + col * colW + colW / 2} y={PY + row * rowH + rowH / 2 - 4} fill="#fff" fontSize="13" fontWeight="900" textAnchor="middle">{zd.success}%</text>
-                        <text x={PX + col * colW + colW / 2} y={PY + row * rowH + rowH / 2 + 9} fill="#fff" opacity="0.7" fontSize="8" textAnchor="middle">n={zd.count}</text>
-                      </>
-                    )}
-                  </g>
-                );
-              })
-            )}
-            <line x1={PX} y1={PY + fieldH / 2} x2={PX + fieldW} y2={PY + fieldH / 2} stroke="#fff" strokeWidth="1.2" />
-            <circle cx={PX + fieldW / 2} cy={PY + fieldH / 2} r={Math.min(colW, rowH) * 0.32} fill="none" stroke="#fff" strokeWidth="1.2" />
-            <rect x={PX + fieldW * 0.22} y={PY} width={fieldW * 0.56} height={fieldH * 0.12} fill="none" stroke="#fff" strokeWidth="1" />
-            <rect x={PX + fieldW * 0.22} y={PY + fieldH * 0.88} width={fieldW * 0.56} height={fieldH * 0.12} fill="none" stroke="#fff" strokeWidth="1" />
-            <text x={W / 2} y={10} fill={BHA.blueLight} fontSize="9" fontWeight="bold" textAnchor="middle">▲ ATTACK</text>
-          </svg>
-        </div>
-
-        <div className="sm:col-span-2 space-y-2">
-          {selected ? (
-            <div className="rounded-md border border-white/15 bg-black/40 p-3 space-y-2">
-              <div className="text-[9px] uppercase tracking-widest text-white/40 font-mono">Selected</div>
-              <div className="text-sm font-bold text-white" style={{ fontFamily: "'Georgia', serif" }}>{selected.label}</div>
-              {selected.success !== null ? (
-                <>
-                  <div className="flex items-baseline gap-1 mt-2">
-                    <span className="text-2xl font-black" style={{ color: BHA.blueLight }}>{selected.success}%</span>
-                    <span className="text-[10px] text-white/40">success rate</span>
-                  </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-lg font-bold text-white">{selected.count}</span>
-                    <span className="text-[10px] text-white/40">total moves (season)</span>
-                  </div>
-                </>
-              ) : (
-                <div className="text-[10px] text-white/50 italic">{selected.note || "No data in this view."}</div>
+      {/* OUTPUT BOX — above the pitch */}
+      <div className="mb-3">
+        {selected ? (
+          <div className="rounded-md border p-3 space-y-2" style={{ borderColor: CYBER.cyan + "55", background: "rgba(0,245,255,0.05)", boxShadow: `0 0 18px ${CYBER.cyan}22` }}>
+            <div className="flex items-center justify-between">
+              <div className="text-[9px] uppercase tracking-widest font-mono font-bold" style={{ color: CYBER.amber, textShadow: `0 0 8px ${CYBER.amber}88` }}>{periodLabel}</div>
+              {selected.success !== null && <div className="text-[9px] font-mono text-white/45">n={selected.count}</div>}
+            </div>
+            <div className="flex items-baseline justify-between gap-2">
+              <div className="text-sm font-bold text-white">{selected.label}</div>
+              {selected.success !== null && (
+                <div className="flex items-baseline gap-1 flex-shrink-0">
+                  <span className="text-2xl font-black" style={{ color: CYBER.cyan, textShadow: `0 0 16px ${CYBER.cyan}cc` }}>{selected.success}%</span>
+                  <span className="text-[9px] text-white/40">{mode === "loss_rate" ? "of losses" : "success"}</span>
+                </div>
               )}
             </div>
-          ) : (
-            <div className="rounded-md border border-dashed border-white/15 bg-black/20 p-4 text-center">
-              <div className="text-[10px] text-white/40 italic">Tap any zone on the pitch</div>
-            </div>
+            {selected.stats && selected.stats.length > 0 ? (
+              <div className="space-y-1.5 pt-0.5">
+                <div className="text-[8px] uppercase tracking-widest text-white/35 font-mono">Key player stats vs target</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {selected.stats.map((s, i) => {
+                    const sc = s.good ? CYBER.neonGreen : CYBER.amber;
+                    return (
+                      <div key={i} className="rounded p-2 border" style={{ background: sc + "12", borderColor: sc + "44" }}>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="font-mono font-bold text-[11px] flex-shrink-0" style={{ color: sc, textShadow: `0 0 8px ${sc}aa` }}>{s.good ? "▲" : "▼"}</span>
+                            <span className="text-[11px] font-bold text-white truncate">{s.player}</span>
+                            <span className="text-[8px] font-mono text-white/30 flex-shrink-0">#{s.num}</span>
+                          </div>
+                          <span className="font-mono font-black text-[13px] flex-shrink-0" style={{ color: sc, textShadow: `0 0 8px ${sc}88` }}>{s.value}</span>
+                        </div>
+                        <div className="flex items-center justify-between mt-0.5 gap-2">
+                          <span className="text-[9px] text-white/55 truncate">{s.metric}</span>
+                          <span className="text-[8px] font-mono text-white/35 flex-shrink-0">target {s.target}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : selected.success === null ? (
+              <div className="text-[10px] text-white/50 italic">{selected.note || "No data in this view."}</div>
+            ) : null}
+          </div>
+        ) : (
+          <div className="rounded-md border border-dashed p-3 text-center" style={{ borderColor: CYBER.cyan + "44", background: "rgba(0,245,255,0.03)" }}>
+            <div className="text-[10px] italic" style={{ color: CYBER.cyan, textShadow: `0 0 8px ${CYBER.cyan}66` }}>▼ Tap any zone on the pitch below to inspect it</div>
+          </div>
+        )}
+      </div>
+
+      <p className="text-[10px] text-white/50 mb-2 italic">{data.label}</p>
+
+      {/* PITCH — full width, centered, neon */}
+      <div className="max-w-[320px] mx-auto">
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" style={{ borderRadius: 8, filter: `drop-shadow(0 0 18px ${CYBER.cyan}33)` }}>
+          <defs>
+            <radialGradient id="ipField" cx="50%" cy="42%" r="75%">
+              <stop offset="0%" stopColor="#0d2433" />
+              <stop offset="100%" stopColor="#060c16" />
+            </radialGradient>
+            <filter id="ipGlow" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="2.2" result="b" />
+              <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+          </defs>
+          <rect x={PX} y={PY} width={fieldW} height={fieldH} fill="url(#ipField)" stroke={CYBER.cyan} strokeOpacity="0.55" strokeWidth="1.5" rx="3" filter="url(#ipGlow)" />
+          {[0, 1, 2, 3].map(row =>
+            [0, 1, 2].map(col => {
+              const zd = getZoneData(col, row);
+              const fill = zd && zd.color ? zd.color : "#555";
+              const hasData = zd && zd.success !== null;
+              const opacity = hasData ? 0.62 : 0.08;
+              const isSelected = selected && selected.col === col && selected.row === row;
+              return (
+                <g key={`${row}-${col}`} onClick={() => zd && setSelected({ ...zd, col, row })} style={{ cursor: "pointer" }}>
+                  <rect x={PX + col * colW} y={PY + row * rowH} width={colW} height={rowH} fill={fill} opacity={isSelected ? 0.9 : opacity} stroke={isSelected ? CYBER.cyan : (hasData ? fill : "transparent")} strokeOpacity={isSelected ? 1 : 0.7} strokeWidth={isSelected ? 2.2 : 0.75} />
+                  {hasData && (
+                    <>
+                      <text x={PX + col * colW + colW / 2} y={PY + row * rowH + rowH / 2 - 3} fill="#fff" fontSize="14" fontWeight="900" textAnchor="middle" filter="url(#ipGlow)">{zd.success}%</text>
+                      <text x={PX + col * colW + colW / 2} y={PY + row * rowH + rowH / 2 + 10} fill={CYBER.cyan} opacity="0.85" fontSize="8" fontWeight="bold" textAnchor="middle">n={zd.count}</text>
+                    </>
+                  )}
+                </g>
+              );
+            })
           )}
-        </div>
+          {[1, 2].map(c => <line key={"v" + c} x1={PX + c * colW} y1={PY} x2={PX + c * colW} y2={PY + fieldH} stroke={CYBER.cyan} strokeOpacity="0.22" strokeWidth="0.6" />)}
+          {[1, 3].map(r => <line key={"h" + r} x1={PX} y1={PY + r * rowH} x2={PX + fieldW} y2={PY + r * rowH} stroke={CYBER.cyan} strokeOpacity="0.18" strokeWidth="0.6" />)}
+          <line x1={PX} y1={PY + fieldH / 2} x2={PX + fieldW} y2={PY + fieldH / 2} stroke={CYBER.cyan} strokeOpacity="0.7" strokeWidth="1.2" filter="url(#ipGlow)" />
+          <circle cx={PX + fieldW / 2} cy={PY + fieldH / 2} r={Math.min(colW, rowH) * 0.32} fill="none" stroke={CYBER.cyan} strokeOpacity="0.7" strokeWidth="1.2" filter="url(#ipGlow)" />
+          <rect x={PX + fieldW * 0.22} y={PY} width={fieldW * 0.56} height={fieldH * 0.12} fill="none" stroke={CYBER.cyan} strokeOpacity="0.45" strokeWidth="1" />
+          <rect x={PX + fieldW * 0.22} y={PY + fieldH * 0.88} width={fieldW * 0.56} height={fieldH * 0.12} fill="none" stroke={CYBER.cyan} strokeOpacity="0.45" strokeWidth="1" />
+          <text x={W / 2} y={11} fill={CYBER.cyan} fontSize="9" fontWeight="bold" textAnchor="middle" filter="url(#ipGlow)">▲ ATTACK</text>
+        </svg>
       </div>
     </div>
   );
@@ -7319,15 +7462,15 @@ function VisualsTab() {
 
       {sub === "pitch" && (
         <>
-          <InteractivePitch />
-          <div className="mt-6 p-4 rounded-lg border border-white/10 bg-white/[0.02]">
-            <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2 font-mono">Reading the pitch</div>
+          <div className="mb-4 p-4 rounded-lg border" style={{ borderColor: CYBER.cyan + "2a", background: "rgba(0,245,255,0.03)", boxShadow: `0 0 16px ${CYBER.cyan}10` }}>
+            <div className="text-[10px] uppercase tracking-widest mb-2 font-mono font-bold" style={{ color: CYBER.cyan, textShadow: `0 0 8px ${CYBER.cyan}66` }}>Reading the pitch</div>
             <ul className="space-y-2 text-xs text-white/65 leading-relaxed">
               <li><span style={{ color: SCOUTS.green }}>●</span> <strong>Pre-offensive area (us at 37.4%)</strong> is our elite zone — well above the PL average of 34.8%. This is where Mitoma and Minteh isolate.</li>
               <li><span style={{ color: "#FF3D5A" }}>●</span> <strong>Defensive area (us at 8.1% when moves end here)</strong> — the recovery from the Man Utd defeat sits in this number. Two of three conceded goals originated here.</li>
               <li><span style={{ color: SCOUTS.green }}>●</span> <strong>Central corridor (us at 31.2%)</strong> is below the PL average of 34.3% — too many of our entries are wide, too few are central.</li>
             </ul>
           </div>
+          <InteractivePitch />
         </>
       )}
     </Section>
@@ -7488,8 +7631,8 @@ export default function App() {
             { id: "team", label: "Team" },
             { id: "tactics", label: "Tactics" },
             { id: "training", label: "Training" },
-            { id: "kpis", label: "KPIs" },
             { id: "visuals", label: "Visuals" },
+            { id: "kpis", label: "KPIs" },
             { id: "speed", label: "Speed" },
             { id: "ssgs", label: "SSGs" },
             { id: "insights", label: "Insights" },
