@@ -2416,35 +2416,487 @@ function InteractivePitch() {
 }
 
 // ============ TRAINING TAB WRAPPER (sub-tabs: Weekly Plan / Zone Focus) ============
+// ============ CODED — session review (what's been trained + how it's transferring) ============
+// Each aim maps to a Game Model phase (gmId) so the review links to the live phase metrics.
+const SESSION_AIMS = [
+  {
+    id: "buildup", label: "Build-up under pressure", phase: "Build-Up", gmId: "buildup", color: BHA.blueLight,
+    sessions: 5, ssgs: ["SSG-01", "SSG-05"], lastRun: "2 days ago",
+    pool: [1, 5, 6, 21, 34, 29, 17, 27, 30],
+    trainingTrend: [58, 63, 68, 72, 74],
+    trainingNote: "Cleaner exits under press — players are recognising the free man faster and turning out of pressure rather than into it.",
+    match: [
+      { name: "Build-out success", us: "21.3%", target: "≥ 22%", league: "17.5%", met: false, trend: [18.6, 19.5, 20.4, 20.9, 21.3] },
+      { name: "Support around the ball (coverage)", us: "2.4", target: "≥ 2.5", league: "2.1", met: false, trend: [2.0, 2.1, 2.2, 2.3, 2.4] },
+    ],
+    matchNote: "Transferring well — build-out is above league and nearly at target. The last 0.1 of support around the carrier is the gap left to close.",
+    players: [
+      { num: 5, name: "Dunk", status: "responding", note: "Line-breaks up; carrying to provoke the press then playing through it." },
+      { num: 17, name: "Baleba", status: "developing", note: "Turnovers reducing but still above target — scanning earlier." },
+      { num: 29, name: "De Cuyper", status: "responding", note: "Inverting cleanly to form the midfield three." },
+    ],
+  },
+  {
+    id: "progression", label: "Progression through midfield", phase: "Progression", gmId: "progression", color: CYBER.cyan,
+    sessions: 5, ssgs: ["SSG-01", "SSG-06"], lastRun: "4 days ago",
+    pool: [17, 27, 13, 30, 26, 33, 10, 29, 34],
+    trainingTrend: [60, 64, 67, 70, 72],
+    trainingNote: "Players are finding the man between the lines more often; less reliance on Baleba to carry the ball through.",
+    match: [
+      { name: "Possessions reaching final third", us: "36%", target: "≥ 35%", league: "31%", met: true, trend: [33, 34, 35, 35, 36] },
+      { name: "Progressive passes / 90 (team)", us: "52", target: "≥ 55", league: "48", met: false, trend: [46, 48, 50, 51, 52] },
+    ],
+    matchNote: "Strong — we reach the final third more than most. Progressive-pass volume is climbing toward target as the midfield rotations bed in.",
+    players: [
+      { num: 17, name: "Baleba", status: "responding", note: "Distributing forward under less pressure now others receive between lines." },
+      { num: 27, name: "Wieffer", status: "developing", note: "Progressive range improving; breaking the first line earlier." },
+      { num: 13, name: "Hinshelwood", status: "responding", note: "Receiving on the half-turn between the lines consistently." },
+    ],
+  },
+  {
+    id: "finalthird", label: "Final-third entries", phase: "Final Third", gmId: "finalthird", color: CYBER.amber,
+    sessions: 6, ssgs: ["SSG-03", "SSG-04"], lastRun: "1 day ago",
+    pool: [18, 22, 11, 10, 13, 9, 19, 33, 24],
+    trainingTrend: [48, 52, 55, 58, 61],
+    trainingNote: "Our most-trained phase and the slowest to click — central occupation is much better, finishing is still streaky.",
+    match: [
+      { name: "Central box entries", us: "31.2%", target: "≥ 34%", league: "34.3%", met: false, trend: [29.0, 29.8, 30.4, 30.9, 31.2] },
+      { name: "Cut-back conversion", us: "28%", target: "≥ 35%", league: "33%", met: false, trend: [24, 25, 26, 27, 28] },
+    ],
+    matchNote: "Closing faster in training than on matchday — central entries are creeping up, but cut-back quality is still the bottleneck in games.",
+    players: [
+      { num: 22, name: "Mitoma", status: "developing", note: "Cut-back selection improving; picking the pull-back over the near post more often." },
+      { num: 18, name: "Welbeck", status: "responding", note: "Box movement and near/far-post timing sharper." },
+      { num: 11, name: "Minteh", status: "developing", note: "Decision speed in the final third still the work-on." },
+    ],
+  },
+  {
+    id: "counterpress", label: "Counter-press triggers", phase: "Counter-Press", gmId: "counterpress", color: CYBER.magenta,
+    sessions: 4, ssgs: ["SSG-02", "SSG-07"], lastRun: "5 days ago",
+    pool: [18, 22, 11, 13, 10, 17, 27, 26],
+    trainingTrend: [62, 65, 68, 70, 71],
+    trainingNote: "Swarm reactions are quicker — the first two players to the ball are arriving together rather than in sequence.",
+    match: [
+      { name: "Counter-press recovery ≤ 5s", us: "28%", target: "≥ 30%", league: "24%", met: false, trend: [24, 25, 26, 27, 28] },
+      { name: "Time to pressure", us: "2.6s", target: "≤ 2.5s", league: "2.9s", met: false, trend: [2.9, 2.8, 2.7, 2.65, 2.6] },
+    ],
+    matchNote: "Above league on both, just under our own targets — the trend is right; keep nudging engagement time down.",
+    players: [
+      { num: 13, name: "Hinshelwood", status: "responding", note: "Reading the trigger early and leading the press." },
+      { num: 27, name: "Wieffer", status: "developing", note: "Intensity up; needs to hold the screen a beat longer." },
+      { num: 17, name: "Baleba", status: "responding", note: "Covering the rest-defence space behind the swarm well." },
+    ],
+  },
+  {
+    id: "block", label: "Defensive block shape", phase: "Defensive Block", gmId: "block", color: "#FF3D5A",
+    sessions: 3, ssgs: ["SSG-07"], lastRun: "6 days ago",
+    pool: [5, 6, 21, 4, 34, 24, 29, 17, 27, 18],
+    trainingTrend: [76, 78, 80, 81, 82],
+    trainingNote: "Strong and low-maintenance — compact, connected lines, forcing play wide consistently.",
+    match: [
+      { name: "Central protection index", us: "77", target: "≥ 75", league: "71", met: true, trend: [74, 75, 76, 76, 77] },
+      { name: "Time to pressure (in block)", us: "2.6s", target: "≤ 2.5s", league: "2.9s", met: false, trend: [2.9, 2.8, 2.75, 2.7, 2.6] },
+    ],
+    matchNote: "Our standout — the block funnels play wide and protects the centre. This is maintain-not-chase; keep the reps light.",
+    players: [
+      { num: 5, name: "Dunk", status: "responding", note: "Organising the line and the force-wide cues." },
+      { num: 6, name: "van Hecke", status: "responding", note: "Aggressive on the first contact, holding shape." },
+      { num: 27, name: "Wieffer", status: "responding", note: "Screening the central corridor consistently." },
+    ],
+  },
+  {
+    id: "transition", label: "Attacking transition", phase: "Counter-Attack", gmId: "counterattack", color: SCOUTS.green,
+    sessions: 5, ssgs: ["SSG-02"], lastRun: "3 days ago",
+    pool: [18, 22, 11, 10, 13, 17, 29],
+    trainingTrend: [55, 58, 62, 66, 68],
+    trainingNote: "Responding well — the first action after the regain is noticeably quicker and runners are committing earlier.",
+    match: [
+      { name: "Post-recovery conversion", us: "19.4%", target: "≥ 22%", league: "22.1%", met: false, trend: [16.8, 17.5, 18.2, 19.0, 19.4] },
+      { name: "Recovery → shot time", us: "14.2s", target: "≤ 12s", league: "11.5s", met: false, trend: [15.6, 15.1, 14.8, 14.5, 14.2] },
+    ],
+    matchNote: "Training is sharper than matchday — we win it well (47/match) but still strike slowly. The 14.2s is the number to move.",
+    players: [
+      { num: 11, name: "Minteh", status: "responding", note: "Committing to the run before the ball is won." },
+      { num: 22, name: "Mitoma", status: "responding", note: "Direct first action after the turnover improving." },
+      { num: 18, name: "Welbeck", status: "developing", note: "Hold-up good; needs to spin in behind faster on the break." },
+    ],
+  },
+];
+
+function SessionReview() {
+  const [aimId, setAimId] = useState(SESSION_AIMS[0].id);
+  const aim = SESSION_AIMS.find((a) => a.id === aimId) || SESSION_AIMS[0];
+  const c = aim.color;
+  const trainNow = aim.trainingTrend[aim.trainingTrend.length - 1];
+  const trainStart = aim.trainingTrend[0];
+  const nameOf = (n) => { const s = squad.find((x) => x.num === n); return s ? s.name.replace(/^[A-Z]\.\s/, "") : String(n); };
+  const posOf = (n) => { const s = squad.find((x) => x.num === n); return s ? s.pos : "CM"; };
+  const statusStyle = (s) => s === "responding" ? { c: SCOUTS.green, label: "responding" } : s === "watch" ? { c: "#FF3D5A", label: "watch" } : { c: CYBER.amber, label: "developing" };
+  const gmPhase = gameModel.find((p) => p.id === aim.gmId);
+  const gmTiles = gmPhase ? phaseMetrics(gmPhase).slice(0, 3) : [];
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <div className="text-[10px] uppercase tracking-widest mb-2 font-mono text-white/45">Session aim</div>
+        <div className="flex flex-wrap gap-1.5">
+          {SESSION_AIMS.map((a) => {
+            const on = a.id === aimId;
+            return (
+              <button key={a.id} onClick={() => setAimId(a.id)} className="text-[10px] font-bold px-2.5 py-1.5 rounded-md transition-all" style={on ? { background: a.color + "22", color: a.color, border: `1px solid ${a.color}66`, boxShadow: `0 0 8px ${a.color}33` } : { color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.1)" }}>{a.label}</button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Sessions run */}
+      <div className="rounded-lg border p-3.5" style={{ borderColor: c + "33", background: c + "0A" }}>
+        <div className="flex items-center justify-between gap-2 mb-2.5">
+          <div>
+            <div className="text-[9px] uppercase tracking-wider font-mono text-white/45">Sessions run · {aim.phase}</div>
+            <div className="text-sm font-bold" style={{ color: c }}>{aim.label}</div>
+          </div>
+          <div className="text-right flex-shrink-0">
+            <div className="font-mono font-black text-2xl leading-none" style={{ color: c }}>{aim.sessions}</div>
+            <div className="text-[8px] uppercase tracking-wider font-mono text-white/40 mt-0.5">this block</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[9px] font-mono uppercase tracking-wider text-white/35">Drills</span>
+          {aim.ssgs.map((s) => <span key={s} className="px-1.5 py-0.5 rounded text-[10px] font-mono" style={{ background: c + "1A", color: c }}>{s}</span>)}
+          <span className="text-[9px] font-mono text-white/30">· last run {aim.lastRun} · see SSGs tab</span>
+        </div>
+      </div>
+
+      {/* Players involved (rotating pool) */}
+      <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3.5">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="text-[10px] uppercase tracking-widest font-mono text-white/45">Players involved</div>
+          <div className="text-[8px] font-mono uppercase tracking-wider text-white/30">{aim.pool.length}-player pool</div>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {aim.pool.map((n) => {
+            const pc = PLAYER_POS_COL(posOf(n));
+            return <span key={n} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono" style={{ background: pc + "14", color: pc, border: `1px solid ${pc}33` }}><b>{n}</b> {nameOf(n)}</span>;
+          })}
+        </div>
+        <div className="text-[10px] text-white/40 mt-2.5 leading-relaxed italic">Pool rotates with availability — not every player trains every session; others rotate in around load and recovery. Numbers below show how the regulars are responding.</div>
+        <div className="border-t border-white/10 mt-3 pt-3 space-y-2.5">
+          {aim.players.map((pl) => {
+            const st = statusStyle(pl.status);
+            return (
+              <div key={pl.num} className="flex items-start gap-2.5">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center font-mono font-bold text-[10px] flex-shrink-0 mt-0.5" style={{ background: st.c + "1A", color: st.c, border: `1px solid ${st.c}44` }}>{pl.num}</div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[12px] font-bold text-white">{pl.name}</span>
+                    <span className="text-[8px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: st.c + "1A", color: st.c }}>{st.label}</span>
+                  </div>
+                  <div className="text-[11px] text-white/55 leading-snug mt-0.5">{pl.note}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Training response */}
+      <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3.5">
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-[10px] uppercase tracking-widest font-mono" style={{ color: SCOUTS.green }}>Training response</div>
+          <div className="text-[10px] font-mono text-white/50">success {trainStart}% → <span className="font-bold" style={{ color: SCOUTS.green }}>{trainNow}%</span></div>
+        </div>
+        <DevSparkline data={aim.trainingTrend} color={SCOUTS.green} />
+        <div className="text-[11px] text-white/70 mt-2 leading-relaxed italic">{aim.trainingNote}</div>
+      </div>
+
+      {/* How it's transferring — match outcomes */}
+      <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3.5">
+        <div className="text-[10px] uppercase tracking-widest font-mono mb-3" style={{ color: c }}>How it's transferring — match outcomes</div>
+        <div className="space-y-2.5">
+          {aim.match.map((m, i) => (
+            <div key={i} className="rounded-md bg-black/25 p-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-[12px] font-semibold text-white/85 leading-tight">{m.name}</div>
+                <span className="text-[8px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded flex-shrink-0" style={m.met ? { background: SCOUTS.green + "22", color: SCOUTS.green } : { background: CYBER.amber + "1A", color: CYBER.amber }}>{m.met ? "at target" : "below target"}</span>
+              </div>
+              <div className="flex items-end justify-between gap-3 mt-1.5">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="font-mono font-black text-lg leading-none" style={{ color: c }}>{m.us}</span>
+                  <span className="text-[9px] font-mono text-white/40">us · target {m.target} · PL {m.league}</span>
+                </div>
+                <div className="w-20 flex-shrink-0"><DevSparkline data={m.trend} color={c} /></div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="text-[11px] text-white/70 mt-3 leading-relaxed italic">{aim.matchNote}</div>
+      </div>
+
+      {/* How it's transferring — Game Model phase data (live) */}
+      <div className="rounded-lg border p-3.5" style={{ borderColor: c + "33", background: c + "0A" }}>
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="text-[10px] uppercase tracking-widest font-mono" style={{ color: c }}>Game Model phase data</div>
+          <div className="text-[8px] font-mono uppercase tracking-wider text-white/35">{aim.phase} board</div>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {gmTiles.map((t, i) => (
+            <div key={i} className="rounded-md p-2 bg-black/25 border border-white/5">
+              <div className="flex items-baseline gap-0.5">
+                <span className="font-mono font-black text-lg leading-none" style={{ color: c }}>{t.v}</span>
+                {t.unit && <span className="text-[9px] font-mono text-white/45">{t.unit}</span>}
+              </div>
+              <div className="text-[9px] text-white/65 font-semibold mt-1 leading-tight">{t.label}</div>
+              <div className="text-[8px] text-white/35 font-mono mt-0.5 leading-tight">{t.sub}</div>
+            </div>
+          ))}
+        </div>
+        <div className="text-[10px] text-white/40 mt-2.5 leading-relaxed italic">Spatial model data for this phase, tracked from the {aim.phase} board — the same x/y metrics we collect in matches. Full morphs &amp; principles in Tactics → Game Model.</div>
+      </div>
+    </div>
+  );
+}
+
+// ============ INDIVIDUAL DEVELOPMENT TRACKER (full squad) ============
+const DEV_PLANS = [
+  // Goalkeepers
+  { num: 1, name: "Verbruggen", pos: "GK", role: "Sweeper-keeper",
+    goals: [
+      { goal: "Distribution accuracy under press", metric: "Pass completion %", target: "≥ 80%", current: 78, dir: "up", trend: [73, 75, 76, 77, 78], drill: "SSG-01" },
+      { goal: "Proactive sweeper actions", metric: "Def. actions outside box / 90", target: "≥ 1.5", current: 1.2, dir: "up", trend: [0.8, 0.9, 1.0, 1.1, 1.2], drill: "SSG-02" },
+    ],
+    focus: "Play through the first line when it's on; command the space behind a high line." },
+  { num: 23, name: "Steele", pos: "GK", role: "Experienced cover",
+    goals: [
+      { goal: "Shot-stopping sharpness in limited minutes", metric: "Save %", target: "≥ 70%", current: 68, dir: "up", trend: [64, 65, 66, 67, 68], drill: "SSG-04" },
+    ],
+    focus: "Stay match-ready through reaction and handling work between selections." },
+  { num: 38, name: "McGill", pos: "GK", role: "Development keeper",
+    goals: [
+      { goal: "Build distribution range", metric: "Pass completion %", target: "≥ 72%", current: 70, dir: "up", trend: [64, 66, 68, 69, 70], drill: "SSG-01" },
+    ],
+    focus: "Young keeper — consistency in kicking and footwork is the priority." },
+  // Defenders
+  { num: 5, name: "Dunk", pos: "CB", role: "Build-out leader",
+    goals: [
+      { goal: "Line-breaking passes under press", metric: "Line-breaks / 90", target: "≥ 5", current: 3.6, dir: "up", trend: [2.6, 2.9, 3.2, 3.4, 3.6], drill: "SSG-01" },
+    ],
+    focus: "Carry into midfield to provoke the press, then break the line behind it." },
+  { num: 6, name: "van Hecke", pos: "CB", role: "Ball-playing CB",
+    goals: [
+      { goal: "Progressive carries into midfield", metric: "Prog. carries / 90", target: "≥ 2.5", current: 2.2, dir: "up", trend: [1.5, 1.7, 1.9, 2.1, 2.2], drill: "SSG-01" },
+      { goal: "First contact in aerial duels", metric: "Aerial win %", target: "≥ 72%", current: 68, dir: "up", trend: [63, 64, 66, 67, 68], drill: "SSG-07" },
+    ],
+    focus: "Step in to break lines; attack the first contact at set pieces." },
+  { num: 21, name: "Boscagli", pos: "CB", role: "Left-sided CB",
+    goals: [
+      { goal: "Composure on the ball under pressure", metric: "Pass completion %", target: "≥ 87%", current: 84, dir: "up", trend: [80, 81, 82, 83, 84], drill: "SSG-01" },
+    ],
+    focus: "Scan before receiving; open the body to play forward first." },
+  { num: 4, name: "Webster", pos: "CB", role: "Defensive CB",
+    goals: [
+      { goal: "Reading danger early", metric: "Recoveries / 90", target: "≥ 5.0", current: 4.4, dir: "up", trend: [3.6, 3.9, 4.1, 4.3, 4.4], drill: "SSG-07" },
+    ],
+    focus: "Start defensive actions earlier through better pre-scanning." },
+  { num: 34, name: "Veltman", pos: "RB", role: "Defensive full-back",
+    goals: [
+      { goal: "Overlap timing in the final third", metric: "Prog. carries / 90", target: "≥ 2.2", current: 1.8, dir: "up", trend: [1.2, 1.4, 1.6, 1.7, 1.8], drill: "SSG-03" },
+    ],
+    focus: "Time the overlap to the winger's touch; recover position quickly." },
+  { num: 24, name: "Kadıoğlu", pos: "RB", role: "Attacking full-back",
+    goals: [
+      { goal: "Final-third delivery quality", metric: "Chances created / 90", target: "≥ 1.5", current: 1.1, dir: "up", trend: [0.7, 0.8, 0.9, 1.0, 1.1], drill: "SSG-03" },
+    ],
+    focus: "Pick the cut-back over the early cross; stay sound defensively." },
+  { num: 29, name: "De Cuyper", pos: "LB", role: "Inverting full-back",
+    goals: [
+      { goal: "Inverted positioning in build-up", metric: "Half-space receptions / 90", target: "≥ 8", current: 8.2, dir: "up", trend: [4.6, 5.6, 6.6, 7.5, 8.2], drill: "SSG-05" },
+    ],
+    focus: "Tuck inside to form the midfield three; receive on the half-turn to face forward." },
+  // Midfielders
+  { num: 17, name: "Baleba", pos: "DM", role: "Deep-lying carrier",
+    goals: [
+      { goal: "Reduce turnovers under press", metric: "Losses / 90", target: "≤ 2.0", current: 2.8, dir: "down", trend: [3.6, 3.3, 3.1, 2.9, 2.8], drill: "SSG-01" },
+      { goal: "Increase progressive passes", metric: "Prog. passes / 90", target: "≥ 9", current: 7.4, dir: "up", trend: [5.8, 6.2, 6.9, 7.1, 7.4], drill: "SSG-06" },
+    ],
+    focus: "Half-turn body shape to scan before receiving; first touch out of pressure, not into it." },
+  { num: 27, name: "Wieffer", pos: "DM", role: "Box-to-box screen",
+    goals: [
+      { goal: "Progressive passing range", metric: "Prog. passes / 90", target: "≥ 5", current: 3.8, dir: "up", trend: [2.6, 3.0, 3.4, 3.6, 3.8], drill: "SSG-06" },
+      { goal: "Counter-press intensity", metric: "Recoveries / 90", target: "≥ 8", current: 7.2, dir: "up", trend: [6.0, 6.4, 6.8, 7.0, 7.2], drill: "SSG-02" },
+    ],
+    focus: "Break the first line earlier; screen aggressively on the counter-press trigger." },
+  { num: 13, name: "Hinshelwood", pos: "CAM", role: "Box-arriving 8",
+    goals: [
+      { goal: "Late arrivals in the box", metric: "Chances created / 90", target: "≥ 2.5", current: 2.1, dir: "up", trend: [1.5, 1.7, 1.9, 2.0, 2.1], drill: "SSG-03" },
+    ],
+    focus: "Time the third-man run; one-touch combinations to arrive beyond the ball." },
+  { num: 30, name: "Groß", pos: "CM", role: "Creative metronome",
+    goals: [
+      { goal: "Sustain creative output", metric: "Chances created / 90", target: "≥ 2.6", current: 2.6, dir: "up", trend: [2.2, 2.4, 2.5, 2.5, 2.6], drill: "SSG-03" },
+    ],
+    focus: "Maintain set-piece and open-play creativity; manage load across the week." },
+  { num: 26, name: "Ayari", pos: "CM", role: "Ball-progressing 8",
+    goals: [
+      { goal: "Press resistance in midfield", metric: "Pass completion %", target: "≥ 84%", current: 80, dir: "up", trend: [75, 77, 78, 79, 80], drill: "SSG-01" },
+    ],
+    focus: "Receive on the back foot under pressure, then drive into space." },
+  { num: 33, name: "O'Riley", pos: "CM", role: "Goal-threat 8",
+    goals: [
+      { goal: "Goal contribution from midfield", metric: "Shots / 90", target: "≥ 2.0", current: 1.5, dir: "up", trend: [1.0, 1.2, 1.3, 1.4, 1.5], drill: "SSG-04" },
+    ],
+    focus: "Late runs to the edge of the box; shoot earlier from the second line." },
+  { num: 20, name: "Milner", pos: "CM", role: "Experienced leader",
+    goals: [
+      { goal: "Game-management & tempo control", metric: "Pass completion %", target: "≥ 88%", current: 85, dir: "up", trend: [82, 83, 84, 84, 85], drill: "SSG-01" },
+    ],
+    focus: "Lead the press triggers vocally; manage fouls in midfield areas." },
+  { num: 25, name: "Gómez", pos: "CM", role: "Development midfielder",
+    goals: [
+      { goal: "Composure & decision-making", metric: "Pass completion %", target: "≥ 82%", current: 78, dir: "up", trend: [73, 75, 76, 77, 78], drill: "SSG-01" },
+    ],
+    focus: "Young midfielder — tempo of release and scanning are the focus." },
+  // Forwards
+  { num: 22, name: "Mitoma", pos: "LW", role: "Wide 1v1 threat",
+    goals: [
+      { goal: "Cut-back quality from the byline", metric: "Cut-back → SOT %", target: "≥ 35%", current: 28, dir: "up", trend: [22, 24, 26, 27, 28], drill: "SSG-03" },
+      { goal: "End-product in transition", metric: "Shots / 90", target: "≥ 3.0", current: 2.4, dir: "up", trend: [1.9, 2.0, 2.2, 2.3, 2.4], drill: "SSG-02" },
+    ],
+    focus: "Commit the full-back before the recovery is confirmed; pick the cut-back over the near post." },
+  { num: 11, name: "Minteh", pos: "RW", role: "Direct runner",
+    goals: [
+      { goal: "Runs in behind the line", metric: "In-behind runs / 90", target: "≥ 6", current: 4.1, dir: "up", trend: [2.8, 3.2, 3.6, 3.9, 4.1], drill: "SSG-06" },
+      { goal: "Final-third decision speed", metric: "Final-3rd losses / 90", target: "≤ 3.0", current: 4.2, dir: "down", trend: [5.4, 5.0, 4.6, 4.4, 4.2], drill: "SSG-03" },
+    ],
+    focus: "Time the third-man run; release earlier rather than taking the extra touch." },
+  { num: 10, name: "Rutter", pos: "CAM", role: "Linking 10",
+    goals: [
+      { goal: "Chance creation between the lines", metric: "Chances created / 90", target: "≥ 3.0", current: 2.6, dir: "up", trend: [2.0, 2.2, 2.4, 2.5, 2.6], drill: "SSG-03" },
+    ],
+    focus: "Receive on the half-turn between lines; quicker combination to the final pass." },
+  { num: 7, name: "March", pos: "WG", role: "Returning wide man",
+    goals: [
+      { goal: "Rebuild match sharpness", metric: "Shot accuracy %", target: "≥ 45%", current: 35, dir: "up", trend: [0, 20, 28, 32, 35], drill: "SSG-02" },
+    ],
+    focus: "Phased return — sprint exposure and final-third reps to regain rhythm." },
+  { num: 18, name: "Welbeck", pos: "ST", role: "Link + in-behind",
+    goals: [
+      { goal: "Hold-up retention", metric: "Hold-up success %", target: "≥ 70%", current: 64, dir: "up", trend: [58, 60, 61, 63, 64], drill: "SSG-05" },
+      { goal: "Movement to attack crosses", metric: "Box touches / 90", target: "≥ 6", current: 4.6, dir: "up", trend: [3.4, 3.9, 4.2, 4.4, 4.6], drill: "SSG-03" },
+    ],
+    focus: "Vary near/far-post timing; show short to feet, then spin in behind." },
+  { num: 9, name: "Tzimas", pos: "ST", role: "Developing striker",
+    goals: [
+      { goal: "Finishing efficiency", metric: "Conversion %", target: "≥ 12%", current: 10, dir: "up", trend: [6, 7, 8, 9, 10], drill: "SSG-04" },
+    ],
+    focus: "Young striker — composure and first-touch setup in the box." },
+  { num: 19, name: "Kostoulas", pos: "ST", role: "Developing striker",
+    goals: [
+      { goal: "Shot accuracy", metric: "Shot accuracy %", target: "≥ 45%", current: 38, dir: "up", trend: [30, 33, 35, 37, 38], drill: "SSG-04" },
+    ],
+    focus: "Young striker — shot selection and striking technique are the priority." },
+];
+
+function DevSparkline({ data, color }) {
+  const w = 100, h = 28, pad = 3;
+  const min = Math.min(...data), max = Math.max(...data), rng = max - min || 1;
+  const pts = data.map((v, i) => [pad + (i / (data.length - 1)) * (w - 2 * pad), h - pad - ((v - min) / rng) * (h - 2 * pad)]);
+  const d = pts.map((p, i) => (i === 0 ? "M" : "L") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+  const last = pts[pts.length - 1];
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-7">
+      <path d={d} fill="none" stroke={color} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" opacity="0.85" />
+      {pts.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="1.1" fill={color} opacity="0.5" />)}
+      <circle cx={last[0]} cy={last[1]} r="2.3" fill={color} />
+    </svg>
+  );
+}
+
+function IndividualDev() {
+  const [num, setNum] = useState(DEV_PLANS[0].num);
+  const p = DEV_PLANS.find((d) => d.num === num) || DEV_PLANS[0];
+  const col = PLAYER_POS_COL(p.pos);
+  return (
+    <div className="space-y-4">
+      <div>
+        <div className="text-[10px] uppercase tracking-widest mb-2 font-mono text-white/45">Player · full squad</div>
+        <div className="flex flex-wrap gap-1">
+          {DEV_PLANS.map((d) => {
+            const on = d.num === num;
+            const pc = PLAYER_POS_COL(d.pos);
+            return (
+              <button key={d.num} onClick={() => setNum(d.num)} className="text-[10px] font-bold px-2 py-1 rounded transition-all" style={on ? { background: pc + "22", color: pc, border: `1px solid ${pc}66`, boxShadow: `0 0 8px ${pc}33` } : { color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.1)" }}>{d.name}</button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="rounded-lg border p-3" style={{ borderColor: col + "33", background: col + "0A" }}>
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full flex items-center justify-center font-mono font-black text-sm flex-shrink-0" style={{ background: col + "22", color: col, border: `1px solid ${col}66` }}>{p.num}</div>
+          <div>
+            <div className="text-sm font-bold text-white">{p.name} <span className="text-white/40 font-normal">· {p.pos}</span></div>
+            <div className="text-[10px] font-mono" style={{ color: col }}>{p.role}</div>
+          </div>
+        </div>
+      </div>
+
+      {p.goals.map((g, i) => {
+        const tnum = parseFloat(String(g.target).replace(/[^0-9.]/g, "")) || 1;
+        const prog = g.dir === "up" ? Math.min(100, Math.round((100 * g.current) / tnum)) : Math.min(100, Math.round((100 * tnum) / g.current));
+        const met = prog >= 100;
+        return (
+          <div key={i} className="rounded-lg border border-white/10 bg-white/[0.03] p-3.5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="text-[13px] font-bold text-white leading-tight">{g.goal}</div>
+              <span className="text-[8px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded flex-shrink-0" style={met ? { background: SCOUTS.green + "22", color: SCOUTS.green } : { background: CYBER.amber + "1A", color: CYBER.amber }}>{met ? "on target" : "developing"}</span>
+            </div>
+            <div className="text-[10px] font-mono text-white/45 mt-1">{g.metric}</div>
+            <div className="flex items-end justify-between gap-3 mt-2">
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-mono font-black text-xl" style={{ color: col }}>{g.current}</span>
+                <span className="text-[10px] font-mono text-white/40">now · target {g.target}</span>
+              </div>
+              <div className="w-24 flex-shrink-0"><DevSparkline data={g.trend} color={col} /></div>
+            </div>
+            <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mt-2">
+              <div className="h-full rounded-full transition-all" style={{ width: `${prog}%`, background: met ? SCOUTS.green : col, boxShadow: `0 0 6px ${met ? SCOUTS.green : col}` }} />
+            </div>
+            <div className="text-[10px] text-white/50 mt-2 flex items-center gap-1.5">
+              <span className="font-mono uppercase tracking-wider text-white/35">Drill</span>
+              <span className="px-1.5 py-0.5 rounded font-mono" style={{ background: col + "1A", color: col }}>{g.drill}</span>
+              <span className="text-white/30">— see SSGs tab</span>
+            </div>
+          </div>
+        );
+      })}
+
+      <div className="rounded-lg border p-3" style={{ borderColor: SCOUTS.green + "33", background: SCOUTS.green + "08" }}>
+        <div className="text-[10px] uppercase tracking-widest mb-1.5 font-mono" style={{ color: SCOUTS.green }}>Coaching focus</div>
+        <div className="text-[12px] text-white/80 leading-relaxed italic">{p.focus}</div>
+      </div>
+    </div>
+  );
+}
+
 function TrainingTab() {
-  const [subTab, setSubTab] = useState("week"); // "week" | "zones"
+  const [subTab, setSubTab] = useState("individual"); // "individual" | "zones" | "coding" | "week"
 
   return (
     <div>
       {/* Sub-tab strip */}
       <div className="flex gap-1 mb-5 p-1 rounded-lg bg-white/[0.04] border border-white/10">
-        <button
-          onClick={() => setSubTab("week")}
-          className="flex-1 py-2 text-[10px] font-bold rounded transition-all uppercase tracking-wider"
-          style={{
-            background: subTab === "week" ? BHA.blueLight + "22" : "transparent",
-            color: subTab === "week" ? BHA.blueLight : "rgba(255,255,255,0.45)",
-            border: `1px solid ${subTab === "week" ? BHA.blueLight + "55" : "transparent"}`
-          }}
-        >
-          📅 Weekly Plan
-        </button>
-        <button
-          onClick={() => setSubTab("zones")}
-          className="flex-1 py-2 text-[10px] font-bold rounded transition-all uppercase tracking-wider"
-          style={{
-            background: subTab === "zones" ? SCOUTS.green + "22" : "transparent",
-            color: subTab === "zones" ? SCOUTS.green : "rgba(255,255,255,0.45)",
-            border: `1px solid ${subTab === "zones" ? SCOUTS.green + "55" : "transparent"}`
-          }}
-        >
-          🎯 Zone Focus
-        </button>
+        {[
+          ["individual", "📈 Players", CYBER.amber],
+          ["coding", "🎬 Coded", CYBER.cyan],
+          ["zones", "🎯 Zones", SCOUTS.green],
+          ["week", "📅 Plan", BHA.blueLight],
+        ].map(([k, label, clr]) => {
+          const on = subTab === k;
+          return (
+            <button key={k} onClick={() => setSubTab(k)} className="flex-1 py-2 text-[10px] font-bold rounded transition-all uppercase tracking-wider" style={{ background: on ? clr + "22" : "transparent", color: on ? clr : "rgba(255,255,255,0.45)", border: `1px solid ${on ? clr + "55" : "transparent"}` }}>{label}</button>
+          );
+        })}
       </div>
 
       {/* Sub-tab content */}
@@ -2466,6 +2918,10 @@ function TrainingTab() {
           </div>
         </div>
       )}
+
+      {subTab === "coding" && <SessionReview />}
+
+      {subTab === "individual" && <IndividualDev />}
     </div>
   );
 }
@@ -6208,10 +6664,144 @@ function PlayerTouchMap({ player, col }) {
 }
 
 // Swipeable two-pitch carousel for a player: Play Style ↔ Touch Map.
+// Last-match pass map — deterministic, seeded; origins anchored on where the player operates,
+// destinations biased forward by role. Completed / incomplete / progressive are distinguished.
+function genPlayerPasses(player) {
+  const style = PLAYER_STYLE[player.num] || { slot: "DM", path: [[50, 50]] };
+  const home = style.path[0];
+  const moves = PLAYER_MOVES[player.num] || [];
+  const rnd = ptcRand((player.num * 5779) ^ 0x51ed2701);
+  const g = (m, s) => m + (((rnd() + rnd() + rnd()) / 3) - 0.5) * 2 * s;
+  const pos = player.pos;
+  const grp = pos === "GK" ? "gk"
+    : pos === "CB" ? "cb"
+    : ["LB", "RB", "WB", "LWB", "RWB"].includes(pos) ? "fb"
+    : pos === "DM" ? "dm"
+    : pos === "CM" ? "cm"
+    : pos === "CAM" ? "cam"
+    : ["LW", "RW", "WG"].includes(pos) ? "wg"
+    : "st";
+  const CFG = {
+    gk:  { n: 30, comp: 0.80, fwd: 16, lat: 14 },
+    cb:  { n: 64, comp: 0.91, fwd: 9,  lat: 16 },
+    fb:  { n: 50, comp: 0.85, fwd: 12, lat: 12 },
+    dm:  { n: 70, comp: 0.90, fwd: 11, lat: 13 },
+    cm:  { n: 56, comp: 0.87, fwd: 13, lat: 12 },
+    cam: { n: 42, comp: 0.82, fwd: 14, lat: 11 },
+    wg:  { n: 34, comp: 0.78, fwd: 11, lat: 12 },
+    st:  { n: 26, comp: 0.76, fwd: 8,  lat: 12 },
+  };
+  const c = CFG[grp];
+  const n = Math.max(14, Math.round(c.n + (rnd() - 0.5) * 10));
+  const totalW = moves.reduce((s, m) => s + m[2], 0) || 1;
+  const pickMove = () => { let r = rnd() * totalW; for (const m of moves) { r -= m[2]; if (r <= 0) return m; } return moves[moves.length - 1] || home; };
+  const passes = [];
+  for (let i = 0; i < n; i++) {
+    const a = (rnd() < 0.45 && moves.length > 0) ? pickMove() : home;
+    let ox = g(a[0], 9), oy = g(a[1], 9);
+    ox = Math.max(4, Math.min(96, ox)); oy = Math.max(4, Math.min(96, oy));
+    const dx = g(c.fwd, 13), dy = g(0, c.lat); // biased forward, lateral spread (some recycled back)
+    let tx = ox + dx, ty = oy + dy;
+    tx = Math.max(3, Math.min(99, tx)); ty = Math.max(3, Math.min(97, ty));
+    const len = Math.hypot((tx - ox) * 1.05, (ty - oy) * 0.68);
+    const p = c.comp - (len > 28 ? 0.28 : len > 18 ? 0.1 : 0) - ((tx - ox) > 22 ? 0.08 : 0);
+    const ok = rnd() < Math.max(0.4, p);
+    const prog = ok && (tx - ox) >= 15; // completed forward pass that meaningfully progresses
+    passes.push({ ox: +ox.toFixed(1), oy: +oy.toFixed(1), tx: +tx.toFixed(1), ty: +ty.toFixed(1), ok, prog });
+  }
+  return passes;
+}
+
+const PASS_FILTERS = ["completed", "incomplete", "all"];
+function PlayerPassMap({ player, col }) {
+  const passes = genPlayerPasses(player);
+  const n = passes.length;
+  const done = passes.filter((p) => p.ok).length;
+  const comp = Math.round((100 * done) / n);
+  const prog = passes.filter((p) => p.prog).length;
+  const px = (v) => 2 + (v / 100) * 96;
+  const py = (v) => 2 + (v / 100) * 60;
+  const res = (LAST_MATCH.gf > LAST_MATCH.ga ? "W" : LAST_MATCH.gf < LAST_MATCH.ga ? "L" : "D") + " " + LAST_MATCH.gf + "–" + LAST_MATCH.ga;
+  const lastName = player.name.split(" ").pop();
+  const stats = [["Passes", n], ["Completion", comp + "%"], ["Progressive", prog]];
+  const [filter, setFilter] = useState("completed");
+  useEffect(() => {
+    const t = setTimeout(() => setFilter(PASS_FILTERS[(PASS_FILTERS.indexOf(filter) + 1) % PASS_FILTERS.length]), 3500);
+    return () => clearTimeout(t);
+  }, [filter]);
+  const showOK = filter !== "incomplete";
+  const showBad = filter !== "completed";
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-[10px] uppercase tracking-widest font-mono" style={{ color: col }}>Pass map · <span className="font-bold">last match</span></div>
+        <div className="text-[8px] font-mono uppercase tracking-wider text-white/35">vs {LAST_MATCH.opp} ({LAST_MATCH.venue}) · {res}</div>
+      </div>
+      <div className="flex items-center justify-between gap-1 mb-2">
+        <div className="flex gap-1">
+          {[["completed", "Completed", SCOUTS.green], ["incomplete", "Incomplete", "#FF3D5A"], ["all", "All", "#9DB2BF"]].map(([k, label, clr]) => {
+            const on = filter === k;
+            return (
+              <button key={k} onClick={() => setFilter(k)} className="text-[8px] font-mono font-bold uppercase tracking-wider px-2 py-1 rounded transition-all" style={on ? { background: clr + "22", color: clr, boxShadow: `0 0 6px ${clr}33` } : { color: "rgba(255,255,255,0.4)" }}>{label}</button>
+            );
+          })}
+        </div>
+        <span className="text-[7px] font-mono uppercase tracking-wider text-white/30 flex items-center gap-1 flex-shrink-0">
+          <span className="inline-block w-1 h-1 rounded-full" style={{ background: SCOUTS.green, boxShadow: `0 0 4px ${SCOUTS.green}` }} />auto
+        </span>
+      </div>
+      <div className="relative w-full rounded-lg overflow-hidden border border-white/10" style={{ aspectRatio: "100/64" }}>
+        <svg viewBox="0 0 100 64" className="absolute inset-0 w-full h-full">
+          <defs>
+            <linearGradient id="paPitch" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#0e2a20" /><stop offset="50%" stopColor="#143a26" /><stop offset="100%" stopColor="#0e2a20" />
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="100" height="64" fill="url(#paPitch)" />
+          <rect x={px(0)} y={py(0)} width={px(100) - px(0)} height={py(100) - py(0)} fill="none" stroke={col} strokeOpacity="0.18" strokeWidth="0.4" />
+          <line x1={px(50)} y1={py(0)} x2={px(50)} y2={py(100)} stroke="#fff" strokeOpacity="0.12" strokeWidth="0.3" />
+          <circle cx={px(50)} cy={py(50)} r="8" fill="none" stroke="#fff" strokeOpacity="0.12" strokeWidth="0.3" />
+          <rect x={px(0)} y={py(22)} width={px(16) - px(0)} height={py(78) - py(22)} fill="none" stroke="#fff" strokeOpacity="0.12" strokeWidth="0.3" />
+          <rect x={px(84)} y={py(22)} width={px(100) - px(84)} height={py(78) - py(22)} fill="none" stroke="#fff" strokeOpacity="0.16" strokeWidth="0.3" />
+          {showBad && passes.filter((p) => !p.ok).map((p, i) => (
+            <line key={"i" + i} x1={px(p.ox)} y1={py(p.oy)} x2={px(p.tx)} y2={py(p.ty)} stroke="#FF3D5A" strokeOpacity="0.4" strokeWidth="0.35" strokeDasharray="1.4 1" />
+          ))}
+          {showOK && passes.filter((p) => p.ok && !p.prog).map((p, i) => (
+            <line key={"c" + i} x1={px(p.ox)} y1={py(p.oy)} x2={px(p.tx)} y2={py(p.ty)} stroke={SCOUTS.green} strokeOpacity="0.4" strokeWidth="0.35" />
+          ))}
+          {showOK && passes.filter((p) => p.ok && p.prog).map((p, i) => (
+            <line key={"p" + i} x1={px(p.ox)} y1={py(p.oy)} x2={px(p.tx)} y2={py(p.ty)} stroke={SCOUTS.green} strokeOpacity="0.9" strokeWidth="0.6" />
+          ))}
+          {passes.filter((p) => (p.ok && showOK) || (!p.ok && showBad)).map((p, i) => (<circle key={"o" + i} cx={px(p.ox)} cy={py(p.oy)} r="0.45" fill="rgba(255,255,255,0.35)" />))}
+          {passes.filter((p) => (p.ok && showOK) || (!p.ok && showBad)).map((p, i) => {
+            const cc = p.ok ? SCOUTS.green : "#FF3D5A";
+            return <circle key={"d" + i} cx={px(p.tx)} cy={py(p.ty)} r={p.prog ? 1.3 : 1.0} fill={cc} fillOpacity={p.ok ? 0.9 : 0.6} stroke="#0b1410" strokeWidth="0.2" />;
+          })}
+          <text x={px(99)} y={py(7)} fill={SCOUTS.green} fontSize="3.4" fontWeight="bold" textAnchor="end">ATTACK ▶</text>
+        </svg>
+      </div>
+      <div className="flex items-center justify-center gap-3 mt-2 text-[8px] font-mono text-white/45">
+        <span className="flex items-center gap-1"><span style={{ width: 10, borderTop: `1.5px solid ${SCOUTS.green}` }} />Completed</span>
+        <span className="flex items-center gap-1"><span style={{ width: 10, borderTop: "1.5px dashed #FF3D5A" }} />Incomplete</span>
+        <span className="flex items-center gap-1"><span style={{ width: 10, borderTop: `2.5px solid ${SCOUTS.green}` }} />Progressive</span>
+      </div>
+      <div className="grid grid-cols-3 gap-2 mt-2">
+        {stats.map(([k, v]) => (
+          <div key={k} className="rounded p-1.5 bg-black/30 text-center">
+            <div className="text-[8px] uppercase tracking-widest text-white/40 font-mono">{k}</div>
+            <div className="font-mono font-black text-white text-base leading-tight" style={{ textShadow: `0 0 6px ${col}55` }}>{v}</div>
+          </div>
+        ))}
+      </div>
+      <div className="text-center text-[8px] text-white/35 mt-1.5 font-mono">Passes by {lastName} · {n} attempted · {comp}% completed</div>
+    </div>
+  );
+}
+
 function PlayerPitchCarousel({ player, col }) {
   const scrollerRef = useRef(null);
   const [active, setActive] = useState(0);
-  const slides = [{ key: "style", label: "Play Style" }, { key: "touch", label: "Touch Map" }];
+  const slides = [{ key: "style", label: "Style" }, { key: "touch", label: "Touch" }, { key: "pass", label: "Passes" }];
   const goTo = (i) => { const el = scrollerRef.current; if (el) el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" }); };
   const onScroll = () => { const el = scrollerRef.current; if (!el) return; const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth)); if (i !== active) setActive(i); };
   return (
@@ -6224,7 +6814,9 @@ function PlayerPitchCarousel({ player, col }) {
           ))}
         </div>
         <div className="text-[8px] font-mono uppercase tracking-wider text-white/30 flex items-center gap-1 flex-shrink-0">
-          {active === 0 ? <>swipe <span className="text-white/55">→</span></> : <><span className="text-white/55">←</span> swipe</>}
+          {active > 0 && <span className="text-white/55">←</span>}
+          <span>swipe</span>
+          {active < slides.length - 1 && <span className="text-white/55">→</span>}
         </div>
       </div>
       <div ref={scrollerRef} onScroll={onScroll} className="ptc-scroll flex overflow-x-auto snap-x snap-mandatory items-start" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
@@ -6234,6 +6826,9 @@ function PlayerPitchCarousel({ player, col }) {
         </div>
         <div className="snap-center shrink-0 w-full">
           <PlayerTouchMap player={player} col={col} />
+        </div>
+        <div className="snap-center shrink-0 w-full">
+          <PlayerPassMap player={player} col={col} />
         </div>
       </div>
       <div className="flex items-center justify-center gap-1.5 mt-2">
@@ -6892,10 +7487,10 @@ export default function App() {
           {[
             { id: "team", label: "Team" },
             { id: "tactics", label: "Tactics" },
-            { id: "speed", label: "Speed" },
+            { id: "training", label: "Training" },
             { id: "kpis", label: "KPIs" },
             { id: "visuals", label: "Visuals" },
-            { id: "training", label: "Training" },
+            { id: "speed", label: "Speed" },
             { id: "ssgs", label: "SSGs" },
             { id: "insights", label: "Insights" },
             { id: "index", label: "Index" }
