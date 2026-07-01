@@ -6135,6 +6135,288 @@ function TacticalPrinciples() {
 }
 
 // ============ TACTICS TAB (Game Model · Zone Data · Tactical Principles) ============
+// ============ GAME-MODEL ENCAPSULATION PANELS ============
+// Principle tree (Principles sub-tab), connection network (Zone Data sub-tab),
+// style fingerprint (top of Visuals). Illustrative-but-realistic values, wired
+// to the same brand palette; designed for the StatsBomb/360 feed to overwrite.
+
+const RED_OPP = "#FF4D6A";
+
+// --- Principle tree ---
+const PT_IDEA = "Dominate the ball through positional build-up, hunt it back the instant we lose it, and defend compact and central.";
+const PT_MOMENTS = [
+  { moment: "Offensive Organisation", tag: "in possession", color: SCOUTS.green, principles: [
+    { label: "Build securely from the back", children: [
+      { label: "GK + CBs split, pivot drops in", metric: { n: "Build-out success", v: "68%", t: "≥ 72%", ok: false }, drill: "SSG-01" },
+      { label: "Bait the press, break the first line", metric: { n: "Line-breaks /90", v: "3.6", t: "≥ 5", ok: false }, drill: "SSG-05" },
+    ]},
+    { label: "Progress through the thirds", children: [
+      { label: "Manufacture the free man in midfield", metric: { n: "Prog. passes /90", v: "6.4", t: "≥ 6", ok: true }, drill: "SSG-06" },
+      { label: "Stretch wide to open the centre", metric: { n: "Build-up width", v: "52 m", t: "≥ 50 m", ok: true }, drill: "SSG-06" },
+    ]},
+    { label: "Create & finish centrally", children: [
+      { label: "Attack the box with numbers", metric: { n: "Central box entries", v: "31%", t: "≥ 34%", ok: false }, drill: "SSG-03" },
+      { label: "Cut-backs over hopeful crosses", metric: { n: "Cut-back conversion", v: "28%", t: "≥ 35%", ok: false }, drill: "SSG-03" },
+    ]},
+  ]},
+  { moment: "Defensive Organisation", tag: "out of possession", color: RED_OPP, principles: [
+    { label: "Compact mid-block", children: [
+      { label: "Protect the centre, show them wide", metric: { n: "Central protection", v: "77", t: "≥ 75", ok: true }, drill: "SSG-07" },
+      { label: "Hold the lines, tight distances", metric: { n: "Block compactness", v: "33 m", t: "≤ 35 m", ok: true }, drill: "SSG-07" },
+    ]},
+    { label: "Deny progression", children: [
+      { label: "Delay the carrier, cover behind", metric: { n: "Time to pressure", v: "2.6 s", t: "≤ 2.5 s", ok: false }, drill: "SSG-07" },
+    ]},
+  ]},
+  { moment: "Offensive Transition", tag: "counter-attack", color: CYBER.cyan, principles: [
+    { label: "Attack the disorganised defence — fast", children: [
+      { label: "Vertical first action on the regain", metric: { n: "Positive transition", v: "41%", t: "≥ 45%", ok: false }, drill: "SSG-02" },
+      { label: "Runners beyond the ball", metric: { n: "Runs in behind /90", v: "4.1", t: "≥ 6", ok: false }, drill: "SSG-06" },
+    ]},
+  ]},
+  { moment: "Defensive Transition", tag: "counter-press", color: CYBER.magenta, principles: [
+    { label: "Win it back inside 6 seconds", children: [
+      { label: "Swarm the ball immediately", metric: { n: "Counter-press regains", v: "28%", t: "≥ 30%", ok: false }, drill: "SSG-02" },
+      { label: "Rest-defence kills the counter", metric: { n: "Numbers behind ball", v: "7", t: "≥ 7", ok: true }, drill: "SSG-02" },
+    ]},
+  ]},
+];
+
+function PtTreeNode({ node, color, depth }) {
+  const [open, setOpen] = useState(true);
+  const kids = node.children && node.children.length;
+  return (
+    <div style={{ marginLeft: depth ? 9 : 0, borderLeft: depth ? `1px solid ${color}30` : "none", paddingLeft: depth ? 11 : 0 }}>
+      <div className="flex items-start gap-2 py-1" onClick={kids ? () => setOpen(!open) : undefined} style={{ cursor: kids ? "pointer" : "default" }}>
+        {kids ? (
+          <span className="font-mono text-[10px] mt-0.5 select-none" style={{ color }}>{open ? "▾" : "▸"}</span>
+        ) : (
+          <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color, boxShadow: `0 0 5px ${color}` }} />
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className={depth === 0 ? "text-[12px] font-bold text-white" : "text-[11px] text-white/80"}>{node.label}</span>
+            {node.metric && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px]" style={{ background: (node.metric.ok ? CYBER.neonGreen : CYBER.amber) + "12", color: node.metric.ok ? CYBER.neonGreen : CYBER.amber, border: `1px solid ${(node.metric.ok ? CYBER.neonGreen : CYBER.amber)}30` }}>
+                <span className="font-bold">{node.metric.ok ? "▲" : "▼"}</span>
+                <span className="text-white/65">{node.metric.n}</span>
+                <span className="font-mono font-bold">{node.metric.v}</span>
+                <span className="text-white/30 font-mono">{node.metric.t}</span>
+              </span>
+            )}
+            {node.drill && <span className="px-1.5 py-0.5 rounded text-[9px] font-mono" style={{ background: SCOUTS.green + "14", color: SCOUTS.green }}>{node.drill}</span>}
+          </div>
+        </div>
+      </div>
+      {kids && open && node.children.map((c, i) => <PtTreeNode key={i} node={c} color={color} depth={depth + 1} />)}
+    </div>
+  );
+}
+
+function PrincipleTreePanel() {
+  return (
+    <div>
+      <p className="text-[11px] text-white/55 leading-relaxed mb-3">Our game idea, broken down into the principles and detail behind each moment — every rung tied to the number that measures it and the drill that trains it.</p>
+      <div className="rounded-xl p-3.5 mb-4" style={{ background: `linear-gradient(135deg, ${BHA.blueLight}12, rgba(255,255,255,0.02))`, border: `1px solid ${BHA.blueLight}33` }}>
+        <div className="font-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: BHA.blueLight }}>◆ Game idea</div>
+        <p className="text-[14px] font-semibold text-white leading-snug">{PT_IDEA}</p>
+      </div>
+      <div className="space-y-3">
+        {PT_MOMENTS.map((m) => (
+          <div key={m.moment} className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.02)", border: `1px solid ${m.color}2e` }}>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm" style={{ background: m.color, boxShadow: `0 0 6px ${m.color}` }} />
+              <span className="text-[13px] font-black text-white">{m.moment}</span>
+              <span className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ color: m.color, background: m.color + "14" }}>{m.tag}</span>
+            </div>
+            {m.principles.map((p, i) => <PtTreeNode key={i} node={p} color={m.color} depth={1} />)}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// --- Connection network ---
+const NW_DATA = {
+  metrics: [
+    { k: "Connectivity", v: "0.71", s: "pass-network density" },
+    { k: "Centralisation", v: "0.34", s: "reliance on key nodes" },
+    { k: "Clustering", v: "0.58", s: "local triangulation" },
+    { k: "Triangles /90", v: "41", s: "3rd-man combinations" },
+  ],
+  nodes: [
+    { id: "GK", x: 10, y: 50, cen: 0.30 }, { id: "LCB", x: 26, y: 32, cen: 0.55 }, { id: "RCB", x: 26, y: 68, cen: 0.60 },
+    { id: "LB", x: 42, y: 14, cen: 0.50 }, { id: "RB", x: 42, y: 86, cen: 0.62 }, { id: "DM", x: 45, y: 50, cen: 0.92 },
+    { id: "LCM", x: 60, y: 34, cen: 0.72 }, { id: "RCM", x: 60, y: 66, cen: 0.66 }, { id: "LW", x: 80, y: 18, cen: 0.66 },
+    { id: "RW", x: 80, y: 82, cen: 0.56 }, { id: "ST", x: 90, y: 50, cen: 0.50 },
+  ],
+  edges: [
+    ["LCB", "DM", 0.80], ["RCB", "DM", 0.85], ["DM", "LCM", 0.92], ["DM", "RCM", 0.74], ["LCM", "LW", 0.70], ["RB", "RW", 0.72],
+    ["RCM", "ST", 0.55], ["LW", "ST", 0.50], ["GK", "LCB", 0.48], ["GK", "RCB", 0.52], ["LB", "LW", 0.60], ["LCM", "ST", 0.46],
+  ],
+  keyLinks: [
+    { pair: "Pivot ↔ LCM", strength: "0.92", note: "the main progression axis" },
+    { pair: "Pivot ↔ RCB", strength: "0.85", note: "primary build-up outlet" },
+    { pair: "RB ↔ RW", strength: "0.72", note: "right-side overload combo" },
+  ],
+  read: "Everything routes through the pivot — our highest-involvement node by distance. Our strength is the pivot–LCM axis; the risk is over-reliance on it: mark the 6 and our connectivity drops.",
+};
+
+function NetworkPanel() {
+  const pos = Object.fromEntries(NW_DATA.nodes.map((n) => [n.id, n]));
+  const sx = (x) => 12 + (x / 100) * 316, sy = (y) => 12 + (y / 100) * 176;
+  return (
+    <div className="space-y-4">
+      <p className="text-[11px] text-white/55 leading-relaxed">How joined-up we are with the ball — who links to whom, how evenly and how densely. The pivot is our hub; the risk is leaning on it too hard.</p>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {NW_DATA.metrics.map((t) => (
+          <div key={t.k} className="rounded-lg p-2.5" style={{ background: "rgba(0,245,255,0.04)", border: `1px solid ${CYBER.cyan}22` }}>
+            <div className="text-[8px] uppercase tracking-widest text-white/40 font-mono">{t.k}</div>
+            <div className="text-lg font-black font-mono text-white" style={{ textShadow: `0 0 10px ${CYBER.cyan}44` }}>{t.v}</div>
+            <div className="text-[8px] text-white/35 leading-tight mt-0.5">{t.s}</div>
+          </div>
+        ))}
+      </div>
+      <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}>
+        <div className="flex items-center justify-between mb-1">
+          <span className="font-mono text-[10px] uppercase tracking-widest" style={{ color: CYBER.cyan }}>Connection network</span>
+          <span className="font-mono text-[9px] text-white/35">node = involvement · edge = link strength</span>
+        </div>
+        <svg viewBox="0 0 340 200" className="w-full h-auto" style={{ filter: `drop-shadow(0 0 8px ${CYBER.cyan}22)` }}>
+          <rect x="6" y="6" width="328" height="188" rx="4" fill="#070d18" stroke={CYBER.cyan} strokeOpacity="0.32" strokeWidth="1.1" />
+          <line x1="170" y1="6" x2="170" y2="194" stroke={CYBER.cyan} strokeOpacity="0.2" strokeWidth="1" />
+          {NW_DATA.edges.map(([a, b, w], i) => {
+            const A = pos[a], B = pos[b];
+            return <line key={i} x1={sx(A.x)} y1={sy(A.y)} x2={sx(B.x)} y2={sy(B.y)} stroke={CYBER.cyan} strokeOpacity={0.12 + w * 0.5} strokeWidth={0.5 + w * 2.3} />;
+          })}
+          {NW_DATA.nodes.map((n) => {
+            const hub = n.id === "DM"; const col = hub ? CYBER.amber : SCOUTS.green; const r = 4 + n.cen * 8;
+            return (
+              <g key={n.id}>
+                <circle cx={sx(n.x)} cy={sy(n.y)} r={r} fill={col} fillOpacity="0.25" stroke={col} strokeWidth="1.3" style={{ filter: `drop-shadow(0 0 ${hub ? 8 : 4}px ${col})` }} />
+                <text x={sx(n.x)} y={sy(n.y) + 2.5} fill="#fff" fontSize="7" fontWeight="bold" textAnchor="middle">{n.id}</text>
+              </g>
+            );
+          })}
+          <text x="170" y="17" fill={CYBER.cyan} fontSize="8" fontWeight="bold" textAnchor="middle" opacity="0.7">ATTACK →</text>
+        </svg>
+      </div>
+      <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}>
+        <div className="font-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: CYBER.cyan }}>Strongest links</div>
+        <div className="space-y-1.5">
+          {NW_DATA.keyLinks.map((l) => (
+            <div key={l.pair} className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-semibold text-white flex-shrink-0">{l.pair}</span>
+              <span className="text-[10px] text-white/45 flex-1 truncate px-2">{l.note}</span>
+              <span className="font-mono text-[11px] font-bold flex-shrink-0" style={{ color: SCOUTS.green }}>{l.strength}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <p className="text-[11px] text-white/55 italic leading-relaxed">{NW_DATA.read}</p>
+    </div>
+  );
+}
+
+// --- Style fingerprint (top of Visuals) ---
+const STY_DATA = {
+  dims: [
+    { axis: "Possession", us: 82 }, { axis: "Directness", us: 34 }, { axis: "Build-up", us: 80 },
+    { axis: "Width", us: 68 }, { axis: "High press", us: 74 }, { axis: "Counter threat", us: 52 },
+    { axis: "Crossing", us: 44 }, { axis: "Sustained threat", us: 76 }, { axis: "Tempo", us: 70 },
+  ],
+  tags: ["Possession-dominant", "Build from the back", "High press", "Sustained threat"],
+};
+
+function StyleFingerprintPanel() {
+  const data = STY_DATA.dims.map((d) => ({ axis: d.axis, us: d.us, med: 50 }));
+  return (
+    <div className="rounded-xl p-3" style={{ background: "rgba(0,245,255,0.04)", border: `1px solid ${CYBER.cyan}22` }}>
+      <div className="flex items-start justify-between mb-1 gap-2">
+        <div>
+          <div className="text-sm font-black text-white uppercase tracking-wide" style={{ textShadow: `0 0 10px ${CYBER.cyan}44` }}>Playing-Style Fingerprint</div>
+          <div className="text-[11px] text-white/50 mt-0.5">Our identity across the key style dimensions, against the league average.</div>
+        </div>
+        <div className="flex items-center gap-3 text-[10px] font-mono flex-shrink-0 pt-1">
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: CYBER.cyan }} />Brighton</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: "rgba(255,255,255,0.4)" }} />League</span>
+        </div>
+      </div>
+      <div style={{ width: "100%", height: 300 }}>
+        <ResponsiveContainer>
+          <RadarChart data={data} outerRadius="70%">
+            <PolarGrid stroke="#ffffff" strokeOpacity={0.12} />
+            <PolarAngleAxis dataKey="axis" tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 9 }} />
+            <Radar name="League" dataKey="med" stroke="rgba(255,255,255,0.45)" strokeWidth={1} strokeDasharray="3 3" fill="#ffffff" fillOpacity={0.05} />
+            <Radar name="Brighton" dataKey="us" stroke={CYBER.neonGreen} strokeWidth={2} fill={CYBER.cyan} fillOpacity={0.3} />
+          </RadarChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="flex flex-wrap gap-1.5 mb-3">
+        {STY_DATA.tags.map((t) => <span key={t} className="text-[10px] px-2 py-1 rounded-md" style={{ background: CYBER.cyan + "14", color: CYBER.cyan, border: `1px solid ${CYBER.cyan}33` }}>{t}</span>)}
+      </div>
+      <div className="space-y-1.5">
+        {STY_DATA.dims.map((d) => {
+          const above = d.us >= 50; const col = above ? CYBER.cyan : CYBER.amber;
+          return (
+            <div key={d.axis}>
+              <div className="flex items-center justify-between text-[10px] mb-0.5">
+                <span className="text-white/60 uppercase tracking-wide text-[9px]">{d.axis}</span>
+                <span className="font-mono font-bold" style={{ color: col }}>{d.us}</span>
+              </div>
+              <div className="relative h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                <div className="h-full rounded-full" style={{ width: `${d.us}%`, background: col, opacity: 0.65 }} />
+                <div className="absolute top-0 bottom-0" style={{ left: "50%", width: 1, background: "rgba(255,255,255,0.4)" }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <p className="text-[9px] text-white/35 mt-2 font-mono">Vertical line = league average (50th pctile). Cyan above · amber below.</p>
+    </div>
+  );
+}
+
+// --- Sub-tab wrappers ---
+function EncapToggle({ tabs, view, setView, accent }) {
+  return (
+    <div className="flex gap-1 mb-4 p-1 rounded-lg bg-white/[0.04] border border-white/10">
+      {tabs.map(([id, label]) => {
+        const on = view === id;
+        return (
+          <button key={id} onClick={() => setView(id)} className="flex-1 py-2 text-[10px] font-bold rounded transition-all uppercase tracking-wider"
+            style={{ background: on ? accent + "22" : "transparent", color: on ? accent : "rgba(255,255,255,0.45)", border: `1px solid ${on ? accent + "55" : "transparent"}` }}>
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function PrinciplesSection() {
+  const [view, setView] = useState("model");
+  return (
+    <div>
+      <EncapToggle tabs={[["model", "◆ Model"], ["scores", "▦ Scorecard"]]} view={view} setView={setView} accent={CYBER.cyan} />
+      {view === "model" && <PrincipleTreePanel />}
+      {view === "scores" && <TacticalPrinciples />}
+    </div>
+  );
+}
+
+function ZoneDataSection() {
+  const [view, setView] = useState("networks");
+  return (
+    <div>
+      <EncapToggle tabs={[["networks", "⬡ Networks"], ["maps", "▦ Zone Maps"]]} view={view} setView={setView} accent={SCOUTS.green} />
+      {view === "networks" && <NetworkPanel />}
+      {view === "maps" && <TacticalZones />}
+    </div>
+  );
+}
+
 function TacticsTab() {
   const [subTab, setSubTab] = useState("model"); // "model" | "zones" | "principles"
 
@@ -6169,8 +6451,8 @@ function TacticsTab() {
       </div>
 
       {subTab === "model" && <GameModel />}
-      {subTab === "zones" && <TacticalZones />}
-      {subTab === "principles" && <TacticalPrinciples />}
+      {subTab === "zones" && <ZoneDataSection />}
+      {subTab === "principles" && <PrinciplesSection />}
       {subTab === "space" && <SpaceControlTab />}
     </div>
   );
@@ -7501,6 +7783,8 @@ function VisualsTab() {
 
       {sub === "visuals" && (
           <div className="space-y-4">
+            <StyleFingerprintPanel />
+
             <ChartCard title="xG vs Actual Goals" subtitle="Final 9 matchweeks" footnote="We consistently underperform our xG. Across the season, we scored 0.07 goals less per match than expected — that's a finishing problem, not a chance creation problem.">
               <ResponsiveContainer>
                 <AreaChart data={xgVsActual}>
